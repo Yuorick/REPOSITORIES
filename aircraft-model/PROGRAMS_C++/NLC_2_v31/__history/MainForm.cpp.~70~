@@ -1,0 +1,1038 @@
+//---------------------------------------------------------------------------
+
+#include <vcl.h>
+#pragma hdrstop
+
+#include "MainForm.h"
+
+#include "Diagrams.h"
+#include "YrString.h"
+#include "MatrixProccess.h"
+#include <math.h>
+#include <dir.h>
+#include "Equations.h"
+#include "Gauss.h"
+#include "UrPointXY.h"
+#include "URPolyLine.h"
+#include "YrWriteShapeFile.h"
+#include "Faceta.h"
+#include "Far.h"
+#include "URPolygon.h"
+#include "DiagrSinX.h"
+#include "DiagrSet.h"
+#include "Diagr.h"
+#include "PicturesForReport1.h"
+
+
+//---------------------------------------------------------------------------
+#pragma package(smart_init)
+#pragma resource "*.dfm"
+static int I_ENTER_COUNT = 0  ;
+TForm1 *Form1;
+
+//---------------------------------------------------------------------------
+__fastcall TForm1::TForm1(TComponent* Owner)
+	: TForm(Owner)
+{
+
+
+	  String s_22 = LabeledEdit3->Text;
+		if (wcschr(s_22.w_str(), L',') )
+		{
+		// 1.ширина диаграммы
+		mWidthDgr =  StrTo_Dbl_(LabeledEdit3->Text) * M_PI/3000./2. ;
+		//2. СКО шума
+		mNoiseSkz =  StrTo_Dbl_(LabeledEdit2->Text);
+		// 3.высота антенны
+		mAltCoord  = StrTo_Dbl_(LabeledEdit4->Text);
+
+		//7. дальность цели
+		mDistTarg = StrTo_Dbl_(Edit3->Text);
+        // длина волны
+		 mLambda=StrTo_Dbl_(LabeledEdit1->Text);
+		}
+		else
+		{
+		// ширина диаграммы
+		mWidthDgr =  StrTo_Dbl_(LabeledEdit3->Text) * M_PI/3000./2. ;
+		}
+
+
+
+		///
+/////////////////////////////////////////////////////////////////////////////////
+	   // создание гридов
+	   createInputGridForTarg_and_Antp();
+	   createOutputGridForTarg_and_Antp();
+	   createOutputGridForRezAnglesUM_Targ_and_Antp();
+	   createOutputGridForTrueAnglesUM_Targ_and_Antp();
+
+	   ///
+
+	   // заполение данных по цели и анитиподу
+	   // высота цели
+		 mAltTarg = 100.;//StrTo_Dbl_(LabeledEdit5->Text);
+		// 6.высота антипода
+		 mAltAntp = -100.;//StrTo_Dbl_(LabeledEdit11->Text);
+
+
+		// 8. сигнал цели, дискрет
+		mSignLevTarg = 800.;//StrTo_Dbl_(LabeledEdit7->Text);
+		// 9. сигнал антипода, дискрет
+		mSignLevAntp = 800.;//StrTo_Dbl_(LabeledEdit12->Text);
+
+		// 11. угол фазы отражения цели
+		 mPhaseTarg = 0.;
+
+	   //12. угол фазы отражения антипода
+		mPhaseAntp = 0.;
+
+		fillInputGrids();
+
+
+		// 11. коэффиц отражениея цели
+		mcmpKTarg.m_Re= mSignLevTarg * cos(mPhaseTarg) ;
+		mcmpKTarg.m_Im= mSignLevTarg * sin(mPhaseTarg) ;
+	   //12. коэфф отражения антипода
+		mcmpKAntp.m_Re= mSignLevAntp * cos(mPhaseAntp) ;
+		mcmpKAntp.m_Im= mSignLevAntp * sin(mPhaseAntp) ;
+
+
+
+
+		// критический угол места антипода
+	   int	ia = mDownAngVeer *3000./M_PI* 100.;
+		LabeledEdit10->Text = ia / 100.;
+
+    	ComboBox1->ItemIndex = 3;
+
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::Button2Click(TObject *Sender)
+{
+
+	fncInputData();
+
+
+
+
+    // создание пути к папке с отчетом
+	if (!mpwchOutFile0)
+	{
+	 if (I_ENTER_COUNT > 4) Close();
+
+
+	 ShowMessage(L"Укажите путь к папке с графиками") ;
+	 I_ENTER_COUNT++;
+	 return;
+	}
+	wcscpy(mwchOutFold,mpwchOutFile0);
+	wchar_t *pwchr = wcsrchr(mwchOutFold, L'\\');
+	pwchr[0] = 0;
+
+	createPicture1(mwchOutFold );
+	wchar_t wchFileName000[300]= {0};
+	wcscpy( wchFileName000,  mwchOutFold);
+	wcscat(wchFileName000, L"\\FARPict");
+	_wmkdir(wchFileName000);
+	 TYrWriteShapeFile::PictFar(wchFileName000) ;
+   return;
+   // метод ньютона общий случай - сиситема 2-х уранений
+		double alfUMTrg  = calcUMTarg();
+		double alfUMAntp = calcUMAntp();
+	 // создание набота диаграмм
+	  TDiagrSet DiagrSet;
+	  CreateDiagrSet( &DiagrSet);
+	 // const int mNumDiagr  = 7 ; // число диаграмм
+
+	  TComp *pcmpSZv = new TComp[mNumDiagr] ; // массив измерений диаграмм
+	  TComp *pcmpS = new TComp[mNumDiagr] ; // массив измерений диаграмм
+	 /* TDiagr *pDiagr = new TDiagr[mNumDiagr] ;
+
+	  TFar Far;
+
+	  // создание 1-ой диаграммы - разностная с углом сканирования 0.007 рад
+	  int iTypeOfDiagram = 1;   // тип диаграммы - разностная
+	  double parrPar[2] ={0.}; // массив параметров описывающих диаграмму
+	  parrPar[0] = 0.007; // угол сканирования разностной диаграммы
+	  pDiagr[0] = TDiagr( Far, iTypeOfDiagram, parrPar) ;  // разностная с углом сканирования 0.007 рад
+
+		  // создание 2-ой диаграммы - разностная с углом сканирования -0.007 рад
+	  parrPar[0] = -0.007; // угол сканирования разностной диаграммы
+	  pDiagr[1] = TDiagr( Far, iTypeOfDiagram, parrPar) ;  // разностная с углом сканирования 0.007 рад
+
+		  // создание 3 -ей диаграммы - комплексная с углом разведения 0.01 рад
+	  iTypeOfDiagram = 0;   // тип диаграммы - разностная
+	  parrPar[0] =0.; // угол сканирования
+	  parrPar[0] = 0.01; // угол разведения
+	  pDiagr[2] = TDiagr( Far, iTypeOfDiagram, parrPar) ;  // разностная с углом сканирования 0.007 рад
+
+		  // создание 4 -ей диаграммы - комплексная с углом разведения 0.01 рад
+	  parrPar[0] = -0.01; // угол разведения
+	  pDiagr[3] = TDiagr( Far, iTypeOfDiagram, parrPar) ;  // разностная с углом сканирования 0.007 рад
+
+		  // создание 5 -ей диаграммы - cуммарная с углом сканирования 0 рад
+	  pDiagr[4] = TDiagr( 0.) ;
+		  // создание 6 -ей диаграммы - cуммарная с углом сканирования 0.01 рад
+	  pDiagr[5] = TDiagr( -0.01) ;
+		  // создание 7 -ей диаграммы - cуммарная с углом сканирования 0.01 рад
+	  pDiagr[6] = TDiagr( 0.01) ;
+   ///
+
+	// создание множесткава диаграмм
+	TDiagrSet DiagrSet( NumDiagr, pDiagr);
+	///
+	*/
+	// построение графиков диаграмм
+	   DiagrSet.createDiagrGraphs(mwchOutFold);
+	///
+	// заполнение массива измерений дианрнамм
+		//  заполенеие истинных значений  диаграмм
+	for (int i =0; i < mNumDiagr ; i++)
+	{
+	  TComp cmpF1 = DiagrSet.mpDiagr[i].fncF(alfUMTrg);
+	  TComp cmpF2 = DiagrSet.mpDiagr[i].fncF(alfUMAntp);
+	  pcmpS[i] = mcmpKTarg * cmpF1 +  mcmpKAntp * cmpF2 ;
+	  pcmpSZv[i].m_Re = pcmpS[i].m_Re +  getGauss(0., mNoiseSkz/sqrt(2.) );
+	  pcmpSZv[i].m_Im = pcmpS[i].m_Im +  getGauss(0., mNoiseSkz/sqrt(2.) );
+
+	}
+
+	TComp cmpZTarg, cmpZAnt;
+	double arrMtrxCorr[4] ={0.};
+	alfUMTrg  = 0.005;
+	alfUMAntp = -0.005;
+	const double valXMax = 0.01;
+	const double valStepX = 0.001;
+ //  int irez = 	DiagrSet.solvNewtonMeth_Razn( mNoiseSkz,pcmpSZv, &cmpZTarg, &cmpZAnt, &alfUMTrg, &alfUMAntp, arrMtrxCorr  );
+   int irez = DiagrSet.solvNewtonMeth_RaznPerebor( mNoiseSkz,valXMax, valStepX,pcmpSZv
+   , &cmpZTarg, &cmpZAnt, &alfUMTrg, &alfUMAntp, arrMtrxCorr  );
+
+
+  if (irez == 0)
+  {
+	double valUMTargRez = alfUMTrg * 3000./ M_PI;
+	double valUMAntpRez = alfUMAntp  * 3000./ M_PI;
+	// угол места
+	int ib =  valUMTargRez * 100.;
+	StringGrid5->Cells[0][1] = ib/ 100.;
+
+	ib =  sqrt(arrMtrxCorr [0])* 3000./ M_PI * 100.;
+	StringGrid5->Cells[1][1] = ib/ 100.;
+
+	ib =  valUMAntpRez* 100.;
+	StringGrid5->Cells[0][2] = ib/ 100.;
+
+	ib =  sqrt(arrMtrxCorr [3])* 3000./ M_PI * 100.;
+	StringGrid5->Cells[1][2] = ib/ 100.;
+	// высота
+	ib = ( mAltCoord + mDistTarg * tan(alfUMTrg)) * 100.;
+	StringGrid3->Cells[1][1] =  ib/ 100.;
+	ib = (mAltCoord + mDistTarg * tan(alfUMAntp)) * 100.;
+	StringGrid3->Cells[1][2] = ib/ 100.;
+
+	// сигнал  модуль
+	ib = cmpZTarg.modul()* 100.;
+	StringGrid3->Cells[2][1] =   ib/ 100.;
+	ib = cmpZAnt.modul()* 100.;
+	StringGrid3->Cells[2][2] =   ib/ 100.;
+	// сигнал
+	ib = cmpZTarg.phase()* 180./ M_PI* 100.;
+	StringGrid3->Cells[3][1] =   ib/ 100.;
+	ib = cmpZAnt.phase()* 180./ M_PI* 100.;
+	StringGrid3->Cells[3][2] =  ib/ 100.;
+  }
+
+	 // delete [] pDiagr ;
+
+	 // построение графика метода стат испытаний
+	 int NIsp =100, numPoints = 0;
+	 TURPointXY *ppnts  =  new TURPointXY [NIsp];
+	 double alfUMTrg0  = calcUMTarg();
+	 double alfUMAntp0 = calcUMAntp();
+	 int irez0 = -100;
+	 for (int i = 0; i < NIsp; i++)
+	 {
+		for (int j =0; j < mNumDiagr ; j++)
+		{
+		TComp cmpF1 = DiagrSet.mpDiagr[j].fncF(alfUMTrg0);
+		TComp cmpF2 = DiagrSet.mpDiagr[j].fncF(alfUMAntp0);
+		pcmpS[j] = mcmpKTarg * cmpF1 +  mcmpKAntp * cmpF2 ;
+		pcmpSZv[j].m_Re = pcmpS[j].m_Re +  getGauss(0., mNoiseSkz/sqrt(2.) );
+		pcmpSZv[j].m_Im = pcmpS[j].m_Im +  getGauss(0., mNoiseSkz/sqrt(2.) );
+
+		}
+		alfUMTrg  = 0.008;
+		alfUMAntp = -0.008;
+
+		irez0 = DiagrSet.solvNewtonMeth_RaznPerebor( mNoiseSkz,valXMax, valStepX,pcmpSZv
+		, &cmpZTarg, &cmpZAnt, &alfUMTrg, &alfUMAntp, arrMtrxCorr  );
+		if(irez0 == 0)
+		{
+		  ppnts[numPoints].X = numPoints;
+		  ppnts[numPoints].Y = alfUMTrg *3000./ M_PI ;
+		  numPoints++;
+		}
+
+	 }
+	 TURPointXY  pnt1(0., calcUMTarg()*3000./ M_PI);
+	 TURPointXY  pnt2((double)numPoints, calcUMTarg()*3000./ M_PI);
+	 TURPolyLine line(   pnt1,   pnt2) ;
+	 wchar_t wchrStatFold[300] ={0};
+	 wcscpy( wchrStatFold, mwchOutFold);
+	 wcscat(wchrStatFold, L"\\Stat");
+	 _wmkdir(wchrStatFold);
+
+	  wchar_t wchFileName[300] ={0};
+	wcscpy( wchFileName,  wchrStatFold);
+	wcscat(wchFileName, L"\\Axes.shp");
+
+	 TYrWriteShapeFile::CreateShpArrowedAxes(wchFileName,0.,(double)numPoints + 5.
+	 ,-50.,20.,2.) ;
+
+
+	 wcscpy( wchFileName,  wchrStatFold);
+	wcscat(wchFileName, L"\\line.shp");
+	line.WriteSetSHPFiles(wchFileName, &line, 1) ;
+	 wcscpy( wchFileName,  wchrStatFold);
+	wcscat(wchFileName, L"\\pnts.shp");
+	TURPointXY::WriteSetSHPFiles(wchFileName, ppnts, numPoints) ;
+
+
+	 delete []ppnts;
+	  delete [] pcmpSZv ;
+	  delete [] pcmpS ;
+  return;
+
+
+
+
+}
+//---------------------------------------------------------------------------
+
+
+void __fastcall TForm1::Button1Click(TObject *Sender)
+{
+SaveDialog1->Filter = L"файлы с графиками (*.shp)|*.shp" ;
+
+
+  if (SaveDialog1->Execute())
+  {
+	//ShowMessage( (SaveDialog1->FileName).w_str()) ;
+   mpwchOutFile0 =  (SaveDialog1->FileName).w_str();
+
+  }
+  Button1->Caption =  mpwchOutFile0;
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::fncInputData()
+{
+
+
+	   String s_22 = LabeledEdit3->Text;
+		if (wcschr(s_22.w_str(), L',') )
+		{
+		// 1.ширина диаграммы
+		mWidthDgr =  StrTo_Dbl_(LabeledEdit3->Text) * M_PI/3000./2. ;
+		//2. СКО шума
+		mNoiseSkz =  StrTo_Dbl_(LabeledEdit2->Text);
+		// 3.высота антенны
+		mAltCoord  = StrTo_Dbl_(LabeledEdit4->Text);
+
+		//7. дальность цели
+		mDistTarg = StrTo_Dbl_(Edit3->Text);
+        // длина волны
+		 mLambda=StrTo_Dbl_(LabeledEdit1->Text);
+
+		}
+		else
+		{
+		// ширина диаграммы
+		mWidthDgr =  StrTo_Dbl_(LabeledEdit3->Text) * M_PI/3000./2. ;
+		}
+
+/////////////////////////////////////////////////////////////////////////////////
+
+
+		miTypeDiagrSet = ComboBox1->ItemIndex;
+
+	   // заполение данных по цели и анитиподу
+	   InputGridDataTarg_and_Antp();
+	   ///
+
+
+
+
+
+
+	//критический угол места цели
+      //критический угол места цели
+
+		int ia = calcCritUMTarg() *3000./M_PI * 100.;
+		LabeledEdit9->Text = ia / 100.;
+
+		// критический угол места антипода
+		ia = calcMinUMAntp() *3000./M_PI* 100.;
+		LabeledEdit10->Text = ia / 100.;
+
+
+
+
+ updatRezGrids();
+ updatRezTrueAngUMGrid() ;
+}
+
+
+
+
+void __fastcall TForm1::LabeledEdit4Change(TObject *Sender)
+{
+
+fncInputData();
+
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit5Change(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit6Change(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit11Change(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+
+
+// если угол места цели относительно координатора больше этого угла, то влияния антипода нет
+double  __fastcall TForm1::calcCritUMTarg()
+{
+ return (-atan(mAltCoord/ mDistTarg)+   mWidthDgr) ;
+}
+
+// если высота цели больше этой, то влияния антипода не будет
+double  __fastcall TForm1::calcCritElevTarg()
+{
+	return mAltCoord - mDistTarg * tan(atan(mAltCoord/ mDistTarg)-  calcCritUMTarg());
+}
+ // минимально возможный угол места антипода относительно координатора
+double  __fastcall TForm1::calcMinUMAntp()
+{
+ return - atan((calcCritElevTarg() + mAltCoord)/ mDistTarg) ;
+}
+
+
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit15Change(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit16Change(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit17Change(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit18Change(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+// вычмсление угла места цели истинного относительно координатора
+double  __fastcall TForm1::calcUMTarg()
+{
+return atan((mAltTarg- mAltCoord)/ mDistTarg);
+}
+//---------------------------------------------------------------------------
+// вычмсление угла места анотипода истинного относительно координатора
+double  __fastcall TForm1::calcUMAntp()
+{
+return atan((mAltAntp- mAltCoord)/ mDistTarg);
+}
+
+
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::Edit3Exit(TObject *Sender)
+{
+	mDistTarg = StrTo_Dbl_(Edit3->Text );
+	//критический угол места цели
+		mUpAngVeer =  calcCritUMTarg();
+		mDownAngVeer = calcMinUMAntp();
+		int ia = mUpAngVeer *3000./M_PI * 100.;
+		LabeledEdit9->Text = ia / 100.;
+
+		// критический угол места антипода
+		ia = mDownAngVeer *3000./M_PI* 100.;
+		LabeledEdit10->Text = ia / 100.;
+
+
+		// зполнение ячеек массива углов места веера диаграмм
+
+    updatRezGrids();
+	fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::StringGrid2Exit(TObject *Sender)
+{
+  updatRezTrueAngUMGrid() ;
+
+ // updateVeerDiagrams();
+  updatRezGrids();
+  fncInputData();
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm1::createInputGridForTarg_and_Antp()
+{
+	   StringGrid2->Cells[0][1] = L"Цель";
+	   StringGrid2->Cells[0][2] = L"Антипод";
+	   StringGrid2->Cells[1][0]  = L"Высота, м.";
+
+	   StringGrid2->Cells[2][0]  = L"Сигнал,дскр.";
+	   StringGrid2->Cells[3][0]  = L"Фаз.угол сигн.,град";
+	   StringGrid2->ColWidths[0]= 150;
+	   StringGrid2->ColWidths[1]= 130;
+	   StringGrid2->ColWidths[2]= 130;
+	   StringGrid2->ColWidths[3]= 130;
+}
+
+
+//---------------------------------------------------------------------------
+void __fastcall TForm1::createOutputGridForTarg_and_Antp()
+{
+	   StringGrid3->Cells[0][1] = L"Цель";
+	   StringGrid3->Cells[0][2] = L"Антипод";
+	   StringGrid3->Cells[1][0]  = L"Высота, м.";
+
+	   StringGrid3->Cells[2][0]  = L"Сигнал,дскр.";
+	   StringGrid3->Cells[3][0]  = L"Фаз.угол сигн.,град";
+	   StringGrid3->ColWidths[0]= 150;
+	   StringGrid3->ColWidths[1]= 130;
+	   StringGrid3->ColWidths[2]= 130;
+	   StringGrid3->ColWidths[3]= 130;
+}
+//---------------------------------------------------------------------------
+
+
+void __fastcall TForm1::createOutputGridForTrueAnglesUM_Targ_and_Antp()
+{
+
+	   StringGrid4->Cells[0][0]  = L"Угол места, т.д.";
+
+	   StringGrid4->ColWidths[0]= 80;
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm1::createOutputGridForRezAnglesUM_Targ_and_Antp()
+{
+
+	   StringGrid5->Cells[0][0]  = L"Угол места, т.д.";
+	   StringGrid5->Cells[1][0]  = L"CКО, т.д.";
+
+	   StringGrid5->ColWidths[0]= 80;
+	   StringGrid5->ColWidths[1]= 80;
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm1::fillInputGrids()
+{
+
+		StringGrid2->Cells[1][1] = mAltTarg ;
+		StringGrid2->Cells[1][2] = mAltAntp;
+
+		StringGrid2->Cells[2][1] = mSignLevTarg;
+		StringGrid2->Cells[2][2] = mSignLevAntp;
+		StringGrid2->Cells[3][1] = mPhaseTarg;
+		StringGrid2->Cells[3][2] = mPhaseAntp;
+		int ia = atan((mAltTarg- mAltCoord)/ mDistTarg)*3000./M_PI * 100.;
+		StringGrid4->Cells[0][1] = ((double)ia)/ 100.;
+		ia =  atan((mAltAntp- mAltCoord)/ mDistTarg)*3000./M_PI * 100.;
+		StringGrid4->Cells[0][2] = ((double)ia)/ 100.;
+}
+
+//--------------------------------------------------------------------------
+
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+// обновление информации в гридах с результатами веера диаграмм
+void __fastcall TForm1::updatRezGrids()
+{
+		for (int i= 1; i < 3; i++)
+		for (int j= 1; j < StringGrid3->ColCount  ; j++)
+		{
+		 StringGrid3->Cells[j][i]= L"";
+		}
+		for (int i= 1; i < 3; i++)
+		for (int j= 0; j < StringGrid5->ColCount  ; j++)
+		{
+		 StringGrid5->Cells[j][i]= L"";
+		}
+}
+//--------------------------------------------------------------------------
+// обновление информации в гриде с истинными углами цели и натипода
+void __fastcall TForm1::updatRezTrueAngUMGrid()
+{
+		int ia = atan((mAltTarg- mAltCoord)/ mDistTarg)*3000./M_PI * 100.;
+		StringGrid4->Cells[0][1] = ia / 100.;
+		ia = atan((mAltAntp- mAltCoord)/ mDistTarg)*3000./M_PI * 100.;
+		StringGrid4->Cells[0][2] =  ia / 100.;
+}
+//--------------------------------------------------------------------------
+// обновление входнгой информации из грида с данными цели и натипода
+void __fastcall TForm1::InputGridDataTarg_and_Antp()
+{
+ // заполение данных по цели и анитиподу
+	   // высота цели
+		mAltTarg = StrTo_Dbl_(StringGrid2->Cells[1][1] );
+		// 6.высота антипода
+		 mAltAntp =StrTo_Dbl_(StringGrid2->Cells[1][2]);
+
+
+		// 8. сигнал цели, дискрет
+		mSignLevTarg = StrTo_Dbl_(StringGrid2->Cells[2][1]);
+		// 9. сигнал антипода, дискрет
+		mSignLevAntp = StrTo_Dbl_(StringGrid2->Cells[2][2]);
+
+		// 11. угол фазы отражения цели
+		 mPhaseTarg = StrTo_Dbl_(StringGrid2->Cells[3][1]) * M_PI / 180.;
+		 mcmpKTarg.m_Re = mSignLevTarg * cos(mPhaseTarg) ;
+		 mcmpKTarg.m_Im = mSignLevTarg * sin(mPhaseTarg) ;
+
+
+	   //12. угол фазы отражения антипода
+		mPhaseAntp = StrTo_Dbl_(StringGrid2->Cells[3][2]) * M_PI / 180.;
+		mcmpKAntp.m_Re = mSignLevAntp * cos(mPhaseAntp) ;
+		mcmpKAntp.m_Im = mSignLevAntp * sin(mPhaseAntp) ;
+
+ updatRezGrids();
+ updatRezTrueAngUMGrid() ;
+
+
+}
+//--------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit1Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+
+void __fastcall TForm1::LabeledEdit2Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+
+void __fastcall TForm1::LabeledEdit3Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit4Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::CreateDiagrSet( TDiagrSet *pDiagrSet0)
+{
+// 16 суммарных диагтрамм
+  if (miTypeDiagrSet == 0)
+  {
+	int iNumDiagr = 16;
+	double *parrAlfaDiagr = new double [ iNumDiagr] ;
+	memset(parrAlfaDiagr, 0, iNumDiagr * sizeof(double));
+	double del = 0.02/ ((double)(iNumDiagr-1));
+	for (int i = 0; i < iNumDiagr; i++)
+	{
+	 parrAlfaDiagr[i] = -0.01 + ((double)i) * del;
+	}
+	TDiagrSet DiagrSet(iNumDiagr, parrAlfaDiagr);
+	*pDiagrSet0 =  DiagrSet;
+	delete parrAlfaDiagr;
+	mNumDiagr = iNumDiagr;
+	return;
+  }
+ ///
+ // 4 суммарных диагтрамм
+  if (miTypeDiagrSet == 1)
+  {
+	int iNumDiagr = 4;
+	double *parrAlfaDiagr = new double [ iNumDiagr] ;
+	memset(parrAlfaDiagr, 0, iNumDiagr * sizeof(double));
+	double del = 0.02/ ((double)(iNumDiagr-1));
+	for (int i = 0; i < iNumDiagr; i++)
+	{
+	 parrAlfaDiagr[i] = -0.01 + ((double)i) * del;
+	}
+	TDiagrSet DiagrSet(iNumDiagr, parrAlfaDiagr);
+	*pDiagrSet0 =  DiagrSet;
+	delete parrAlfaDiagr;
+	mNumDiagr = iNumDiagr;
+	return;
+  }
+ ///
+ //
+  if (miTypeDiagrSet == 2)
+  {
+	  TFar Far;
+	  mNumDiagr = 7;
+	  TDiagr *pDiagr =  (TDiagr *)malloc(mNumDiagr * sizeof( TDiagr)) ;
+	  // создание 1-ой диаграммы - разностная с углом сканирования 0.007 рад
+	  int iTypeOfDiagram = 1;   // тип диаграммы - разностная
+	  double parrPar[2] ={0.}; // массив параметров описывающих диаграмму
+	  parrPar[0] = 0.007; // угол сканирования разностной диаграммы
+	  pDiagr[0] = TDiagr( Far, iTypeOfDiagram, parrPar) ;  // разностная с углом сканирования 0.007 рад
+
+		  // создание 2-ой диаграммы - разностная с углом сканирования -0.007 рад
+	  parrPar[0] = -0.007; // угол сканирования разностной диаграммы
+	  pDiagr[1] = TDiagr( Far, iTypeOfDiagram, parrPar) ;  // разностная с углом сканирования 0.007 рад
+
+		  // создание 3 -ей диаграммы - комплексная с углом разведения 0.01 рад
+	  iTypeOfDiagram = 0;   // тип диаграммы - разностная
+	  parrPar[0] =0.; // угол сканирования
+	  parrPar[0] = 0.01; // угол разведения
+	  pDiagr[2] = TDiagr( Far, iTypeOfDiagram, parrPar) ;  // разностная с углом сканирования 0.007 рад
+
+		  // создание 4 -ей диаграммы - комплексная с углом разведения 0.01 рад
+	  parrPar[0] = -0.01; // угол разведения
+	  pDiagr[3] = TDiagr( Far, iTypeOfDiagram, parrPar) ;  // разностная с углом сканирования 0.007 рад
+
+		  // создание 5 -ей диаграммы - cуммарная с углом сканирования 0 рад
+	  pDiagr[4] = TDiagr( 0.) ;
+		  // создание 6 -ей диаграммы - cуммарная с углом сканирования 0.01 рад
+	  pDiagr[5] = TDiagr( -0.01) ;
+		  // создание 7 -ей диаграммы - cуммарная с углом сканирования 0.01 рад
+	  pDiagr[6] = TDiagr( 0.01) ;
+   ///
+
+	// создание множесткава диаграмм
+
+	TDiagrSet DiagrSet( mNumDiagr, pDiagr);
+	*pDiagrSet0 =  DiagrSet;
+	free( pDiagr);
+	return;
+  }
+  // 4 строковые диаграммы
+  if (miTypeDiagrSet == 3)
+  {
+	TFar Far;
+	mNumDiagr = 4;
+	TDiagr *pDiagr =  (TDiagr *)malloc(mNumDiagr * sizeof( TDiagr)) ;
+	TComp arrCmpElCurrent[4];
+	memset(arrCmpElCurrent, 0, 4 *sizeof(TComp));
+
+	// создание 1-ой диаграммы
+	arrCmpElCurrent [0] = TComp(1./4.,0.);
+	pDiagr[0] = TDiagr(Far, arrCmpElCurrent);
+
+	// создание 2-ой диаграммы
+	memset(arrCmpElCurrent, 0, 4 *sizeof(TComp));
+	arrCmpElCurrent [1] = TComp(1./4.,0.);
+	pDiagr[1] = TDiagr(Far, arrCmpElCurrent);
+
+	// создание 3 -ей диаграммы
+	memset(arrCmpElCurrent, 0, 4 *sizeof(TComp));
+	arrCmpElCurrent [2] = TComp(1./4.,0.);
+	pDiagr[2] = TDiagr(Far, arrCmpElCurrent);
+
+	// создание 4 -ей диаграммы
+	memset(arrCmpElCurrent, 0, 4 *sizeof(TComp));
+	arrCmpElCurrent [3] = TComp(1./4.,0.);
+	pDiagr[3] = TDiagr(Far, arrCmpElCurrent);
+	// создание множесткава диаграмм
+
+	TDiagrSet DiagrSet( mNumDiagr, pDiagr);
+	*pDiagrSet0 =  DiagrSet;
+	free( pDiagr);
+	return;
+  }
+
+   // 2 зоринские + суммарная
+  if (miTypeDiagrSet == 4)
+  {
+	TFar Far;
+	mNumDiagr = 3;
+	TDiagr *pDiagr =  (TDiagr *)malloc(mNumDiagr * sizeof( TDiagr)) ;
+	TComp arrCmpElCurrent[4];
+	memset(arrCmpElCurrent, 0, 4 *sizeof(TComp));
+
+	// создание 1-ой диаграммы  -  псевдозоринские
+	arrCmpElCurrent [0] = TComp(2./5.,0.);
+	arrCmpElCurrent [1] = TComp(1./5.,0.);
+	arrCmpElCurrent [2] = arrCmpElCurrent [1] ;
+	arrCmpElCurrent [3] = arrCmpElCurrent [1] ;
+	pDiagr[0] = TDiagr(Far, arrCmpElCurrent);
+
+	// создание 2-ой диаграммы -  псевдозоринские
+	memset(arrCmpElCurrent, 0, 4 *sizeof(TComp));
+	arrCmpElCurrent [3] = TComp(2./5.,0.);
+	arrCmpElCurrent [1] = TComp(1./5.,0.);
+	arrCmpElCurrent [2] = arrCmpElCurrent [1] ;
+	arrCmpElCurrent [0] = arrCmpElCurrent [1] ;
+	pDiagr[1] = TDiagr(Far, arrCmpElCurrent);
+
+	// создание 3 -ей диаграммы  - суммарная
+	memset(arrCmpElCurrent, 0, 4 *sizeof(TComp));
+	arrCmpElCurrent [3] = TComp(1./4.,0.);
+	arrCmpElCurrent [1] = TComp(1./4.,0.);
+	arrCmpElCurrent [2] = TComp(1./4.,0.);
+	arrCmpElCurrent [0] = TComp(1./4.,0.);
+	pDiagr[2] = TDiagr(Far, arrCmpElCurrent);
+
+
+	// создание множесткава диаграмм
+
+	TDiagrSet DiagrSet( mNumDiagr, pDiagr);
+	*pDiagrSet0 =  DiagrSet;
+	free( pDiagr);
+	return;
+  }
+
+   // 2 псевдозоринские + разностная
+  if (miTypeDiagrSet == 5)
+  {
+	TFar Far;
+	mNumDiagr = 3;
+	TDiagr *pDiagr =  (TDiagr *)malloc(mNumDiagr * sizeof( TDiagr)) ;
+	TComp arrCmpElCurrent[4];
+	memset(arrCmpElCurrent, 0, 4 *sizeof(TComp));
+
+	// создание 1-ой диаграммы  - псевдозоринская
+	arrCmpElCurrent [0] = TComp(2./5.,0.);
+	arrCmpElCurrent [1] = TComp(1./5.,0.);
+	arrCmpElCurrent [2] = arrCmpElCurrent [1] ;
+	arrCmpElCurrent [3] = arrCmpElCurrent [1] ;
+	pDiagr[0] = TDiagr(Far, arrCmpElCurrent);
+
+	// создание 2-ой диаграммы - псевдозоринская
+	memset(arrCmpElCurrent, 0, 4 *sizeof(TComp));
+	arrCmpElCurrent [3] = TComp(2./5.,0.);
+	arrCmpElCurrent [1] = TComp(1./5.,0.);
+	arrCmpElCurrent [2] = arrCmpElCurrent [1] ;
+	arrCmpElCurrent [0] = arrCmpElCurrent [1] ;
+	pDiagr[1] = TDiagr(Far, arrCmpElCurrent);
+
+	// создание 3 -ей диаграммы  - разностная
+	const int iTypeOfDiagram = 0;
+	double parrPar[2] = {0.};
+	pDiagr[2] = TDiagr( Far,  iTypeOfDiagram, parrPar);
+
+
+	// создание множесткава диаграмм
+
+	TDiagrSet DiagrSet( mNumDiagr, pDiagr);
+	*pDiagrSet0 =  DiagrSet;
+	free( pDiagr);
+	return;
+  }
+
+	// 2 псевдозоринские + разностная + суммарная
+  if (miTypeDiagrSet == 6)
+  {
+	TFar Far;
+	mNumDiagr = 4;
+	TDiagr *pDiagr =  (TDiagr *)malloc(mNumDiagr * sizeof( TDiagr)) ;
+	TComp arrCmpElCurrent[4];
+	memset(arrCmpElCurrent, 0, 4 *sizeof(TComp));
+
+	// создание 1-ой диаграммы  - псевдозоринская
+	arrCmpElCurrent [0] = TComp(2./5.,0.);
+	arrCmpElCurrent [1] = TComp(1./5.,0.);
+	arrCmpElCurrent [2] = arrCmpElCurrent [1] ;
+	arrCmpElCurrent [3] = arrCmpElCurrent [1] ;
+	pDiagr[0] = TDiagr(Far, arrCmpElCurrent);
+
+	// создание 2-ой диаграммы - псевдозоринская
+	memset(arrCmpElCurrent, 0, 4 *sizeof(TComp));
+	arrCmpElCurrent [3] = TComp(2./5.,0.);
+	arrCmpElCurrent [1] = TComp(1./5.,0.);
+	arrCmpElCurrent [2] = arrCmpElCurrent [1] ;
+	arrCmpElCurrent [0] = arrCmpElCurrent [1] ;
+	pDiagr[1] = TDiagr(Far, arrCmpElCurrent);
+
+
+	// создание 3 -ей диаграммы  - суммарная
+	memset(arrCmpElCurrent, 0, 4 *sizeof(TComp));
+	arrCmpElCurrent [3] = TComp(1./4.,0.);
+	arrCmpElCurrent [1] = TComp(1./4.,0.);
+	arrCmpElCurrent [2] = TComp(1./4.,0.);
+	arrCmpElCurrent [0] = TComp(1./4.,0.);
+	pDiagr[2] = TDiagr(Far, arrCmpElCurrent);
+
+
+	// создание 4 -ей диаграммы  - разностная
+	const int iTypeOfDiagram = 0;
+	double parrPar[3] = {0.};
+	pDiagr[3] = TDiagr( Far, iTypeOfDiagram, parrPar);
+
+
+	// создание множесткава диаграмм
+
+	TDiagrSet DiagrSet( mNumDiagr, pDiagr);
+	*pDiagrSet0 =  DiagrSet;
+	free( pDiagr);
+	return;
+  }
+
+	// Зорин =  разностная + суммарная + квадратичная
+  if (miTypeDiagrSet == 7)
+  {
+	TFar Far;
+	mNumDiagr = 3;
+	TDiagr *pDiagr =  (TDiagr *)malloc(mNumDiagr * sizeof( TDiagr)) ;
+	TComp arrCmpElCurrent[4];
+	memset(arrCmpElCurrent, 0, 4 *sizeof(TComp));
+
+
+
+	// создание 1 -ой диаграммы  - суммарная
+	memset(arrCmpElCurrent, 0, 4 *sizeof(TComp));
+	arrCmpElCurrent [3] = TComp(1./4.,0.);
+	arrCmpElCurrent [1] = TComp(1./4.,0.);
+	arrCmpElCurrent [2] = TComp(1./4.,0.);
+	arrCmpElCurrent [0] = TComp(1./4.,0.);
+	pDiagr[0] = TDiagr(Far, arrCmpElCurrent);
+
+
+	// создание 2 -й диаграммы  - разностная
+	const int iTypeOfDiagram = 0;
+	double parrPar[2] = {0.};
+	pDiagr[1] = TDiagr( Far,  iTypeOfDiagram, parrPar);
+
+	 // создание 3 -ей диаграммы  - квадратичная
+	memset(arrCmpElCurrent, 0, 4 *sizeof(TComp));
+	arrCmpElCurrent [0] = TComp(1./3.,0.);
+	arrCmpElCurrent [3] = TComp(1./3.,0.);
+	arrCmpElCurrent [1] = TComp(1./6.,0.);
+	arrCmpElCurrent [2] = TComp(1./6.,0.);
+
+	pDiagr[2] = TDiagr(Far, arrCmpElCurrent);
+
+
+	// создание множесткава диаграмм
+
+	TDiagrSet DiagrSet( mNumDiagr, pDiagr);
+	*pDiagrSet0 =  DiagrSet;
+	free( pDiagr);
+	return;
+  }
+  // 8 строковых
+	if (miTypeDiagrSet == 8)
+  {
+	TFaceta Faceta(16) ;
+	 // количество модулей (фасет)
+  int N = 8;
+ // расстояние между модулями
+  double D = 32.8;
+ // длина волны
+  double Lambda = 3.15;;
+	 TFar Far( N, D, Lambda, Faceta);
+	mNumDiagr = N;
+	TDiagr *pDiagr =  (TDiagr *)malloc(mNumDiagr * sizeof( TDiagr)) ;
+	TComp arrCmpElCurrent[8];
+
+
+	for (int j =0; j < mNumDiagr; j++)
+	{
+	memset(arrCmpElCurrent, 0, 8 *sizeof(TComp));
+	arrCmpElCurrent [j] = TComp(1./8.,0.);
+	pDiagr[j] = TDiagr(Far, arrCmpElCurrent);
+	}
+
+
+	TDiagrSet DiagrSet( mNumDiagr, pDiagr);
+	*pDiagrSet0 =  DiagrSet;
+	free( pDiagr);
+	return;
+  }
+
+   // 16 строковых
+	if (miTypeDiagrSet == 9)
+  {
+
+	TFaceta Faceta(16) ;
+	 // количество модулей (фасет)
+  int N = 16;
+ // расстояние между модулями
+  double D = 32.8;
+ // длина волны
+  double Lambda = 3.15;;
+	 TFar Far( N, D, Lambda, Faceta);
+	mNumDiagr = N;
+	TDiagr *pDiagr =  (TDiagr *)malloc(mNumDiagr * sizeof( TDiagr)) ;
+	TComp *arrCmpElCurrent = new TComp[N];
+
+
+	for (int j =0; j < mNumDiagr; j++)
+	{
+	memset(arrCmpElCurrent, 0, mNumDiagr *sizeof(TComp));
+	arrCmpElCurrent [j] = TComp(1./mNumDiagr,0.);
+	pDiagr[j] = TDiagr(Far, arrCmpElCurrent);
+	}
+
+
+	TDiagrSet DiagrSet( mNumDiagr, pDiagr);
+	*pDiagrSet0 =  DiagrSet;
+	delete []arrCmpElCurrent ;
+	free( pDiagr);
+	return;
+  }
+
+   // 32 строковых
+	if (miTypeDiagrSet == 10)
+  {
+
+	TFaceta Faceta(16) ;
+	 // количество модулей (фасет)
+  int N = 32;
+ // расстояние между модулями
+  double D = 32.8;
+ // длина волны
+  double Lambda = 3.15;;
+	 TFar Far( N, D, Lambda, Faceta);
+	mNumDiagr = N;
+	TDiagr *pDiagr =  (TDiagr *)malloc(mNumDiagr * sizeof( TDiagr)) ;
+	TComp *arrCmpElCurrent = new TComp[N];
+
+
+	for (int j =0; j < mNumDiagr; j++)
+	{
+	memset(arrCmpElCurrent, 0, mNumDiagr *sizeof(TComp));
+	arrCmpElCurrent [j] = TComp(1./mNumDiagr,0.);
+	pDiagr[j] = TDiagr(Far, arrCmpElCurrent);
+	}
+
+
+	TDiagrSet DiagrSet( mNumDiagr, pDiagr);
+	*pDiagrSet0 =  DiagrSet;
+	delete []arrCmpElCurrent ;
+	free( pDiagr);
+	return;
+  }
+}
+
+
+

@@ -1,0 +1,29 @@
+//---------------------------------------------------------------------------
+
+#include <vcl.h>
+#include <math.h>
+#pragma hdrstop
+
+#include "Unit1.h"
+//---------------------------------------------------------------------------
+#pragma package(smart_init)
+#pragma resource "*.dfm"
+TForm1 *Form1;
+//---------------------------------------------------------------------------
+__fastcall TForm1::TForm1(TComponent* Owner)
+	: TForm(Owner)
+{
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm1::Button1Click(TObject *Sender)
+{
+double valTKel0 = 288.15;
+	  double valTKel = valTKel0  - 0.0065 * 5500;
+	  double valPAm = 101325. * exp(log(valTKel/ valTKel0) * 9.81* 0.028964/ 8.31/ 0.0065);
+	  double valRo =   valPAm * 0.028964/8.31/  valTKel;
+
+	  int iii =0;
+
+
+}
+//---------------------------------------------------------------------------

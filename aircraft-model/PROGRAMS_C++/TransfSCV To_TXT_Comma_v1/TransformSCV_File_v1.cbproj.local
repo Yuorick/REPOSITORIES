@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2012.10.17 10:24:57.954.cbproj,C:\Users\u.b.korobochkin\Documents\RAD Studio\Projects\Project4.cbproj=C:\Users\u.b.korobochkin\Documents\RAD Studio\Projects\SinkErase.cbproj</Transaction>
+    <Transaction>2012.10.17 10:25:17.601.cpp,C:\Users\u.b.korobochkin\Documents\RAD Studio\Projects\Unit3.cpp=C:\Users\u.b.korobochkin\Documents\RAD Studio\Projects\MainForm.cpp</Transaction>
+    <Transaction>2012.10.17 10:25:17.601.h,C:\Users\u.b.korobochkin\Documents\RAD Studio\Projects\Unit3.h=C:\Users\u.b.korobochkin\Documents\RAD Studio\Projects\MainForm.h</Transaction>
+    <Transaction>2012.10.17 10:25:17.601.dfm,C:\Users\u.b.korobochkin\Documents\RAD Studio\Projects\Unit3.dfm=C:\Users\u.b.korobochkin\Documents\RAD Studio\Projects\MainForm.dfm</Transaction>
+    <Transaction>2012.10.17 10:25:53.635.cpp,C:\Users\u.b.korobochkin\Documents\RAD Studio\Projects\MainForm.cpp=C:\ГИДРОПРОЕКТ\Caucasus_DEM\EXPERIMENTS\Gidro_C++\SinkErase\MainForm.cpp</Transaction>
+    <Transaction>2012.10.17 10:25:53.635.h,C:\Users\u.b.korobochkin\Documents\RAD Studio\Projects\MainForm.h=C:\ГИДРОПРОЕКТ\Caucasus_DEM\EXPERIMENTS\Gidro_C++\SinkErase\MainForm.h</Transaction>
+    <Transaction>2012.10.17 10:25:53.635.dfm,C:\Users\u.b.korobochkin\Documents\RAD Studio\Projects\MainForm.dfm=C:\ГИДРОПРОЕКТ\Caucasus_DEM\EXPERIMENTS\Gidro_C++\SinkErase\MainForm.dfm</Transaction>
+    <Transaction>2012.10.17 10:26:06.974.cbproj,C:\Users\u.b.korobochkin\Documents\RAD Studio\Projects\SinkErase.cbproj=C:\ГИДРОПРОЕКТ\Caucasus_DEM\EXPERIMENTS\Gidro_C++\SinkErase\SinkErase.cbproj</Transaction>
+    <Transaction>2012.10.17 10:36:47.025.cpp,C:\ГИДРОПРОЕКТ\Caucasus_DEM\EXPERIMENTS\Gidro_C++\SinkErase\Unit1.cpp=C:\ГИДРОПРОЕКТ\Caucasus_DEM\EXPERIMENTS\Gidro_C++\SinkErase\Claster.cpp</Transaction>
+    <Transaction>2012.10.17 10:36:47.025.h,C:\ГИДРОПРОЕКТ\Caucasus_DEM\EXPERIMENTS\Gidro_C++\SinkErase\Unit1.h=C:\ГИДРОПРОЕКТ\Caucasus_DEM\EXPERIMENTS\Gidro_C++\SinkErase\Claster.h</Transaction>
+    <Transaction>2012.10.17 10:40:33.843.cpp,C:\ГИДРОПРОЕКТ\Caucasus_DEM\EXPERIMENTS\Gidro_C++\SinkErase\Claster.cpp=C:\ГИДРОПРОЕКТ\Caucasus_DEM\EXPERIMENTS\Gidro_C++\SinkErase\Dasin.cpp</Transaction>
+    <Transaction>2012.10.17 10:40:33.843.h,C:\ГИДРОПРОЕКТ\Caucasus_DEM\EXPERIMENTS\Gidro_C++\SinkErase\Claster.h=C:\ГИДРОПРОЕКТ\Caucasus_DEM\EXPERIMENTS\Gidro_C++\SinkErase\Dasin.h</Transaction>
+    <Transaction>2012.10.17 10:41:06.424.cpp,C:\ГИДРОПРОЕКТ\Caucasus_DEM\EXPERIMENTS\Gidro_C++\SinkErase\Dasin.cpp=C:\ГИДРОПРОЕКТ\Caucasus_DEM\EXPERIMENTS\Gidro_C++\SinkErase\Basin.cpp</Transaction>
+    <Transaction>2012.10.17 10:41:06.424.h,C:\ГИДРОПРОЕКТ\Caucasus_DEM\EXPERIMENTS\Gidro_C++\SinkErase\Dasin.h=C:\ГИДРОПРОЕКТ\Caucasus_DEM\EXPERIMENTS\Gidro_C++\SinkErase\Basin.h</Transaction>
+    <Transaction>2012.10.28 19:41:06.896.cpp,C:\ГИДРОПРОЕКТ\Caucasus_DEM\EXPERIMENTS\Gidro_C++\SinkErase\URPointZ.cpp=</Transaction>
+    <Transaction>2012.10.28 19:54:24.539.cpp,C:\ГИДРОПРОЕКТ\Caucasus_DEM\EXPERIMENTS\Gidro_C++\SinkErase\URPointZ.cpp=</Transaction>
+    <Transaction>2012.10.28 19:56:15.663.cpp,C:\ГИДРОПРОЕКТ\Caucasus_DEM\EXPERIMENTS\Gidro_C++\SinkErase\URPointZ.cpp=</Transaction>
+    <Transaction>2012.10.31 18:54:14.285.cpp,D:\GIDROPROJECT\Gidro_C++\SinkErase _v2\URPolygon.cpp=</Transaction>
+    <Transaction>2012.10.31 18:54:14.341.cpp,D:\GIDROPROJECT\Gidro_C++\SinkErase _v2\URPolygonZ.cpp=</Transaction>
+    <Transaction>2012.10.31 18:54:14.355.cpp,D:\GIDROPROJECT\Gidro_C++\SinkErase _v2\YrRead.cpp=</Transaction>
+    <Transaction>2012.11.02 15:42:09.059.cbproj,D:\GIDROPROJECT\Gidro_C++\SinkErase _v4\SinkErase.cbproj=D:\GIDROPROJECT\Gidro_C++\SinkErase _v4\Link2Streams.cbproj</Transaction>
+    <Transaction>2012.11.17 11:37:24.138.cpp,D:\GIDROPROJECT\Gidro_C++\Link2Streams _v5\Unit1.cpp=D:\GIDROPROJECT\Gidro_C++\Link2Streams _v5\URPolylineXY.cpp</Transaction>
+    <Transaction>2012.11.17 11:37:24.138.h,D:\GIDROPROJECT\Gidro_C++\Link2Streams _v5\Unit1.h=D:\GIDROPROJECT\Gidro_C++\Link2Streams _v5\URPolylineXY.h</Transaction>
+    <Transaction>2012.11.17 11:41:51.670.cbproj,D:\GIDROPROJECT\Gidro_C++\Link2Streams _v6\Link2Streams.cbproj=D:\GIDROPROJECT\Gidro_C++\Link2Streams _v6\LinkStreams.cbproj</Transaction>
+    <Transaction>2018/01/02 22:44:18.684.cpp,E:\Ametist\25-12\Link2Streams _v8\Basin.cpp=</Transaction>
+    <Transaction>2018/01/02 22:46:21.515.cbproj,E:\Ametist\25-12\Link2Streams _v8\LinkStreams.cbproj=E:\Ametist\25-12\Link2Streams _v8\TransformTXTFile.cbproj</Transaction>
+    <Transaction>2018/01/02 22:46:52.921.cbproj,E:\Ametist\25-12\Link2Streams _v8\TransformTXTFile.cbproj=E:\Ametist\25-12\Link2Streams _v8\TransformSCV_File.cbproj</Transaction>
+    <Transaction>2018/01/02 22:51:06.807.cpp,E:\Ametist\25-12\Link2Streams _v8\YrWrite.cpp=</Transaction>
+    <Transaction>2018/01/02 22:51:45.803.cpp,E:\Ametist\25-12\Link2Streams _v8\YrRastr.cpp=</Transaction>
+    <Transaction>2018/01/02 22:52:10.538.cpp,E:\Ametist\25-12\Link2Streams _v8\UrPointXY.cpp=</Transaction>
+    <Transaction>2018/01/02 22:52:10.566.cpp,E:\Ametist\25-12\Link2Streams _v8\URPolylineXY.cpp=</Transaction>
+    <Transaction>2018/01/02 23:00:11.795.cpp,E:\Ametist\25-12\Link2Streams _v8\YrRead.cpp=</Transaction>
+    <Transaction>2021.12.12 11:57:57.748.cbproj,D:\REPOSITORIES\aircraft-model\PROGRAMS_C++\TransfSCV To_TXT_Comma\TransformSCV_File.cbproj=D:\REPOSITORIES\aircraft-model\PROGRAMS_C++\TransfSCV To_TXT_Comma\TransformSCV_File_v1.cbproj</Transaction>
+  </Transactions>
+	<ProjectSortOrder AutoSort="0" SortType="0">
+    <File Path="..\..\PROGRAMS_C++"/>
+    <File Path="..\MyLib"/>
+    <File Path="..\MyLib\SHFold_10Oct_15"/>
+    <File Path="..\MyLib\SHFold_10Oct_15\YrRastr.cpp"/>
+    <File Path="..\MyLib\SHFold_10Oct_15\YrRastr.cpp"/>
+    <File Path="..\MyLib\SHFold_10Oct_15\YrRastr.h"/>
+    <File Path="..\MyLib\SHFold_10Oct_15\YrRead.cpp"/>
+    <File Path="..\MyLib\SHFold_10Oct_15\YrRead.cpp"/>
+    <File Path="..\MyLib\SHFold_10Oct_15\YrRead.h"/>
+    <File Path="..\MyLib\SHFold_10Oct_15\YrWrite.cpp"/>
+    <File Path="..\MyLib\SHFold_10Oct_15\YrWrite.cpp"/>
+    <File Path="..\MyLib\SHFold_10Oct_15\YrWrite.h"/>
+    <File Path="MainForm.cpp"/>
+    <File Path="MainForm.cpp"/>
+    <File Path="MainForm.dfm"/>
+    <File Path="MainForm.h"/>
+    <File Path="TransformSCV_File_v1.cpp"/>
+    <File Path="TransformSCV_File_v1.res"/>
+  </ProjectSortOrder>
+</BorlandProject>

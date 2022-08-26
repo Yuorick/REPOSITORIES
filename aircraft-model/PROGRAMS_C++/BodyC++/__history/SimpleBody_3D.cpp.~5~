@@ -1,0 +1,59 @@
+//---------------------------------------------------------------------------
+
+
+#pragma hdrstop
+
+#include "SimpleBody_3D.h"
+
+__fastcall TSimpleBody_3D::TSimpleBody_3D()
+{
+	/*RecNumber = 0 ;
+	RecLength = 0 ;
+	Type = ShapeType::NullShape ;
+	FigureColor = (TColor)0 ;*/
+	 mPlane = TPlane();
+}
+// конструктор копирования
+ TSimpleBody_3D ::TSimpleBody_3D  (const TSimpleBody_3D &R)
+  {
+	mPlane  = R.mPlane;
+ }
+
+  // оператор присваивания
+  TSimpleBody_3D TSimpleBody_3D::operator=(TSimpleBody_3D  R)
+  {
+	mPlane  = R.mPlane;
+	return *this;
+ }
+//---------------------------------------------------------------------------
+__fastcall TSimpleBody_3D::TSimpleBody_3D(const TPlane Plane)
+{
+	 mPlane = Plane;
+}
+//---------------------------------------------------------------------------
+
+//__fastcall TSimpleBody_3D::~TSimpleBody_3D()
+//{
+//}
+//---------------------------------------------------------------
+
+
+// вычисление объема
+double TSimpleBody_3D::calcCapacity()
+{
+
+}
+
+// вычисление координат центра тяжести
+void TSimpleBody_3D::calcCentreOfGravity(double *arrCentreGrav)
+{
+
+}
+
+// вычисление тензора моментов инерции
+void TSimpleBody_3D::calcInertiaTensor(double *arrInertTens)
+{
+
+}
+
+#pragma package(smart_init)

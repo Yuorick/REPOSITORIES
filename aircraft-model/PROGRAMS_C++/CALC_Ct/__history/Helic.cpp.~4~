@@ -1,0 +1,68 @@
+//---------------------------------------------------------------------------
+
+
+#pragma hdrstop
+
+#include "Helic.h"
+
+
+__fastcall  THelic::THelic()
+{
+// лопасть винта
+	 mBlade = TBlade();
+	// частота вращениеия винта
+	 mBladeOmega = 0.;
+	// масса вертолетв
+	 mHelicMass = 0.;
+	// к-во лопастей
+	 mQuantBlades = 0;
+}
+// Конструктор копирования
+__fastcall  THelic::THelic (const THelic &R)
+ {
+	 mBlade = R.mBlade;
+	 mBladeOmega   = R.mBladeOmega ;
+	 mHelicMass  = R.mHelicMass ;
+	 mQuantBlades = R.mQuantBlades ;
+ }
+ // оператор присваивания
+  THelic THelic::operator=(THelic  R)
+ {
+	 mBlade = R.mBlade;
+	 mBladeOmega   = R.mBladeOmega ;
+	 mHelicMass  = R.mHelicMass ;
+	 mQuantBlades = R.mQuantBlades ;
+	 return *this ;
+ }
+
+ // парам констр 1
+ __fastcall THelic::THelic(const TBlade Blade,const double BladeOmega
+   ,const double HelicMass, const double QuantBlades)
+ {
+	 mBlade = Blade;
+	 mBladeOmega = BladeOmega;
+	 mHelicMass = HelicMass ;
+	 mQuantBlades = QuantBlades;
+ }
+ //-------------------------------------------------------
+ //---------------------------------------------------------------------------
+// вычисление константы Ct по данным РЛЭ
+// задана точка еа высоте висения (максимальной), масса вертолета, температура у поверхнсти земли
+// требуется накйти константу Ct
+	// TKel0 - температура на поверхности земли, град Кельвина
+	// HeliH -  высота  висения, м
+	// BladeOmega  - частота вращениеия винта
+double THelic::calcCt(const double TKel0,const double HeliH)
+{
+	  double valTKel = TKel0  - 0.0065 * 5500;
+	  double valTCel = valTKel- 273.15;
+	  double valPAm = 101325. * exp(log(valTKel/ TKel0) * 9.81* 0.028964/ 8.31/ 0.0065);
+	  double valRo =   valPAm * 0.028964/8.31/  valTKel;
+	  double valCt = 2.* 9.81 * mHelicMass/
+	  (valRo   *M_PI * mBlade.mBladeR * mBlade.mBladeR *mBlade.mBladeR *mBlade.mBladeR
+			*mBlade.mBladeOmega * mBlade.mBladeOmega);
+	  return valCt;
+}
+//--------------------------------------------------------------
+
+#pragma package(smart_init)

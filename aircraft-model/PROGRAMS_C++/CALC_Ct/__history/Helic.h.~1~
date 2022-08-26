@@ -1,0 +1,32 @@
+//---------------------------------------------------------------------------
+
+#ifndef HelicH
+#define HelicH
+// класс описывает вертолет
+class THelic
+{
+public:
+
+ // мощность на передачу
+	double mPowerPrd;
+	// КУ на передачу
+	double mKYPrd;
+
+
+
+
+ __fastcall  THelic() ;
+// Конструктор копирования
+__fastcall  THelic (const THelic &R2) ;
+
+ // оператор присваивания
+ THelic   operator=(THelic  R2) ;
+
+  // парам констр
+ __fastcall THelic(const double PowerPrd,const double KYPrd);
+
+
+
+
+
+};#endif

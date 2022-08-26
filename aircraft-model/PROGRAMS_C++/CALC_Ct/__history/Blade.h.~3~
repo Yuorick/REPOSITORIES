@@ -1,0 +1,41 @@
+//---------------------------------------------------------------------------
+
+#ifndef BladeH
+#define BladeH
+class TBlade
+{
+public:
+
+	// радиус винта
+	double mBladeR ;
+	// расстояние от оси вращения до  втулки ГШ
+	double mRadHorizHsarnir;
+	// высота вертикального сечения  лопасти ближе к центру вращения
+	double mPofile_d0;
+	// высота вертикального сечения  лопасти дальше от центра вращения
+	double mPofile_d1;
+	// масса лопасти
+	double mBladeM;
+
+	// хорда лопасти
+	double mBlade_b;
+
+
+
+	__fastcall  TBlade() ;
+	// Конструктор копирования
+	__fastcall  TBlade (const TBlade &R2) ;
+
+	// оператор присваивания
+	TBlade   operator=(TBlade  R2) ;
+
+	// парам констр
+	 __fastcall TBlade(const double  BladeR,const double  RadHorizHsarnir
+   ,const double  Pofile_d0,const double  Pofile_d1,const double  BladeM  ,const double  Blade_b);
+
+
+
+
+
+};
+#endif

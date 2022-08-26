@@ -1,0 +1,723 @@
+//---------------------------------------------------------------------------
+
+#include <vcl.h>
+
+#pragma hdrstop
+#include <math.h>
+#include "UrPointXY.h"
+#include "MatrixProccess.h"
+#include "YrRastr.h"
+extern const double NODATA;
+extern const double TOLRNC ;
+ TURPointXY ::TURPointXY()
+{
+  X = 0;
+  Y = 0;
+}
+// Конструктор копирования
+ TURPointXY::TURPointXY (const TURPointXY &R2)
+ {
+
+	 X= R2.X ;
+	  Y= R2.Y;
+
+ }
+ // парам констр
+ TURPointXY::TURPointXY(const double x1,const double y1)
+ {
+	 X = x1;
+	 Y = y1;
+ }
+
+
+
+ // оператор присваивания
+ TURPointXY TURPointXY::operator=(TURPointXY  R2)
+{
+	 X= R2.X ;
+	  Y= R2.Y;
+	 return *this ;
+}
+
+ //TURPointXY::~ TURPointXY()
+//{
+
+//}
+TURPointXY TURPointXY::operator+(TURPointXY  p2)
+{
+  TURPointXY pt;
+  pt.X = X + p2.X;
+  pt.Y = Y + p2.Y;
+  return pt;
+}
+TURPointXY TURPointXY::operator-(TURPointXY  p2)
+{
+  TURPointXY pt;
+  pt.X = X - p2.X;
+  pt.Y = Y - p2.Y;
+  return pt;
+}
+double TURPointXY::operator*(TURPointXY  p2)
+{
+
+  return X * p2.X +  Y * p2.Y;
+}
+void TURPointXY::ShowMe()
+{
+	String sOut = L" TURPointXY\n X= ";
+
+	ShowMessage (sOut + X + L" ; Y= = " + Y) ;
+}
+// площадь треугольника
+double TURPointXY::calcVectS(TURPointXY P1,TURPointXY P2)
+{
+	return (P1.X * P2.Y - P1.Y* P2.X)/2;
+}
+double  TURPointXY::dist(TURPointXY P1,TURPointXY P2)
+{
+	return sqrt(( P1.X - P2.X) * ( P1.X - P2.X)+ ( P1.Y - P2.Y) * ( P1.Y - P2.Y) );
+}
+ TURPointXY  TURPointXY::MultReal(const TURPointXY P,const double alf)
+ {
+   TURPointXY pt;
+  pt.X = P.X *alf;
+  pt.Y = P.Y *alf;
+  return pt;
+ }
+  TURPointXY  TURPointXY::ParamPoint(const TURPointXY P1,const TURPointXY P2,const double alf) // p1 + alf*(p2-p1)
+  {
+	TURPointXY P3(P2.X - P1.X,P2.Y - P1.Y);
+
+	TURPointXY P4 = MultReal(P3, alf);
+	TURPointXY P5(P1.X + P4.X,P1.Y + P4.Y);
+	return    P5 ;
+  }
+//---------------------------------------------------------------------------
+  double TURPointXY::Norm()
+  {
+	return    sqrt(X*X + Y*Y) ;
+  }
+  void TURPointXY::DoNorm(TURPointXY &P)
+  {
+	double norma = P.Norm();
+	P.X = P.X / norma;
+	P.Y = P.Y / norma;
+	return  ;
+  }
+ double  TURPointXY::ScalMult(const TURPointXY P1,const TURPointXY P2)
+  {
+
+	return P1.X * P2.X + P1.Y * P2.Y ;
+  }
+
+ double  TURPointXY::calcAng( TURPointXY P1, TURPointXY P2)
+ {
+	 return acos( (P1.X * P2.X + P1.Y * P2.Y )/ P1.Norm()/ P2.Norm() );
+ }
+
+ double  TURPointXY::calcCosAng( TURPointXY P1, TURPointXY P2)
+ {
+	 return ( (P1.X * P2.X + P1.Y * P2.Y )/ P1.Norm()/ P2.Norm() );
+ }
+
+// запись масиива точек в .CSV файл
+int TURPointXY::PutPointsToCsvFile(wchar_t*FileName,TURPointXY *urpntP,
+							double* pZ,const int lenArray,int * lenVars)
+// Запись массива точек в файл .csv Десятичный разделитель - запятая, табуляция ;
+
+{
+   FILE  *fw ;
+		int num = 0 ;
+	 fw=_wfopen(FileName,L"w");
+	 if(!fw) ShowMessage (L"TYrWrite::PutPointsToCsvFile\nFile is not opened !") ;
+	 fprintf(fw,"Object-ID;");
+	 fprintf(fw,"X;");
+	 fprintf(fw,"Y;");
+	 fprintf(fw,"Z;\n");
+
+	for (int i = 0; i < lenArray; i++)
+	{
+	  if( pZ != NULL)
+	  {
+	   if (pZ[ i ] > NODATA)
+	   {
+		   char ch[100] ;
+
+			sprintf(ch,"%d; %f; %f; %f;\n",num,urpntP[i].X, urpntP[i].Y,pZ[i]) ;
+			int lenNumberStr = strlen(ch) ;
+			for (int n = 0 ; n < lenNumberStr ; n++)
+			{
+			   if (ch [n] == '.') ch [n] = ',';
+
+
+			}
+			fprintf(fw,"%s",ch);
+			num++;
+
+	   }
+	 }
+	 else
+	 {
+       char ch[100] ;
+			double z = 0;
+			sprintf(ch,"%d; %f; %f; %f;\n",num,urpntP[i].X, urpntP[i].Y,z) ;
+			int lenNumberStr = strlen(ch) ;
+			for (int n = 0 ; n < lenNumberStr ; n++)
+			{
+			   if (ch [n] == '.') ch [n] = ',';
+
+
+			}
+			fprintf(fw,"%s",ch);
+			num++;
+     }
+	}
+
+	 fclose(fw);
+       *lenVars  = num ;
+	return 0 ;
+}
+int TURPointXY::PutPointsToTxtFile(wchar_t*FileName,TURPointXY *urpntP,
+							 double* pZ,const int lenArray,int * lenVars)
+// Запись массива в txt файл формата Point
+
+{
+
+
+
+FILE  *fw ;
+
+	 fw=_wfopen(FileName,L"w");
+	 if(!fw)
+	 {
+	  ShowMessage (L"TYrWrite::PutPointsToTxtFile\nFile is not opened !") ;
+	  return  1 ;
+	 }
+	 fprintf(fw,"Point\n") ;
+	  char ch[100] ;
+	  int lenCh; //длина ch
+	   int num = 0 ;
+	for (int i = 0; i < lenArray; i++)
+	{
+	  if( pZ != NULL)
+	  {
+	   if (pZ[ i ] > NODATA)
+	   {
+			 int num1 = num +1 ;
+			 int ibegin,iend;
+			sprintf(ch,"%d %f %f %f\n",num1,urpntP[i].X, urpntP[i].Y,pZ[i]) ;
+			lenCh = strlen(ch) ;
+			for (int n = 0 ; n < lenCh ; n++)
+			{
+			   if (ch [n] == '.') ch [n] = ',';
+
+			}
+			fprintf(fw,"%s",ch);
+			num++;
+	   }
+	}
+	else
+	{
+        int num1 = num +1 ;
+			 int ibegin,iend;
+			 double z =0 ;
+			sprintf(ch,"%d %f %f %f\n",num1,urpntP[i].X, urpntP[i].Y,z) ;
+			lenCh = strlen(ch) ;
+			for (int n = 0 ; n < lenCh ; n++)
+			{
+			   if (ch [n] == '.') ch [n] = ',';
+
+			}
+			fprintf(fw,"%s",ch);
+			num++;
+    }
+  }
+	fprintf(fw,"END") ;
+
+	 fclose(fw);
+       *lenVars  = num ;
+	return 0 ;
+
+}
+	//http://www.esri.com/library/whitepapers/pdfs/shapefile.pdf
+	// http://www.dbase.com/Knowledgebase/INT/db7_file_fmt.htm
+	//http://www.clicketyclick.dk/databases/xbase/format/dbf.html#DBF_STRUCT
+
+// изменение порядка следования байтов в 4 байтном слове (32 бита массив)
+//  input : chstr - указатель на массив char[4]
+// output: chstr - указатель на массив  char[4] c измененным порядком следования
+// байтов  chstr[0] = chstr[3] ; chstr1] = chstr[2] ;  chstr[2] = chstr[1] ; chstr[3] = chstr[0] ;
+void TURPointXY::ChangeByteOrder(int * pi0)
+{
+  char c;
+  char * chstr = (char*)pi0;
+  c = chstr[0];
+  chstr[0] = chstr[3] ;
+  chstr[3]  = c;
+  c = chstr[1];
+ chstr[1] = chstr[2] ;
+  chstr[2]  = c;
+
+}
+
+
+void TURPointXY::WriteSetSHPFiles(wchar_t *wchFileName,TURPointXY *purPnt, const int quantPoint)
+{
+
+    int lenFileName = wcslen( wchFileName);
+
+	if (!((wchFileName[lenFileName -1] == L'p')
+	   && (wchFileName[lenFileName -2] == L'h')
+	   && (wchFileName[lenFileName -3] == L's')))
+	   {
+		 ShowMessage(L" Error file name") ;
+		 return;
+	   }
+	 wchar_t wchDBFFileName [200] ,wchSHXFileName [200] ;
+	wcscpy(wchSHXFileName, wchFileName);
+	wchSHXFileName[lenFileName -1] =  L'x' ;
+	wcscpy(wchDBFFileName, wchFileName);
+	wchDBFFileName [lenFileName -1] = L'f';
+	wchDBFFileName [lenFileName -2] = L'b';
+	wchDBFFileName [lenFileName -3] = L'd';
+	WriteDBASEFile(wchDBFFileName,purPnt,  quantPoint) ;
+	WriteMainFile(wchFileName,purPnt,  quantPoint) ;
+	WriteIndexFile(wchSHXFileName,purPnt,  quantPoint) ;
+}
+
+
+
+void TURPointXY::WriteDBASEFile(wchar_t *wchFileName,TURPointXY *purPnt, const int quantPoint)
+{
+	 FILE  *fw ;
+	 fw=_wfopen(wchFileName,L"wb");
+	 if(!fw) ShowMessage (L"TYrWrite::PutPointsToCsvFile\nFile is not opened !") ;
+	  //1. version number and Date of last update  - первые 0-3  байта
+	  // char ch = '\x03';
+	 int i0 = 201421059;
+		  fwrite(&i0,sizeof(int),1 ,fw) ;
+		// 2. Number of records  in data file   4-7 байты
+		int numRecords = quantPoint ;
+		   fwrite(&numRecords,sizeof(int),1 ,fw) ;
+		// 3. bytes 8 -31
+		int iarr[] = {458817,0,0,0,0,22272};
+		  fwrite(iarr,sizeof(int),6 ,fw) ;
+		// 4. описание полей bytes 32-63
+		int iarr1[] = {25673
+					   ,0
+					   ,1308622848
+					   ,0
+					   ,6
+					   ,0
+					   ,0
+					   ,0
+					   };
+		 fwrite(iarr1,sizeof(int),8 ,fw) ;
+	  // 5.  Terminator (0Dh) byte 64
+	  char ch = '\x0D';
+		 fwrite(&ch,1,1 ,fw) ;
+	   //
+	 char arrch[7] = {'\x20','\x20','\x20','\x20','\x20','\x20','\x30'
+	   };
+	   for (int i =0 ; i < quantPoint; i++)  fwrite(arrch,1,7 ,fw) ;
+
+
+	 fclose(fw);
+}
+
+void TURPointXY::WriteMainFile(wchar_t *wchFileName,TURPointXY *purPnt, const int quantPoint)
+{
+   const int SHAPE_TYPE = 1;
+  FILE  *fw ;
+
+	 fw=_wfopen(wchFileName,L"wb");
+	 if(!fw) ShowMessage (L"TYrWrite::PutPointsToCsvFile\nFile is not opened !") ;
+
+	 // Main File HEADER
+	 //*************************************************************************************
+	 //1. step.  byte 0 - 23
+	 // its are 6 integer values, getting by copying real shp file
+	 int iarr[6] = {170328064
+					,0
+					,0
+					,0
+					,0
+					,0 };
+		 fwrite(iarr,sizeof(int),6 ,fw) ;
+	   ///
+
+	   // 2. The value for file length is the total length of the file in 16-bit words (including the fifty
+		//16-bit words that make up the header).   Byte4s 24-27
+		int iFileLeng = (100 + 28 * quantPoint) /2;
+
+
+		ChangeByteOrder(& iFileLeng);
+		 fwrite(&iFileLeng,sizeof(int),1 ,fw) ;
+		///
+
+		// 3. version = 1000 shapetype =5  bytes 28-35
+		   iarr[0] =  1000;
+		   iarr[1] =  SHAPE_TYPE ;
+		   fwrite(iarr,sizeof(int),2 ,fw) ;
+		   ///
+
+		// 4. Bounding box
+		double Box[8] = {0};
+		Box[0] = purPnt[0].X ; Box[1] = purPnt[0].Y ;
+		Box[2] = purPnt[0].X ; Box[3] = purPnt[0].Y ;
+
+		for (int i =0 ; i < quantPoint; i++)
+		{
+
+		   if (purPnt[i].X <  Box[0]) Box[0] =  purPnt[i].X;
+		   if (purPnt[i].Y <  Box[1]) Box[1] =  purPnt[i].Y;
+		   if (purPnt[i].X >  Box[2]) Box[2] =  purPnt[i].X;
+		   if (purPnt[i].Y >  Box[3]) Box[3] =  purPnt[i].Y;
+		}
+		  fwrite(Box,sizeof(double),8 ,fw) ;
+		///******************************************************************************************
+		///******************************************************************************************
+
+	   // RECORDS
+	   for (int i = 0; i < quantPoint; i++)
+	   {
+		  // 1. Record Headers
+		   // Byte 0 Record Number Record Number Integer Big
+		   int iRecNum = i;
+		   ChangeByteOrder(& iRecNum);
+		   //Byte 4 Content Length Content Length Integer Big
+		   int iContLeng = 20/2 ;
+		   ChangeByteOrder(& iContLeng);
+		   iarr[0] =  iRecNum;
+		   iarr[1] =  iContLeng ;
+			 fwrite(iarr,sizeof(int),2 ,fw) ;
+		   //*****************************************************
+		   //********** Content *******************************************
+				int ishapetype =   SHAPE_TYPE ;
+			  fwrite(&ishapetype ,sizeof(int),1 ,fw) ;
+			  fwrite(&(purPnt[i].X),sizeof(double),1 ,fw) ;
+			  fwrite(&(purPnt[i].Y),sizeof(double),1 ,fw) ;
+
+	   }
+
+  fclose(fw);
+}
+
+void TURPointXY::WriteIndexFile(wchar_t *wchFileName,TURPointXY *purPnt, const int quantPoint)
+{
+  FILE  *fw ;
+	const int SHAPE_TYPE = 1;
+	 fw=_wfopen(wchFileName,L"wb");
+	 if(!fw) ShowMessage (L"TYrWrite::PutPointsToCsvFile\nFile is not opened !") ;
+	  // Ibdex(SHX) File HEADER
+	 //*************************************************************************************
+	 //1. step.  byte 0 - 23
+	 // its are 6 integer values, getting by copying real shp file
+	 int iarr[6] = {170328064
+					,0
+					,0
+					,0
+					,0
+					,0 };
+		fwrite(iarr,sizeof(int),6 ,fw) ;
+	   ///
+
+	   // 2. The value for file length is the total length of the file in 16-bit words (including the fifty
+		//16-bit words that make up the header).   Byte4s 24-27
+		int iFileLeng = ( 100 + quantPoint *8 )/2 ;;
+		ChangeByteOrder(& iFileLeng);
+		fwrite(&iFileLeng,sizeof(int),1 ,fw) ;
+		///
+
+		// 3. version = 1000 shapetype =5  bytes 28-35
+		   iarr[0] =  1000;
+		   iarr[1] =  SHAPE_TYPE ;
+		   fwrite(iarr,sizeof(int),2 ,fw) ;
+		   ///
+
+		// 4. Bounding box
+		// 4. Bounding box
+		double Box[8] = {0};
+		Box[0] = purPnt[0].X ; Box[1] = purPnt[0].Y ;
+		Box[2] = purPnt[0].X ; Box[3] = purPnt[0].Y ;
+
+		for (int i =0 ; i < quantPoint; i++)
+		{
+
+		   if (purPnt[i].X <  Box[0]) Box[0] =  purPnt[i].X;
+		   if (purPnt[i].Y <  Box[1]) Box[1] =  purPnt[i].Y;
+		   if (purPnt[i].X >  Box[2]) Box[2] =  purPnt[i].X;
+		   if (purPnt[i].Y >  Box[3]) Box[3] =  purPnt[i].Y;
+		}
+		  fwrite(Box,sizeof(double),8 ,fw) ;
+		///******************************************************************************************
+		///******************************************************************************************
+	   // RECORDS
+	   int offset = 100;
+	   for (int i = 0; i < quantPoint; i++)
+	   {
+		  int ioffset = ( offset + i * 28 )/2;
+		  ChangeByteOrder(& ioffset);
+		   int iContLeng = 20/2 ;
+		   ChangeByteOrder(& iContLeng);
+			 fwrite(&ioffset,sizeof(int),1 ,fw) ;
+			 fwrite(&iContLeng,sizeof(int),1 ,fw) ;
+
+	   }
+
+	   fclose(fw);
+
+}
+
+void TURPointXY::ReadSHPFile(wchar_t *wchFileName,TURPointXY **ppurPnt,  int *pquantPoint)
+{
+	 int lenFileName = wcslen( wchFileName);
+
+	if (!((wchFileName[lenFileName -1] == L'p')
+	   && (wchFileName[lenFileName -2] == L'h')
+	   && (wchFileName[lenFileName -3] == L's')))
+	   {
+		 ShowMessage(L" Error file name") ;
+		 return;
+	   }
+	wchar_t  wchSHXFileName[200] ;
+	wcscpy(wchSHXFileName, wchFileName);
+	wchSHXFileName[lenFileName -1] =  L'x' ;
+	FILE  *fr0 ;
+
+	 fr0=_wfopen(wchSHXFileName,L"rb");
+	 if(!fr0) ShowMessage (L"TURPointXY::ReadSHPFile\nFile is not opened !") ;
+	  int offset0 = 32;
+	  int ishapetype = -1;
+
+	  fseek(fr0,offset0,SEEK_SET);
+	  fread(&ishapetype ,sizeof(int), 1,fr0) ;
+	  if (ishapetype != 1)
+	  {
+		ShowMessage(L" There is not point in shape file") ;
+		 return;
+	  }
+	   offset0 = 24;
+	  fseek(fr0,offset0,SEEK_SET);
+	  int lenSHXFile = -1;
+	  fread(&lenSHXFile ,sizeof(int), 1,fr0) ;
+	  ChangeByteOrder( &lenSHXFile);
+	  int quantPoint =( 2 *  lenSHXFile - 100 )/ 8 ;
+	   *ppurPnt = (TURPointXY *)realloc( *ppurPnt, quantPoint * sizeof( TURPointXY)) ;
+	   *pquantPoint =  quantPoint ;
+
+		FILE  *fr1 ;
+
+	 fr1=_wfopen(wchFileName,L"rb");
+	 if(!fr1) ShowMessage (L"TURPointXY::ReadSHPFile\nFile is not opened !") ;
+	 int offset1 = -1;
+
+	 double x,y;
+	 for (int i = 0; i < quantPoint; i++)
+	 {
+	   offset0 = 100 + 8 * i ;
+	   fseek(fr0,offset0,SEEK_SET);
+	   fread(&offset1 ,sizeof(int), 1,fr0) ;
+	   ChangeByteOrder( &offset1);
+	   offset1 = 2 * offset1 + 12;
+	   fseek(fr1,offset1,SEEK_SET);
+	   fread(& x ,sizeof(double), 1,fr1) ;
+	   fread(& y ,sizeof(double), 1,fr1) ;
+	  (*ppurPnt)[i ].X =   x;
+	  (*ppurPnt)[i ].Y =   y;
+
+	 }
+
+
+
+	 fclose(fr0);
+	 fclose(fr1);
+
+}
+
+
+bool TURPointXY::fncIsPointsEqual(const TURPointXY p0, const TURPointXY p1)
+{
+
+
+	if ((fabs (p0.X - p1.X) < TOLRNC) && (fabs (p0.Y - p1.Y) < TOLRNC)) return true ;
+	else  return false ;
+
+
+}
+
+
+
+TURPointXY    TURPointXY::fncLinTrasform(double * arrMtxPer)
+{
+	double arr[2] = {0.}, arr0[2]  ={0.} ;
+	arr[0] = X ;
+	arr[1] =Y ;
+	MtrxMultMatrx(arrMtxPer,2, 2, arr,1, arr0) ;
+	TURPointXY pntRez ;
+	pntRez.X = arr0 [0] ;
+	pntRez.Y = arr0 [1] ;
+	return pntRez ;
+
+}
+
+
+// Чистка массива точек достижимости от близких точек
+// Ecли разница координат по X и по Y меньше  valEps, то точка удаляется
+void TURPointXY::fncCleanSetPoints(const double  valEps, TURPointXY **pparrPnt, int &lenArr)
+{
+  bool bStop = false;
+  while (!bStop)
+  {
+	bStop = true ;
+	for (int i = 0; i < lenArr; i++)
+	for (int j = 0; j < lenArr; j++)
+	{
+	 if ( j == i)  continue ;
+
+	 if (   ( fabs( (*pparrPnt)[i].X - (*pparrPnt)[j].X )< valEps )
+		 && ( fabs( (*pparrPnt)[i].Y - (*pparrPnt)[j].Y )< valEps ) )
+	 {
+	  memcpy( &((*pparrPnt)[j]),&((*pparrPnt)[j +1]) , (lenArr - j - 1) * sizeof (TURPointXY)) ;
+	  *pparrPnt = (TURPointXY*)realloc(*pparrPnt, (lenArr -1)* sizeof (TURPointXY)) ;
+	  lenArr--;
+	  bStop = false;
+	  break;
+	 }
+	 if(!bStop) break;
+	}
+  }
+}
+
+ // линейное преобразование полигона  пергруженная
+// INPUT:
+// valAng - угол поворота
+// pntSdvig - точка куда перемещается центр полигона
+// valRastigenie - коэффициент растяжения
+// OUTPUT:
+// возвращает преобразованный полигон
+TURPointXY   TURPointXY::LinTransform(const double  valAng , const TURPointXY pntSdvig,const double valRastigenie )
+{
+  double arrMtxPer[4] = {0.};
+  arrMtxPer[0] = cos(valAng);
+  arrMtxPer[1] = -sin(valAng);
+  arrMtxPer[2] = -arrMtxPer[1];
+  arrMtxPer[ 3] = arrMtxPer[0];
+
+  TURPointXY PntTemp1 (X * valRastigenie,Y * valRastigenie  );
+ // PlgTemp1.WriteSetSHPFiles(L"D:\\PROJECTS_C++\\IMPULS-2015\\New\\PlgTemp1.shp",&PlgTemp1 ,1);
+  TURPointXY PntTemp2 = PntTemp1.fncLinTrasform( arrMtxPer );
+ // PlgTemp2.flip();
+  //	PlgTemp2.WriteSetSHPFiles(L"D:\\PROJECTS_C++\\IMPULS-2015\\New\\PlgTemp2.shp",&PlgTemp2 ,1);
+
+  TURPointXY PntRez (PntTemp2.X + pntSdvig.X, PntTemp2.Y + pntSdvig.Y);
+  //	PlgRez.WriteSetSHPFiles(L"D:\\PROJECTS_C++\\IMPULS-2015\\New\\PlgRez.shp",&PlgRez  ,1);
+
+  return PntRez;
+}
+
+ // линейное преобразование полигона  пергруженная
+// INPUT:
+// valAng - угол поворота
+// pntSdvig - точка куда перемещается центр полигона
+// valRastigenie - коэффициент растяжения
+// OUTPUT:
+// возвращает преобразованный полигон
+TURPointXY   TURPointXY::LinTransform( const TURPointXY pntSdvig,double * arrMtxPer )
+{
+
+  TURPointXY PntTemp1 = SdvigTransform( pntSdvig );
+
+  TURPointXY PntRez = PntTemp1.fncLinTrasform( arrMtxPer );
+
+  return PntRez;
+}
+
+
+TURPointXY TURPointXY::SdvigTransform(const TURPointXY pntSdvig )
+{
+return TURPointXY(X + pntSdvig.X, Y + pntSdvig.Y);
+}
+
+//---------------------------------------------------------
+// удаление из массива точек повторяющихся точек
+// задан исходный массив точек parrPnts0 длиной  lenarr0
+// этот массив может содержать повторяющиеся точки
+// Точки считаются одинаковыми, если расстояние между ними менее  VAlTolerance
+// ФУнкция удаляет лишние точки из массива parrPnts0
+// В результате работы функции в первых  *plenarr элементов массива parrPnts0
+// сохранияются неповторяющиеся точки
+// остальные элементы массива(высвобождающиеся) запролняются нулями
+//
+void TURPointXY::subtractEqualPoints(TURPointXY *parrPnts0 // массив точек, input
+			, const int lenarr0 //  длина массива точек , input
+			, const double VAlTolerance // точность
+			, int *plenarr // к-во отличающихся точек
+				)
+{
+ *plenarr = lenarr0;
+ for (int i =0; i < lenarr0 ; i++)
+ {
+	if (i == ((*plenarr)-1))
+	{
+		break;
+	}
+	for (int j = (i + 1); j < (*plenarr) ; j++)
+	{
+	 double valDist = dist(parrPnts0[i],parrPnts0[j]);
+	 if (valDist < VAlTolerance )
+	 {
+		 (*plenarr) = (*plenarr) -1;
+		 memcpy(&parrPnts0[j],&parrPnts0[j + 1], ((*plenarr) - j) * sizeof (TURPointXY ));
+		 j--;
+	 }
+	}
+ }
+
+ for (int i = (*plenarr); i < lenarr0 ; i++)
+ {
+	 parrPnts0[i].X = 0.;
+	 parrPnts0[i].Y = 0.;
+ }
+}
+
+
+void TURPointXY::createTargPointsArray(const int valTargCellSize, TURPointXY **ppTargPntArray, int *lenTargPntArray)
+{
+
+}
+//------------------------------------------------------------------
+ int  TURPointXY::calcQuantsNetPoints(const double  VAlCellSize)
+ {
+	 return 0;
+ }
+
+double  TURPointXY::calcDiam(TURPointXY *pPntArr, const int lenarr, int *pnum0,  int *pnum1)
+{
+  *pnum0 = 0;
+  *pnum1 = 0;
+  double diamcur = 0.;
+  for (int i =0; i < lenarr; i++)
+  {
+	for (int j = (i + 1) ; j < lenarr; j++)
+	{
+		double distcur = dist(pPntArr[i],pPntArr[j]);
+		if (distcur >  diamcur)
+		{
+		 *pnum0 = i;
+		 *pnum1 = j;
+		 diamcur = distcur;
+		}
+    }
+  }
+  return diamcur;
+}
+
+
+void   TURPointXY::LinearTransformation(const double  valAng , const TURPointXY pntSdvig,const double valRastigenie )
+{
+	TURPointXY pntSur = LinTransform(  valAng ,  pntSdvig,valRastigenie ) ;
+	*this = pntCur;
+}
+#pragma package(smart_init)
+

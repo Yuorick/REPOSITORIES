@@ -1,0 +1,33 @@
+//---------------------------------------------------------------------------
+
+#ifndef DiagrH
+#define DiagrH
+#include "Far.h"
+#include "Faceta.h"
+
+class TComp;
+class TFaceta;
+class TFar;
+class TDiagr
+{
+public:
+
+ // массив токов по модулям
+ TComp *mparrCmpElCurrent;
+ // Фар
+ TFar mFar;
+
+ TDiagr() ;
+ TDiagr(const double valTetSdvigRadian);
+ ~TDiagr();
+// конструктор копирования
+ TDiagr(const TDiagr &R) ;
+ TDiagr operator=(TDiagr  R2) ;
+ // парам констр
+ TDiagr(const TFar Far, TComp *parrCmpElCurrent);
+ TComp  _fastcall fncF (const double tet);
+ void  _fastcall createDiagrGraphs(wchar_t *wchFoldName1 );
+ double _fastcall calcFncObjPartial_MMP(TComp cmpSZv, TComp cmpZTrg, TComp cmpZAnp, double alfTrg, double alfAnp );
+
+};
+#endif

@@ -1,0 +1,27 @@
+//---------------------------------------------------------------------------
+
+#ifndef SimpleSumDgrmH
+#define SimpleSumDgrmH
+class TComp;
+class TSimpleSumDgrm
+{
+public:
+ // понижающий коэфф суммарнй диаграммы
+ double mKSum;
+ //угол сканирования суммарной диаграммы
+ double mScnSum;
+ // коэффиц растяжения суммарной диаграммы
+ double mTension;
+
+
+ __fastcall  TSimpleSumDgrm::TSimpleSumDgrm() ;
+// Конструктор копирования
+__fastcall  TSimpleSumDgrm (const TSimpleSumDgrm &R2) ;
+ // парам констр
+ __fastcall TSimpleSumDgrm(const double KSum
+	   , const double ScnSum, const double Tension ) ;
+// оператор присваивания
+TSimpleSumDgrm   operator=(TSimpleSumDgrm  R2) ;
+
+};
+#endif

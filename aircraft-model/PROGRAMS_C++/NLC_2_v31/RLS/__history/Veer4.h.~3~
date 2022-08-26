@@ -1,0 +1,39 @@
+//---------------------------------------------------------------------------
+
+#ifndef Veer4H
+#define Veer4H
+class TComp;
+class TVeer4
+{
+public:
+
+// тангенс угла наклона разностной диаграммы
+ double mTang;
+ // угол сканирования разностной диаграммы
+ double	 mScnDif;
+ // понижающий коэфф суммарнй диаграммы
+ double mKSum;
+ //угол сканирования суммарной диаграммы
+ double mScnSum;
+ // коэффиц растяжения суммарной диаграммы
+ double mTension;
+
+
+ __fastcall  TVeer4 ::TVeer4() ;
+// Конструктор копирования
+__fastcall  TVeer4 (const TVeer4 &R2) ;
+ // парам констр
+ __fastcall TVeer4(const double Tang, const double ScnDif, const double KSum
+	   , const double ScnSum, const double Tension ) ;
+// оператор присваивания
+TVeer4   operator=(TVeer4  R2) ;
+
+//--------------------------------------------------------------------------
+int  _fastcall solv4(TComp *pSDifZv,TComp *pSSumZv, TComp *pZTarg, TComp *pZAnt, double *palfTrg, double *palfAnp ) ;
+
+int _fastcall calc_FGr_and_dFGr_po_dAlf (TComp *pSDifZv,TComp *pSSumZv
+		,  double alfTrg, double alfAnp ) ;
+
+
+};
+#endif

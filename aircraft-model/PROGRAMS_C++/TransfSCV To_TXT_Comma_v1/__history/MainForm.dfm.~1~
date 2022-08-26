@@ -1,0 +1,113 @@
+object Form3: TForm3
+  Left = 0
+  Top = 0
+  Caption = 'TransfTXTFIle_v0'
+  ClientHeight = 709
+  ClientWidth = 520
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -13
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OldCreateOrder = False
+  PixelsPerInch = 96
+  TextHeight = 16
+  object Label3: TLabel
+    Left = 24
+    Top = 14
+    Width = 230
+    Height = 16
+    Caption = #1060#1040#1049#1051#1067' '#1057' '#1048#1057#1061#1054#1044#1053#1067#1052#1048' '#1044#1040#1053#1053#1067#1052#1048' :'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -13
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object Label4: TLabel
+    Left = 240
+    Top = 216
+    Width = 4
+    Height = 16
+  end
+  object Button3: TButton
+    Left = 8
+    Top = 216
+    Width = 251
+    Height = 65
+    Caption = #1042#1053#1045#1057#1058#1048' '#1047#1040#1055#1071#1058#1067#1045
+    DoubleBuffered = False
+    ParentDoubleBuffered = False
+    Style = bsCommandLink
+    TabOrder = 0
+    WordWrap = True
+    OnClick = Button3Click
+  end
+  object Edit1: TEdit
+    Left = 24
+    Top = 56
+    Width = 273
+    Height = 24
+    ReadOnly = True
+    TabOrder = 1
+    Text = #1059#1082#1072#1078#1080#1090#1077' '#1087#1091#1090#1100' '#1082' CSV '#1092#1072#1081#1083#1091'  '#1090#1072#1073#1083#1080#1095#1085#1086#1075#1086' '#1059#1047#1055' :'
+  end
+  object Button2: TButton
+    Left = 416
+    Top = 56
+    Width = 75
+    Height = 25
+    Caption = '...'
+    TabOrder = 2
+    OnClick = Button2Click
+  end
+  object Button8: TButton
+    Left = 24
+    Top = 614
+    Width = 89
+    Height = 41
+    Caption = 'EXIT'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -13
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ParentFont = False
+    Style = bsCommandLink
+    TabOrder = 3
+    WordWrap = True
+    OnClick = Button8Click
+  end
+  object Button7: TButton
+    Left = 8
+    Top = 139
+    Width = 370
+    Height = 35
+    Caption = #1057#1086#1093#1088#1072#1085#1080#1090#1100' '#1086#1090#1088#1077#1076#1072#1082#1090#1080#1088#1086#1074#1072#1085#1085#1099#1081' '#1092#1072#1081#1083' '#1089' '#1079#1072#1087#1103#1090#1099#1084#1080' '#1074' '#1076#1080#1088#1077#1082#1090#1086#1088#1080#1080'...'
+    TabOrder = 4
+    WordWrap = True
+    OnClick = Button7Click
+  end
+  object OpenDialog1: TOpenDialog
+    Left = 312
+    Top = 464
+  end
+  object SaveDialog1: TSaveDialog
+    Left = 320
+    Top = 384
+  end
+  object OpenDialog2: TOpenDialog
+    Left = 424
+    Top = 392
+  end
+  object OpenDialog3: TOpenDialog
+    Left = 432
+    Top = 480
+  end
+  object OpenDialog4: TOpenDialog
+    Left = 432
+    Top = 568
+  end
+end

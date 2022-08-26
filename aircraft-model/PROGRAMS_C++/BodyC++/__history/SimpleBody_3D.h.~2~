@@ -1,0 +1,43 @@
+//---------------------------------------------------------------------------
+
+#ifndef SimpleBody_3DH
+#define SimpleBody_3DH
+
+class TBody_3D
+{
+public:
+
+	__fastcall TBody_3D() ;
+
+	virtual __fastcall ~TBody_3D() ;
+
+   //	virtual  int  calcQuantsNetPoints(const double  VAlCellSize);
+
+	void find_Objects_Type_And_Quant(wchar_t *wchFileName, int *ipShapeType, int*ipQuant);
+
+	void ChangeByteOrder(int * pi0);
+
+	virtual void createTargPointsArray( const int valTargCellSize, TURPointXY **ppTargPntArray, int *lenTargPntArray)  ;
+
+	virtual void calcBoundBox();
+
+	virtual void WriteSetSHPFiles(wchar_t *wchFileName);
+
+	void createAimPointsArray(const int valTargCellSize, TURPointXY **ppAimPntArray, int *lenAimPntArray) ;
+
+	virtual void createUnatedPointsArray(TURPointXY **ppunatedPoints, int *quantUnitedPoints) ;
+
+	virtual void   LinearTransformation(const double  valAng , const TURPointXY pntSdvig,const double valRastigenie );
+
+	int  calcDimension(const double VAlTolerance);
+
+	virtual void   ConvexShell(TURPolygon *pPolgConv);
+
+	virtual TURPolygon   Buffer(const double VAlBufferX,const double VAlBufferY);
+
+	virtual TURPolygon  createBuffPolygonInAccordanceWithCorrMtrx(double *arrMtrxCorrSyst, const double VAlCoeff);
+
+
+
+};
+#endif

@@ -1,0 +1,54 @@
+//---------------------------------------------------------------------------
+
+
+#pragma hdrstop
+#include <string.h>
+#include "Complicated_Body.h"
+
+_fastcall TComplicated_Body::TComplicated_Body()
+{
+	mQuantSimpleBody = 0;
+
+
+}
+
+// конструктор копирования
+ TComplicated_Body ::TComplicated_Body  (const TComplicated_Body &R)
+  {
+		mQuantSimpleBody   = R.mQuantSimpleBody ;
+		for (int i = 0; i < MAX_POSSIBLE_QUANT_OF_SIMPLE_BODY ; i++)
+		{
+		 marrSimpleBody_3D [i] = R.marrSimpleBody_3D[i];
+		}
+ }
+
+  // оператор присваивания
+  TComplicated_Body TComplicated_Body::operator=(TComplicated_Body  R)
+  {
+		mQuantSimpleBody   = R.mQuantSimpleBody ;
+		for (int i = 0; i < MAX_POSSIBLE_QUANT_OF_SIMPLE_BODY ; i++)
+		{
+		 marrSimpleBody_3D [i] = R.marrSimpleBody_3D[i];
+		}
+		return *this;
+ }
+
+//---------------------------------------------------------------------------
+__fastcall TComplicated_Body::TComplicated_Body(const int  QuantSimpleBody
+  , TSimpleBody_3D *arrSimpleBody_3D)
+{
+	 mQuantSimpleBody = QuantSimpleBody;
+	 memcpy(marrSimpleBody_3D, marrSimpleBody_3D, QuantSimpleBody * sizeof(TSimpleBody_3D));
+
+}
+/*
+//---------------------------------------------------------------------------
+
+//__fastcall TComplicated_Body::~TComplicated_Body()
+//{
+//}
+//---------------------------------------------------------------
+
+ */
+
+#pragma package(smart_init)

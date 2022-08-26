@@ -1,0 +1,47 @@
+﻿//---------------------------------------------------------------------------
+
+#ifndef URMultiPointH
+#define URMultiPointH
+//---------------------------------------------------------------------------
+#include "URFigure.h"
+#include "UrPointXY.h"
+class TURPointXY;
+class TURMultiPoint : public TURFigure
+{
+public:
+	double Box[4] ;		// Bounding Box
+	int NumPoints ;
+	TURPointXY *Points ;
+
+ ~TURMultiPoint() ;
+
+  TURMultiPoint();
+ // конструктор копирования
+ TURMultiPoint (const TURMultiPoint &R) ;
+ // оператор присваивания
+ TURMultiPoint operator=(TURMultiPoint  R);
+// парам констр
+TURMultiPoint( TURPointXY *ppntArr, const int iNumPoints);
+
+virtual void createTargPointsArray(const int valTargCellSize, TURPointXY **ppTargPntArray, int *lenTargPntArray);
+
+//virtual void createAimPointsArray(const int valTargCellSize, TURPointXY **ppAimPntArray, int *lenAimPntArray) ;
+virtual void createUnatedPointsArray(TURPointXY **ppunatedPoints, int *quantUnitedPoints) ;
+
+void calcBoundBox();
+
+ void WriteIndexFile(wchar_t *wchFileName);
+ void WriteDBASEFile(wchar_t *wchFileName);
+
+virtual void WriteSetSHPFiles(wchar_t *wchFileName);
+void WriteMainFile(wchar_t *wchFileName);
+void ChangeByteOrder(int * pi0);
+
+virtual void   LinearTransformation(const double  valAng , const TURPointXY pntSdvig,const double valRastigenie );
+
+virtual void   ConvexShell(TURPolygon *pPolgConv);
+
+double  calcDiam(int *pnum0,  int *pnum1);
+
+};
+#endif

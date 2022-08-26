@@ -1,0 +1,534 @@
+// ---------------------------------------------------------------------------
+
+#include <vcl.h>
+#pragma hdrstop
+
+#include "MainForm.h"
+#include <math.h>
+#include <dir.h>
+// ---------------------------------------------------------------------------
+#pragma package(smart_init)
+#pragma resource "*.dfm"
+#include "YrString.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include "AM_2D.h"
+#include "Far_2D.h"
+#include "Comp.h"
+#include "Faceta.h"
+#include "Far.h"
+#include "Diagrams.h"
+#include "Gauss.h"
+#include "FarForm.h"
+#include "MatrixProccess.h"
+
+
+#include "Target.h"
+#include "YrWrite.h"
+#include "Vessel.h"
+#include "Sins.h"
+#include "DriverMech.h"
+
+#include "Measurer.h"
+#include "YrWriteShapeFile.h"
+#include "Fight.h"
+#include "InitTargData.h"
+#include "CalcCorMatrx.h"
+
+#include "Environment.h"
+#include "Equations.h"
+#include "SingleSign.h"
+
+#include "SincDgr.h"
+#include "URPointZ.h"
+
+static int I_ENTER_COUNT = 0;
+extern const double DTi;
+extern const double tb1;
+extern const double VAL_C;
+
+TForm1 *Form1;
+
+_fastcall TForm1::TForm1(TComponent* Owner) : TForm(Owner)
+{
+	for (int i = 0; i < MAX_QUANT_AM; i++)
+	{
+		mbarrAM[i] = true;
+	}
+	fncInputData();
+
+}
+
+
+// ---------------------------------------------------------------------------
+
+void __fastcall TForm1::fncInputData() {
+	String s_22 = LabeledEdit2->Text;
+	if (wcschr(s_22.w_str(), L',')) {
+
+		// длина волны
+		mLambda = VAL_C / StrTo_Dbl_(LabeledEdit15->Text) * 100. / 1000000000.;
+		LabeledEdit13->Text = mLambda;
+
+		// расстояние между излучателями
+		mdEmitCol = mLambda * 0.55;
+		mdEmitRow = mLambda * 0.55;
+		LabeledEdit12->Text = mdEmitCol;
+
+
+		// амплитуда
+		mAmpTarg = StrTo_Dbl_(LabeledEdit2->Text);
+
+		mAmpAntp = StrTo_Dbl_(LabeledEdit3->Text);
+		// СКО внутр шума суммарной диаграммы 5П10
+		mNoiseSKZ_5P10 = StrTo_Dbl_(LabeledEdit16->Text);
+		// СКЗ разброса коэффиц усиления суммарной диаграммы 5П10
+		mEtalonSigAmplFact_5P10 = StrTo_Dbl_(LabeledEdit18->Text);
+
+		mEpsTargTrue = StrTo_Dbl_(LabeledEdit37->Text)/1000.;
+
+		mBetTargTrue = StrTo_Dbl_(LabeledEdit4->Text)/1000.;
+
+		mEpsAntpTrue = StrTo_Dbl_(LabeledEdit32->Text)/1000.;
+
+		mBetAntpTrue = StrTo_Dbl_(LabeledEdit36->Text)/1000.;
+
+
+
+
+
+
+
+	}
+	else {
+		// ширина диаграммы
+		// mWidthDgr =  StrTo_Dbl_(LabeledEdit3->Text) * M_PI/3000./2. ;
+	}
+	// к-во столбцов  излучателей
+
+	mNumEmitCols = StrToInt(LabeledEdit9->Text);
+	// к-во строк излучателей
+	mNumEmitRows = StrToInt(LabeledEdit11->Text);
+	// к-во столбцов АМ  (по горизонтали )
+	mNumAMCols = StrToInt(LabeledEdit5->Text);
+	// к-во строк АМ (по вертикали )
+	mNumAMRows = StrToInt(LabeledEdit6->Text);
+	// расстояние между АМ по вериткали
+	mdAMRow = ((double)mNumEmitRows) * mdEmitRow;
+	// расстояние между АМ по горизонтали
+	mdAMCol = ((double)mNumEmitCols) * mdEmitCol;
+	LabeledEdit8->Text = mdAMRow;
+	LabeledEdit7->Text = mdAMCol;
+
+
+
+/*	switch(itemp) {
+	case 0:
+		mTargType = NOMOVING;
+		break;
+
+	case 1:
+		mTargType = PLANE;
+		break;
+
+	case 2:
+		mTargType = ABOVEWATER;
+	default:
+		break;
+	} */
+
+
+
+	wchar_t wcsStr[2] = {
+		0
+	};
+
+	LabeledEdit1->Text = wcsStr;
+
+	const double SigEmitNoise = mNoiseSKZ_5P10 / sqrt(((double)(8 * 16 * 28)));
+	const double SigEmitAmplFact = mEtalonSigAmplFact_5P10 / sqrt
+		(((double)(8 * 16 * 28)));
+	mAM_2D = TAM_2D(mNumEmitCols, mNumEmitRows, mdEmitCol, mdEmitRow,
+		SigEmitNoise, SigEmitAmplFact);
+
+	mFar_2D = TFar_2D(mNumAMCols, mNumAMRows, mLambda, mdAMCol, mdAMRow,
+		mAM_2D, mbarrAM);
+
+	for (int i = 0; i < mNumAMCols * mNumAMRows; i++) {
+
+		if (!mbarrAM[i]) {
+			mFar_2D.mpAm2D[i].mOtklCoefUs = 1.;
+			mFar_2D.mpAm2D[i].mSigEmitNoise = 0.;
+		}
+	}
+
+
+
+
+
+
+
+
+
+	
+
+
+
+
+}
+
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+
+void __fastcall TForm1::Button2Click(TObject *Sender) {
+	/* for (int i= 0; i < MAX_QUANT_AM; i++)
+	{
+
+	mbarrAM[i] = true;
+	} */
+	fncInputData();
+	Form2->mNumRows = mNumAMRows;
+	Form2->mNumCols = mNumAMCols;
+	Form2->ShowModal();
+}
+// ---------------------------------------------------------------------------
+
+void __fastcall TForm1::FormShow(TObject *Sender) {
+	fncInputData();
+	Form2->mdx = 10;
+	Form2->mdy = 20;
+
+	Form2->mpbarrWorking = mbarrAM;
+	Form2->mNumRows = mNumAMRows;
+	Form2->mNumCols = mNumAMCols;
+	// Form2->mpbarrRealWorking = mbarrRealAM;
+
+}
+
+// ---------------------------------------------------------------------------
+
+
+
+
+
+
+
+void __fastcall TForm1::LabeledEdit2Exit(TObject *Sender)
+{
+   fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit3Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit4Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit16Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit18Exit(TObject *Sender)
+{
+	fncInputData();
+}
+//---------------------------------------------------------------------------
+
+
+void __fastcall TForm1::LabeledEdit36Exit(TObject *Sender)
+{
+	fncInputData();
+}
+//---------------------------------------------------------------------------
+
+
+void __fastcall TForm1::LabeledEdit38Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit37Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::ComboBox1Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::ComboBox2Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit10Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit19Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit20Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit17Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit28Exit(TObject *Sender)
+{
+	      fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit35Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::ComboBox3Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit24Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit23Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit22Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit25Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+
+void __fastcall TForm1::LabeledEdit26Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit29Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+
+void __fastcall TForm1::LabeledEdit9Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit11Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit15Exit(TObject *Sender)
+{
+   fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit12Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit13Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit5Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit6Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit14Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit8Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit7Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit40Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit39Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit21Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::LabeledEdit30Exit(TObject *Sender)
+{
+fncInputData();
+}
+//---------------------------------------------------------------------------
+
+
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::Button3Click(TObject *Sender)
+{
+
+        	// создание пути к папке с отчетом
+	if (!mpwchOutFile0)
+	{
+	 if (I_ENTER_COUNT > 4) Close();
+
+
+	 ShowMessage(L"Укажите путь к папке с графиками") ;
+	 I_ENTER_COUNT++;
+	 return;
+	}
+	wcscpy(mwchOutFold,mpwchOutFile0);
+	wchar_t *pwchr = wcsrchr(mwchOutFold, L'\\');
+	pwchr[0] = 0;
+		String wchFoldName = mwchOutFold;
+
+		fncInputData() ;
+
+		double valTargSignPhase = 2. * M_PI * getRand01( );
+		TSingleSign SignTarg(mBetTargTrue, mEpsTargTrue, mAmpTarg, valTargSignPhase ) ;
+
+		double valAntpSignPhase = 2. * M_PI * getRand01( );
+		TSingleSign SignAntp(mBetAntpTrue, mEpsAntpTrue, mAmpAntp, valAntpSignPhase) ;
+
+		int quantFalseSign = 1;
+
+		TComp *cmparrTrueAmMeasures = new TComp[ mFar_2D.mNumAMCols * mFar_2D.mNumAMRows];
+		TComp *cmparrNoisedAmMeasures = new TComp [ mFar_2D.mNumAMCols * mFar_2D.mNumAMRows];
+		mFar_2D.fncImitateMultiTargMeasure ( SignTarg, &SignAntp, quantFalseSign
+	 , cmparrTrueAmMeasures, cmparrNoisedAmMeasures) ;
+
+	 TFar Far0(mFar_2D, true);
+	 TFar Far(Far0, 4) ;
+
+	 // создание 4-х строковых диаграмм
+	 TComp arrFourRowMeasures[4];
+	 memset(arrFourRowMeasures, 0, 4 * sizeof(TComp));
+	  if (mFar_2D.mNumAMRows % 4 != 0)
+	  {
+		ShowMessage(L"Err");
+		return ;
+	  }
+	 int iQuant =  mFar_2D.mNumAMRows/ 4;
+	 for (int i = 0; i < 4; i++)
+	 {
+		for (int j  = 0; j < iQuant * mFar_2D.mNumAMRows; j++)
+		{
+		  arrFourRowMeasures[i] += cmparrTrueAmMeasures[ i * iQuant * mFar_2D.mNumAMRows + j];
+		}
+
+	 }
+	 ///
+	 double valEstAngTarg = 0.,valEstAngAntp = 0., arrMtrxCorr [4]= {0.};
+	 TComp cmpKTarg , cmpKAntp;
+	 Far.fncEstimateMsd(arrFourRowMeasures, &valEstAngTarg, &valEstAngAntp
+	  , &cmpKTarg , &cmpKAntp , arrMtrxCorr );
+
+	  int ib = valEstAngTarg * 1000.* 100.;
+	  LabeledEdit24->Text =  ((double ) ib)/ 100.;
+
+	  ib = valEstAngAntp * 1000.* 100.;
+	  LabeledEdit22->Text =  ((double ) ib)/ 100.;
+
+	 delete [] cmparrTrueAmMeasures;
+	 delete [] cmparrNoisedAmMeasures ;
+
+
+
+
+
+
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::Button4Click(TObject *Sender)
+{
+OpenDialog1->Filter = L"файлы с графиками (*.shp)|*.shp" ;
+
+	if (OpenDialog1->Execute())
+	{
+	mpwchOutFile0 =  (OpenDialog1->FileName).w_str();
+
+	}
+	Edit2->Text =  mpwchOutFile0;
+}
+//---------------------------------------------------------------------------
+

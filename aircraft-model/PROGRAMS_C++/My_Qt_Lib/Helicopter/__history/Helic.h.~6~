@@ -1,0 +1,44 @@
+//---------------------------------------------------------------------------
+
+#ifndef HelicH
+#define HelicH
+#include "Rotor.h"
+// класс описывает вертолет
+// у вертолета может быть 2 винта
+// в соосной схеме винт с номером 0 описывает верхний винт, а с номером 1 нижний
+// в схеме МИ-8 винт с номером 0 описыает несущий винт, а с номером 1 рулевой
+class TRotor;
+class THelic
+{
+public:
+	//  винты вертолета
+	TRotor marrRotor[2];
+	// частоты вращениия винтов
+	double marrRotorOmega[2];
+	// масса вертолетв
+	double mHelicMass;
+
+
+
+
+
+
+ __fastcall  THelic() ;
+// Конструктор копирования
+__fastcall  THelic (const THelic &R2) ;
+
+ // оператор присваивания
+ THelic   operator=(THelic  R2) ;
+
+  // парам констр
+  __fastcall THelic(TRotor *arrRotor, double *arrRotorOmega
+   ,const double HelicMass);
+
+double calcCt(const double TKel0,const double HeliH) ;
+
+double calc_C_y_alfa(const double TKel0,const double HeliH) ;
+
+
+
+};
+#endif

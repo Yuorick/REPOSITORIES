@@ -1,0 +1,35 @@
+//---------------------------------------------------------------------------
+
+#ifndef Veer4H
+#define Veer4H
+#include "SimpleSumDgrm.h"
+#include "SimpleDifDgrm.h"
+class TComp;
+class TSimpleSumDgrm ;
+class TSimpleDifDgrm ;
+class TVeer4
+{
+public:
+
+ TSimpleSumDgrm  marrSumDgr[2];
+ TSimpleDifDgrm  marrDifDgr[2];
+
+
+ __fastcall  TVeer4 ::TVeer4() ;
+// Конструктор копирования
+__fastcall  TVeer4 (const TVeer4 &R2) ;
+ // парам констр
+ __fastcall TVeer4(const double Tang, const double ScnDif, const double KSum
+	   , const double ScnSum, const double Tension ) ;
+// оператор присваивания
+TVeer4   operator=(TVeer4  R2) ;
+
+//--------------------------------------------------------------------------
+int  _fastcall solv4(TComp *pSDifZv,TComp *pSSumZv, TComp *pZTarg, TComp *pZAnt, double *palfTrg, double *palfAnp ) ;
+
+int _fastcall calc_vectG_and_mtrxH (TComp *pSDifZv,TComp *pSSumZv
+		,  double alfTrg, double alfAnp, double* arr_FGreek, double* arr_dFGreek ) ;
+
+
+};
+#endif

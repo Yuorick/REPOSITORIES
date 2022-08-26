@@ -1,0 +1,28 @@
+//---------------------------------------------------------------------------
+
+#ifndef SimpleDifDgrmH
+#define SimpleDifDgrmH
+class TComp;
+class TSimpleDifDgrm
+{
+public:
+
+// тангенс угла наклона разностной диаграммы
+ double mTang;
+ // угол сканирования разностной диаграммы
+ double	 mScnDif;
+
+
+ __fastcall  TSimpleDifDgrm ::TSimpleDifDgrm() ;
+// Конструктор копирования
+__fastcall  TSimpleDifDgrm (const TSimpleDifDgrm4&R2) ;
+ // парам констр
+ __fastcall TSimpleDifDgrm(const double Tang, const double ScnDif) ;
+// оператор присваивания
+TSimpleDifDgrm   operator=(TSimpleDifDgrm  R2) ;
+
+
+
+
+};
+#endif

@@ -1,0 +1,56 @@
+//---------------------------------------------------------------------------
+
+
+#pragma hdrstop
+
+#include "Rotor.h"
+
+
+__fastcall  TRotor::TRotor()
+{
+// лопасть винта
+	 mBlade = TBlade();
+	// к-во лопастей
+	 mQuantBlades = 0;
+	 //
+	 mBasePLane  = TPlane ();
+	 //
+	 mFiMax = 0.;
+}
+// Конструктор копирования
+__fastcall  TRotor::TRotor (const TRotor &R)
+ {
+	 mBlade = R.mBlade;
+	 mQuantBlades   = R.mQuantBlades ;
+	 mBasePLane  = R.mBasePLane ;
+	 mFiMax = R.mFiMax;
+
+ }
+ // оператор присваивания
+  TRotor TRotor::operator=(TRotor  R)
+ {
+	 mBlade = R.mBlade;
+	 mQuantBlades   = R.mQuantBlades ;
+	 mBasePLane  = R.mBasePLane ;
+	 mFiMax = R.mFiMax;
+	 return *this ;
+ }
+
+ // парам констр 1
+ __fastcall TRotor::TRotor(const TBlade Blade, const double QuantBlades, const TPlane BasePLane)
+ {
+	 mBlade = Blade;
+	 mQuantBlades = QuantBlades;
+	 mBasePLane = BasePLane ;
+	 mFiMax= 15. * M_PI / 180;.;
+  }
+ //-------------------------------------------------------
+ // парам констр 2
+ __fastcall TRotor::TRotor(const TBlade Blade, const double QuantBlades, const TPlane BasePLane)
+ {
+	 mBlade = Blade;
+	 mQuantBlades = QuantBlades;
+	 mBasePLane = BasePLane ;
+ }
+ //-------------------------------------------------------
+#pragma package(smart_init)

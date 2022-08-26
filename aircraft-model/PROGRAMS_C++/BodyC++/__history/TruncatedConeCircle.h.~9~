@@ -1,0 +1,61 @@
+//---------------------------------------------------------------------------
+
+#ifndef TruncatedConeCircleH
+#define TruncatedConeCircleH
+#include "SimpleBody_3D.h"
+// класс описывает  усеченный   круговой конус с основанием R и r. расстояние между основаниями H
+// основание с радиусом R расположено в вертикальной плоскости OXZ
+// начало координат расположено в центре основания.
+// основание с радиусом r расположено в вертикальной плоскости сдвинутой по оси X на H
+// сиситема собственных координат конуса такая:
+// OX - в право
+// OY - вверх
+// OZ - на нас
+// масса конуса равна 1
+class TTruncatedConeCircle : public TSimpleBody_3D
+{
+public:
+
+	double mR;
+	double mr;
+	double mH;
+   //	double mM; // масса
+
+
+
+	//__fastcall ~TTruncatedConeCircle() ;
+
+
+	 TTruncatedConeCircle () ;
+
+	 // конструктор копирования
+	  TTruncatedConeCircle  (const TTruncatedConeCircle  &R) ;
+
+	  // оператор присваивания
+	  TTruncatedConeCircle  operator=(TTruncatedConeCircle   R2) ;
+
+	  TTruncatedConeCircle(const TPlane Plane, const double R, const double r,const double H,const double M);
+
+	  virtual double calcCapacity() ;
+
+	  virtual void calcCentreOfGravity(double *arrCentreGrav)  ;
+
+	  virtual  void calcInertiaTensor(double *arrInertTens) ;
+
+	  double calcJyy_For_ConeCircle(const double VAlR, const double VAlH, const double VAlM) ;
+
+	  double calcJxx_For_ConeCircle(const double VAlR, const double VAlM)  ;
+
+
+	  double calcCapacity_For_ConeCircle(const double VAlR, const double VAlH);
+
+	  void calcCentreOfGravity_For_ConeCircle(const double VAlH, double *arrCentreGrav);
+
+	  void calcInertiaTensor_For_ConeCircle(const double VAlR, const double VAlH, const double VAlM
+	 ,double *arrInertTens);
+
+
+
+};
+
+	  #endif

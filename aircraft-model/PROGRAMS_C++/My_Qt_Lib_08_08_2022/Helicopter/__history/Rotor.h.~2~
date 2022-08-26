@@ -1,0 +1,40 @@
+//---------------------------------------------------------------------------
+
+#ifndef RotorH
+#define RotorH
+#include "Plane.h"
+class TBlade;
+class Plane;
+class TRotor
+{
+public:
+	// лопасть винта
+	TBlade mBlade;
+	// к-во лопастей
+	int mQuantBlades;
+	// базовачя система координат привязанная к оси вращения вала  винта
+	// ось Z направлена по оси вращения вала
+
+
+
+
+
+ __fastcall  TRotor() ;
+// Конструктор копирования
+__fastcall  TRotor (const TRotor &R2) ;
+
+ // оператор присваивания
+ TRotor   operator=(TRotor  R2) ;
+
+  // парам констр
+  __fastcall TRotor(const TBlade Blade,const double BladeOmega
+   ,const double RotorMass, const double QuantBlades);
+
+double calcCt(const double TKel0,const double HeliH) ;
+
+double calc_C_y_alfa(const double TKel0,const double HeliH) ;
+
+
+
+};
+#endif

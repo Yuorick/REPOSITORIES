@@ -1,0 +1,182 @@
+//---------------------------------------------------------------------------
+
+
+#pragma hdrstop
+
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "TruncatedConeCircle.h"
+#include "Plane.h"
+
+
+  TTruncatedConeCircle ::TTruncatedConeCircle()
+{
+
+	mR = 0. ;
+	mr = 0. ;
+	mH = 0.;
+   //	mM = 0.;
+
+
+}
+TTruncatedConeCircle ::TTruncatedConeCircle(const TPlane Plane, const double R, const double r,const double H, const double M):TSimpleBody_3D( Plane, M)
+{
+ mR = R;
+ mr = r;
+ mH = H;
+// mM = M;
+
+}
+
+// конструктор копирования
+ TTruncatedConeCircle ::TTruncatedConeCircle (const TTruncatedConeCircle &R)
+ {
+	mR  = R.mR;
+	mr = R.mr ;
+	mH = R.mH;
+	mM = R.mM   ;
+	mPlane = R.mPlane;
+ }
+ // оператор присваивания
+ TTruncatedConeCircle TTruncatedConeCircle::operator=(TTruncatedConeCircle  R)
+ {
+	mR  = R.mR;
+	mr = R.mr ;
+	mH = R.mH;
+	mM = R.mM   ;
+	mPlane = R.mPlane;
+	return *this ;
+  }
+
+
+// вычисление объема
+double TTruncatedConeCircle::calcCapacity()
+{
+ return  M_PI * mH * (mR * mR + mR * mr + mr * mr)/3.;
+}
+
+// вычисление координат центра тяжести
+// Динник Справочник по технической механике, стр 46
+void TTruncatedConeCircle::calcCentreOfGravity(double *arrCentreGrav)
+{
+  arrCentreGrav [0] = mH * (mR * mR + 2. * mR * mr + 3. * mr * mr)/ (mR * mR + mR * mr + mr * mr) / 4.;
+  arrCentreGrav [1] = 0.;
+  arrCentreGrav [2] = 0.;
+}
+
+// вычисление тензора моментов инерции
+// это диагональная матрица
+// относительно оси вращения считается по формуле
+// относительно осей X и Z прмиенятся формула Штейнера
+//  усеченный конус достраивается до неусеченного (большого).
+// То есть добавляется маленький конус сверху.
+// Вычисляются координаты центра тяжести усеченного, большого и малого конусов.
+// вычисляютмся моменты инерции большого и малого конусов.
+// По теореме Штейнера находится момент инерции усеченого конуса относительно осей  X и Z
+void TTruncatedConeCircle::calcInertiaMtrx(double *arrInertMtrx)
+{
+  // 1. вычисление момента инерции относительно оси X
+  // Динник Справочник по технической механике, стр 46
+  memset(arrInertMtrx, 0, 9 * sizeof(double));
+  double valMass = 1.;
+  arrInertMtrx[0] = 3. * valMass * (mR*mR*mR*mR*mR - mr*mr*mr*mr*mr)/ (mR*mR*mR - mr*mr*mr) / 10.;
+  ////
+
+
+  double arrCentreGravLittle [3] = {0.}  ,arrCentreGravBig [3] = {0.};
+  // 2. вычисление высот малого и большого конусов
+   double valHLittle = mH * mr / (mR - mr);
+	double valHBig =  valHLittle + mH;
+	///
+
+
+   //  3. вычисление  координат центра масс малого конуса
+   calcCentreOfGravity_For_ConeCircle(valHLittle, arrCentreGravLittle) ;
+   arrCentreGravLittle [0] += mH;
+   ///
+
+   // 4. вычисление  координат центра масс большого конуса
+   calcCentreOfGravity_For_ConeCircle(valHBig, arrCentreGravBig) ;
+   ///
+
+
+   //       5.   вычисление массы малого конуса
+  double valMLittle = valMass / calcCapacity() * calcCapacity_For_ConeCircle(mr, valHLittle);
+   ///
+
+
+   //    6. вычисление массы , большого  конуса
+  double valMBig = valMass + valMLittle;
+  ///
+
+
+
+   // 7. вычисление  координат центра масс усеченного  конуса
+   double arrCentreGrav[3] = {0.};
+   calcCentreOfGravity(arrCentreGrav)  ;
+   ///
+
+   // 8.расстояние между ЦМ малого и большого конусов
+   double valDelRLittle =  arrCentreGravLittle[0] - arrCentreGravBig[0];
+   ///
+
+   // 9.расстояние между ЦМ усеченного  и большого конусов
+   double valDelR =  arrCentreGrav[0] - arrCentreGravBig[0];
+   ///
+
+   // формула Штейнера
+
+   arrInertMtrx[4] = calcJyy_For_ConeCircle(mR, valHBig,valMBig) - calcJyy_For_ConeCircle(mr, valHLittle,valMLittle)
+				  -valMLittle * valDelRLittle * valDelRLittle - valMass * valDelR * valDelR;
+
+   arrInertMtrx[8] = arrInertMtrx[4];
+
+
+}
+
+// вычисление момента инерции прямого кругового конуса относительно оси симметрии
+// Динник Справочник по технической механике, стр 237
+double TTruncatedConeCircle::calcJxx_For_ConeCircle(const double VAlR, const double VAlM) // +
+{
+return 3. * VAlM * VAlR * VAlR /10.;
+
+}
+
+// вычисление момента инерции прямого кругового конуса относительно оси
+// перпендикулярной оси симметрии  и проходящзей через центр масс
+// Динник Справочник по технической механике, стр 237
+double TTruncatedConeCircle::calcJyy_For_ConeCircle(const double VAlR, const double VAlH, const double VAlM)  // +
+{
+return 3. * VAlM * (VAlR * VAlR   +  VAlH * VAlH / 4.)/20.;
+
+}
+// вычисление объема  прямого кругового конуса
+double TTruncatedConeCircle::calcCapacity_For_ConeCircle(const double VAlR, const double VAlH)  // +
+{
+  return  M_PI * VAlR *VAlR * VAlH / 3.;
+}
+
+// вычисление вектора центра масс прямого кругового конуса относительно оси
+// перпендикулярной оси симметрии  и проходящзей через центр масс
+// Динник Справочник по технической механике, стр 47
+void TTruncatedConeCircle::calcCentreOfGravity_For_ConeCircle(const double VAlH
+, double *arrCentreGrav)   // +
+{
+  arrCentreGrav [1] = 0.;
+  arrCentreGrav [0] = VAlH / 4. ;
+  arrCentreGrav [2] = 0.;
+}
+// вычисление тензора моментов инерции  для прямого кругового конуса  относительно центра тяжести
+void TTruncatedConeCircle::calcInertiaMtrx_For_ConeCircle(const double VAlR, const double VAlH, const double VAlM  // +
+,double *arrInertTens)
+{
+   memset(arrInertTens, 0, 9 * sizeof(double));
+   arrInertTens [0] = calcJxx_For_ConeCircle(VAlR,VAlM);
+   arrInertTens [1] = calcJyy_For_ConeCircle( VAlR,VAlH, VAlM);
+   arrInertTens [2] = arrInertTens [1] ;
+
+}
+#pragma package(smart_init)

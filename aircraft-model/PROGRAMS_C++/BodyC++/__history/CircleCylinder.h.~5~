@@ -1,0 +1,48 @@
+//---------------------------------------------------------------------------
+
+#ifndef CircleCylinderH
+#define CircleCylinderH
+#include "SimpleBody_3D.h"
+// класс описывает     круговой цилиндр с основанием R и высотой h
+// основание с радиусом R расположено в вертикальной плоскости OXZ
+// сиситема совственных координат конуса такая:
+// OX - в право
+// OY - вверх
+// OZ - на нас
+// начало координат совпадает с центром основания
+class TPlane;
+class TCircleCylinder : public TSimpleBody_3D
+{
+public:
+
+	double mR;
+	double mH;
+   //	double mM; // масса
+
+
+
+   //	__fastcall ~TCircleCylinder() ;
+
+
+	 TCircleCylinder () ;
+
+	 // конструктор копирования
+	  TCircleCylinder  (const TCircleCylinder  &R) ;
+
+	  // оператор присваивания
+	  TCircleCylinder  operator=(TCircleCylinder   R2) ;
+
+	  TCircleCylinder(const TPlane Plane, const double R, const double H,const double M);
+
+	  virtual double calcCapacity() ;
+
+	  virtual void calcCentreOfGravity(double *arrCentreGrav)  ;
+
+	  virtual  void calcInertiaTensor(double *arrInertTens) ;
+
+
+
+
+};
+
+#endif

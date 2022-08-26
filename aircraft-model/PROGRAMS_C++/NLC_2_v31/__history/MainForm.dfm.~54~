@@ -1,0 +1,249 @@
+﻿object Form1: TForm1
+  Left = 0
+  Top = 0
+  Caption = 'LAT_sborka2_v31'
+  ClientHeight = 742
+  ClientWidth = 1053
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OldCreateOrder = False
+  Scaled = False
+  PixelsPerInch = 96
+  TextHeight = 13
+  object Panel2: TPanel
+    Left = 8
+    Top = 645
+    Width = 513
+    Height = 89
+    TabOrder = 0
+    object Label2: TLabel
+      Left = 0
+      Top = 16
+      Width = 95
+      Height = 13
+      Caption = #1043#1088#1072#1092#1080#1082#1080' '#1076#1080#1072#1075#1088#1072#1084#1084
+    end
+    object Edit1: TEdit
+      Left = 109
+      Top = 13
+      Width = 145
+      Height = 21
+      TabOrder = 0
+      Text = #1059#1082#1072#1078#1080#1090#1077' '#1087#1091#1090#1100' '#1082' '#1076#1080#1088#1077#1082#1090#1086#1088#1080#1080':'
+    end
+    object Button1: TButton
+      Left = 260
+      Top = 8
+      Width = 75
+      Height = 25
+      Caption = '...'
+      TabOrder = 1
+      OnClick = Button1Click
+    end
+    object Button2: TButton
+      Left = 341
+      Top = 8
+      Width = 121
+      Height = 25
+      Caption = #1055#1086#1089#1090#1088#1086#1080#1090#1100' '#1075#1088#1072#1092#1080#1082#1080
+      TabOrder = 2
+      OnClick = Button2Click
+    end
+  end
+  object Panel1: TPanel
+    Left = 8
+    Top = 8
+    Width = 1001
+    Height = 617
+    TabOrder = 1
+    object Label1: TLabel
+      Left = 272
+      Top = 8
+      Width = 47
+      Height = 13
+      Caption = #1040#1053#1058#1045#1053#1053#1040
+    end
+    object Label4: TLabel
+      Left = 240
+      Top = 328
+      Width = 222
+      Height = 13
+      Caption = #1048#1057#1061#1054#1044#1053#1067#1045' '#1044#1040#1053#1053#1067#1045' '#1055#1054' '#1062#1045#1051#1048' '#1048' '#1040#1053#1058#1048#1055#1054#1044#1059
+    end
+    object РЕЗУЛЬТАТЫ: TLabel
+      Left = 272
+      Top = 496
+      Width = 114
+      Height = 13
+      Caption = #1056#1045#1047#1059#1051#1068#1058#1040#1058#1067' '#1056#1040#1057#1063#1045#1058#1040
+    end
+    object Label3: TLabel
+      Left = 8
+      Top = 136
+      Width = 192
+      Height = 13
+      Caption = #1042#1099#1073#1077#1088#1080#1090#1077' '#1074#1072#1088#1080#1072#1085#1090' '#1085#1072#1073#1086#1088#1072' '#1076#1080#1072#1075#1088#1072#1084#1084' :'
+    end
+    object LabeledEdit1: TLabeledEdit
+      Left = 8
+      Top = 40
+      Width = 89
+      Height = 21
+      EditLabel.Width = 85
+      EditLabel.Height = 13
+      EditLabel.Caption = #1044#1083#1080#1085#1072' '#1074#1086#1083#1085#1099', '#1089#1084
+      TabOrder = 0
+      Text = '3,15'
+      OnExit = LabeledEdit1Exit
+    end
+    object LabeledEdit2: TLabeledEdit
+      Left = 128
+      Top = 40
+      Width = 89
+      Height = 21
+      EditLabel.Width = 92
+      EditLabel.Height = 13
+      EditLabel.Caption = #1057#1050#1054' '#1096#1091#1084#1072', '#1076#1080#1089#1082#1088'.'
+      TabOrder = 1
+      Text = '0,0001'
+      OnExit = LabeledEdit2Exit
+    end
+    object LabeledEdit3: TLabeledEdit
+      Left = 240
+      Top = 40
+      Width = 89
+      Height = 21
+      EditLabel.Width = 101
+      EditLabel.Height = 13
+      EditLabel.Caption = #1064#1080#1088#1080#1085#1072' '#1076#1080#1072#1075#1088', '#1090'.'#1076'.'
+      TabOrder = 2
+      Text = '20,814'
+      OnExit = LabeledEdit3Exit
+    end
+    object LabeledEdit4: TLabeledEdit
+      Left = 368
+      Top = 40
+      Width = 89
+      Height = 21
+      EditLabel.Width = 50
+      EditLabel.Height = 13
+      EditLabel.Caption = #1042#1099#1089#1086#1090#1072', '#1084
+      TabOrder = 3
+      Text = '0'
+      OnChange = LabeledEdit4Change
+      OnExit = LabeledEdit4Exit
+    end
+    object LabeledEdit9: TLabeledEdit
+      Left = 496
+      Top = 40
+      Width = 89
+      Height = 21
+      EditLabel.Width = 88
+      EditLabel.Height = 13
+      EditLabel.Caption = 'Eps '#1082#1088#1080#1090#1080#1095'., '#1090'.'#1076'.'
+      ReadOnly = True
+      TabOrder = 4
+    end
+    object LabeledEdit10: TLabeledEdit
+      Left = 634
+      Top = 40
+      Width = 89
+      Height = 21
+      EditLabel.Width = 98
+      EditLabel.Height = 13
+      EditLabel.Caption = 'Eps min '#1072#1085#1090#1087#1076', '#1090'.'#1076'.'
+      ReadOnly = True
+      TabOrder = 5
+    end
+    object StringGrid2: TStringGrid
+      Left = 23
+      Top = 395
+      Width = 562
+      Height = 78
+      ColCount = 4
+      RowCount = 3
+      Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goEditing]
+      ScrollBars = ssNone
+      TabOrder = 6
+      OnExit = StringGrid2Exit
+    end
+    object Edit2: TEdit
+      Left = 23
+      Top = 368
+      Width = 122
+      Height = 21
+      ReadOnly = True
+      TabOrder = 7
+      Text = #1044#1072#1083#1100#1085#1086#1089#1090#1100' '#1076#1086' '#1094#1077#1083#1080', '#1084'.:'
+    end
+    object Edit3: TEdit
+      Left = 160
+      Top = 368
+      Width = 57
+      Height = 21
+      TabOrder = 8
+      Text = '10000'
+      OnExit = Edit3Exit
+    end
+    object StringGrid3: TStringGrid
+      Left = 23
+      Top = 527
+      Width = 562
+      Height = 77
+      ColCount = 4
+      RowCount = 3
+      ScrollBars = ssNone
+      TabOrder = 9
+    end
+    object StringGrid4: TStringGrid
+      Left = 616
+      Top = 395
+      Width = 97
+      Height = 78
+      ColCount = 1
+      FixedCols = 0
+      RowCount = 3
+      ScrollBars = ssNone
+      TabOrder = 10
+    end
+    object StringGrid5: TStringGrid
+      Left = 616
+      Top = 527
+      Width = 160
+      Height = 77
+      ColCount = 2
+      FixedCols = 0
+      RowCount = 3
+      ScrollBars = ssNone
+      TabOrder = 11
+    end
+    object ComboBox1: TComboBox
+      Left = 206
+      Top = 133
+      Width = 145
+      Height = 21
+      TabOrder = 12
+      Text = #1053#1072#1073#1086#1088' '#1076#1080#1072#1075#1088#1072#1084#1084
+      Items.Strings = (
+        '16 '#1089#1091#1084#1084#1072#1088#1085'.'
+        ' 4  '#1089#1091#1084#1084#1072#1088#1085'.'
+        '2 '#1088#1072#1079#1085'+2 '#1082#1086#1084#1087#1083'. + 3 '#1089#1091#1084#1084#1072#1088#1085'.'
+        '4 '#1089#1090#1088#1086#1082#1086#1074#1099#1077
+        #1055#1089#1077#1074#1076#1086#1047#1086#1088#1080#1085' '#1089#1091#1084#1084
+        #1055#1089#1077#1074#1076#1086#1047#1086#1088#1080#1085' '#1088#1072#1079#1085
+        #1055#1089#1077#1074#1076#1086#1047#1086#1088#1080#1085' '#1089#1091#1084#1084' + '#1088#1072#1079#1085
+        #1063#1080#1089#1090#1099#1081' '#1047#1086#1088#1080#1085
+        '8  '#1089#1090#1088#1086#1082#1086#1074#1099#1093
+        '16 '#1089#1090#1088#1086#1082#1086#1074#1099#1093
+        '32 '#1089#1090#1088#1086#1082#1086#1074#1099#1093)
+    end
+  end
+  object SaveDialog1: TSaveDialog
+    Left = 648
+    Top = 96
+  end
+end
