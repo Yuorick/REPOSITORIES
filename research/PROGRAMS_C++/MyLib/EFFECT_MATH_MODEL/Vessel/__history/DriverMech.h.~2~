@@ -1,0 +1,88 @@
+//---------------------------------------------------------------------------
+
+#ifndef DriverMechH
+#define DriverMechH
+//---------------------------------------------------------------------------
+class TDriverMech
+{
+public:
+// ТОчность по углу курса
+	double mSigBet;
+//  точность определения угла места
+	double mSigEps;
+// точность отработки угла rкурса
+	double mSigDrBet;
+// точность  отработки угла места
+	double mSigDrEps;
+
+// ДИНАМИЧЕСКАЯ ИНФОРМАЦИЯ
+//protected:
+  double mTDr ; // текущее время привязки иныормации
+  double mEstEps ;// оценка(измерение) угла Eps
+  double mEstBet ; // оценка(измерение) угла Bet
+  double mRealEps ;// истинный угол Eps
+  double mRealBet ; // истинный угол Bet
+  double mDelEps ;// ошибка по  Eps
+  double mDelBet ; // ошибка по Bet
+public:
+  // ОТЧЕТ
+
+	 // К-ВО ТОЧЕК В БУФУЕРЕ
+	int mQuantPntReport ;
+
+	 //36. ПАРАМЕТР ЗАРЕЗЕРВИРОВАННОЙ ПАМАЯТИ
+	int mLenMemoryAlloc ;
+
+	//37. БУФЕР ПАМЯТИ
+	double *mparrBuff    ;
+
+	// 38. ПУТЬ К ПАПКЕ С ОТЧЕТОМ
+	wchar_t *mpwcharrFoldReport ;
+
+
+	__fastcall ~TDriverMech() ;
+	// конструктор по умолчанию
+	TDriverMech () ;
+	// конструктор копирования
+  	TDriverMech  (const TDriverMech  &R) ;
+	// оператор присваивания
+	TDriverMech  operator=(TDriverMech   R2) ;
+	// парам констр 1
+	TDriverMech( const double SigBet, const double SigEps, const double SigDrBet
+		, const double SigDrEps, wchar_t *pwcharrFoldReport);
+
+	 TDriverMech ( const double DriverSigBet // точность измерения угла Bet привода
+								,const double DriverSigEps // точность измерения угла Eps  привода (угла места)
+								,const double DriverDynamicSigBet // точность отработки угла курса  привода
+								,const double DriverDynamicSigEps // точность  привода отработки угла места
+								,const double TDr  // текущее время привязки иныормации
+								,const double VAlEstEps // оценка(измерение) угла Eps
+								,const double VAlEstBet  // оценка(измерение) угла Bet
+								,const double VAlRealEps // истинный угол Eps
+								,const double VAlRealBet  // истинный угол Bet
+								,const double VAlDelEps // ошибка по  Eps
+								,const double VAlDelBet  // ошибка по Bet
+								,wchar_t *pwcharrFoldReport);
+
+	  void init (const double TDr  // текущее время привязки иныормации
+				,const double VAlEstEps // оценка(измерение) угла Eps
+				,const double VAlEstBet  // оценка(измерение) угла Bet
+				,const double VAlRealEps // истинный угол Eps
+				,const double VAlRealBet  // истинный угол Bet
+				,const double VAlDelEps // ошибка по  Eps
+				,const double VAlDelBet  // ошибка по Bet
+				) ;
+
+
+	void recalcDriver(const double valT,const double valEps0,const double valBet0 ) ;
+
+   void updateReportData() ;
+   void WriteReport() ;
+	void WriteReport(wchar_t *pwcharrPath);
+
+
+
+
+}  ;
+
+#endif

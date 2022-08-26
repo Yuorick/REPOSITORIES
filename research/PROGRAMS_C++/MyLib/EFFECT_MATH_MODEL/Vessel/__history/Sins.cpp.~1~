@@ -1,0 +1,783 @@
+//---------------------------------------------------------------------------
+
+
+#pragma hdrstop
+#include <vcl.h>
+#include <dir.h>
+#include "Sins.h"
+
+
+ #include <stdio.h>
+ #include <math.h>
+
+ #include <stdlib.h>
+ #include <string.h>
+
+ #include <float.h>
+ #include "Environment.h"
+
+ #include "Traject.h"
+ #include "YrWriteShapeFile.h"
+  #include "Gauss.h"
+
+
+extern  double PI ;
+const int QUANT_COLS_BUFF_SINS = 19;
+
+
+//---------------------------------------------------------------------------
+
+#pragma package(smart_init)
+
+ 
+//---------------------------------------------------------------------------
+
+__fastcall TSins::~TSins()
+{
+   if (mparrBuff != NULL)
+   {
+   free( mparrBuff)  ;
+   mparrBuff = NULL ;
+   }
+   if ( mpwcharrFoldReport != NULL)
+   {
+   free( mpwcharrFoldReport );
+   mpwcharrFoldReport = NULL ;
+   }
+
+}
+//---------------------------------------------------------------------------
+
+
+ __fastcall TSins ::TSins()
+{
+	mSig_Q      =  0.000582;
+	mSig_Psi    = 0.000145;
+	mSig_Tet    = 0.000145;
+	mSig_dQdt   = 0.00116 ;
+	mSig_dPsidt = 0.00116 ;
+	mSig_dTetdt = 0.00116 ;
+	mMaxSig_Q      =  0.000582;
+	mMaxSig_Psi    = 0.000145;
+	mMaxSig_Tet    = 0.000145;
+	mMaxSig_dQdt   = 0.00116 ;
+	mMaxSig_dPsidt = 0.00116 ;
+	mMaxSig_dTetdt = 0.00116 ;
+	mMaxSig_H = 0.1 ;
+	mMaxSig_VH = 0.05 ;
+	mK1         = 0.01 ;
+	mSigV       = 0.2 * sqrt(2.) ;
+   //	mSig_H       = 0.1 ;
+	mTSins      = 0. ;
+	mDelQ       = 0. ;
+	mDelVQ      = 0. ;
+	mDelPsi     = 0. ;
+	mDelVPsi    = 0. ;
+	mDelTet     = 0. ;
+	mDelVTet    = 0. ;
+	mDelH       = 0. ;
+	mDelVH      = 0. ;
+	mDelVVess   = 0. ;
+  mpwcharrFoldReport = NULL ;
+  mparrBuff   = NULL ;
+  mQuantPntReport = 0;
+  mLenMemoryAlloc = 0 ;
+
+
+
+}
+
+ // конструктор копирования
+__fastcall TSins ::TSins (const TSins &R)
+ {
+	mSig_Q  =  R.mSig_Q ;
+	mSig_Psi = R.mSig_Psi;
+	mSig_Tet = R.mSig_Tet ;
+	mSig_dQdt = R.mSig_dQdt ;
+	mSig_dPsidt = R.mSig_dPsidt;
+	mSig_dTetdt = R.mSig_dTetdt;
+	mMaxSig_Q  =  R.mMaxSig_Q ;
+	mMaxSig_Psi = R.mMaxSig_Psi;
+	mMaxSig_Tet = R.mMaxSig_Tet ;
+	mMaxSig_dQdt = R.mMaxSig_dQdt ;
+	mMaxSig_dPsidt = R.mMaxSig_dPsidt;
+	mMaxSig_dTetdt = R.mMaxSig_dTetdt;
+	mMaxSig_H = R.mMaxSig_H ;
+	mMaxSig_VH = R.mMaxSig_VH ;
+
+	mSig_H = R.mSig_H;
+	mSig_VH = R.mSig_VH ;
+	mK1 = R.mK1 ;
+	mSigV = R.mSigV ;
+	mTSins = R.mTSins ;
+	mDelQ = R.mDelQ ;
+	mDelVQ = R.mDelVQ ;
+	mDelPsi = R.mDelPsi ;
+	mDelVPsi = R.mDelVPsi ;
+	mDelTet = R.mDelTet ;
+	mDelVTet = R.mDelVTet ;
+	mDelH  =R.mDelH  ;
+	mDelVH = R.mDelVH ;
+	mDelVVess = R.mDelVVess ;
+	mEstQ = R.mEstQ;
+	mEstVQ = R.mEstVQ;
+	mEstPsi = R.mEstPsi;
+	mEstVPsi = R.mEstVPsi;
+	mEstTet = R.mEstTet;
+	mEstVTet =R.mEstVTet ;
+	mEstH = R.mEstH ;
+	mEstVH = R.mEstVH;
+	mEstVVess = R.mEstVVess ;
+
+	// для отчета
+	mLenMemoryAlloc = R.mLenMemoryAlloc ;
+	mQuantPntReport = R.mQuantPntReport ;
+
+	////
+	mparrBuff  = NULL;
+	mpwcharrFoldReport = NULL ;
+	if(R.mparrBuff  != NULL)
+	{
+		if((mparrBuff  = (double*)malloc( QUANT_COLS_BUFF_SINS * R.mLenMemoryAlloc * sizeof(double))) != NULL)
+		{
+		memcpy( mparrBuff ,R.mparrBuff , QUANT_COLS_BUFF_SINS * R.mLenMemoryAlloc * sizeof(double));
+		}
+		else
+		{
+		 ShowMessage(L"Not memory for mparrBuff ") ;
+		 Abort() ;
+		}
+	}
+	//
+	if(R.mpwcharrFoldReport != NULL)
+	{
+		if ((mpwcharrFoldReport = (wchar_t *)malloc(300 * sizeof (wchar_t))) != NULL)
+		{
+		wcscpy(mpwcharrFoldReport, R.mpwcharrFoldReport);
+
+		}
+		else
+		{
+		 ShowMessage(L"Not memory for mpwcharrFoldReport") ;
+		 Abort() ; 		}
+
+	}
+
+ }
+
+ // оператор присваивания
+ TSins TSins::operator=(TSins  R)
+ {
+	mSig_Q  =  R.mSig_Q ;
+	mSig_Psi = R.mSig_Psi;
+	mSig_Tet = R.mSig_Tet ;
+	mSig_dQdt = R.mSig_dQdt ;
+	mSig_dPsidt = R.mSig_dPsidt;
+	mSig_dTetdt = R.mSig_dTetdt;
+	mMaxSig_Q  =  R.mMaxSig_Q ;
+	mMaxSig_Psi = R.mMaxSig_Psi;
+	mMaxSig_Tet = R.mMaxSig_Tet ;
+	mMaxSig_dQdt = R.mMaxSig_dQdt ;
+	mMaxSig_dPsidt = R.mMaxSig_dPsidt;
+	mMaxSig_dTetdt = R.mMaxSig_dTetdt;
+	mMaxSig_H = R.mMaxSig_H ;
+	mMaxSig_VH = R.mMaxSig_VH ;
+
+	mSig_H = R.mSig_H;
+	mSig_VH = R.mSig_VH ;
+	mK1 = R.mK1 ;
+	mSigV = R.mSigV ;
+	mTSins = R.mTSins ;
+	mDelQ = R.mDelQ ;
+	mDelVQ = R.mDelVQ ;
+	mDelPsi = R.mDelPsi ;
+	mDelVPsi = R.mDelVPsi ;
+	mDelTet = R.mDelTet ;
+	mDelVTet = R.mDelVTet ;
+	mDelH  =R.mDelH  ;
+	mDelVH = R.mDelVH ;
+	mDelVVess = R.mDelVVess ;
+	mEstQ = R.mEstQ;
+	mEstVQ = R.mEstVQ;
+	mEstPsi = R.mEstPsi;
+	mEstVPsi = R.mEstVPsi;
+	mEstTet = R.mEstTet;
+	mEstVTet =R.mEstVTet ;
+	mEstH = R.mEstH ;
+	mEstVH = R.mEstVH;
+	mEstVVess = R.mEstVVess ;	// для отчета
+	mLenMemoryAlloc = R.mLenMemoryAlloc ;
+	mQuantPntReport = R.mQuantPntReport ;
+
+	////
+	mparrBuff  = NULL;
+	mpwcharrFoldReport = NULL ;
+	if(R.mparrBuff  != NULL)
+	{
+		if((mparrBuff  = (double*)malloc( QUANT_COLS_BUFF_SINS * R.mLenMemoryAlloc * sizeof(double))) != NULL)
+		{
+		memcpy( mparrBuff ,R.mparrBuff , QUANT_COLS_BUFF_SINS * R.mLenMemoryAlloc * sizeof(double));
+		}
+		else
+		{
+		 ShowMessage(L"Not memory for mparrBuff ") ;
+		 Abort() ;
+		}
+
+	}
+
+	//
+	if(R.mpwcharrFoldReport != NULL)
+	{
+		if ((mpwcharrFoldReport = (wchar_t *)malloc(300 * sizeof (wchar_t))) != NULL)
+		{
+		wcscpy(mpwcharrFoldReport, R.mpwcharrFoldReport);
+
+		}
+		else
+		{
+		 ShowMessage(L"Not memory for mpwcharrFoldReport") ;
+		 Abort() ;
+		}
+
+	}
+
+
+
+	return *this ;
+ }
+
+
+// параметр конструктор 1
+__fastcall TSins ::TSins( const int QuantPntReport, const int LenMemoryAlloc
+   , 	wchar_t *pwcharrFoldReport, double *parrBuff )
+{
+
+
+   //2
+  mQuantPntReport = QuantPntReport ;
+  //3
+  mLenMemoryAlloc = LenMemoryAlloc ;
+  // 4
+
+
+	mpwcharrFoldReport = NULL;
+	mparrBuff  = NULL;
+
+   if(pwcharrFoldReport != NULL)
+   {
+	   if ((mpwcharrFoldReport = (wchar_t *)malloc(300 * sizeof (wchar_t))) != NULL)
+		{
+		wcscpy(mpwcharrFoldReport, pwcharrFoldReport);
+
+		}
+		else
+		{
+		 ShowMessage(L"Not memory for mpwcharrFoldReport") ;
+		 Abort() ;
+		}
+
+		if((mparrBuff  = (double*)malloc( QUANT_COLS_BUFF_SINS * LenMemoryAlloc * sizeof(double))) != NULL)
+		{
+
+		memset( mparrBuff,  0,  QUANT_COLS_BUFF_SINS * LenMemoryAlloc * sizeof(double));
+		}
+		else
+		{
+		 ShowMessage(L"Not memory for mparrBuff ") ;
+		 Abort() ;
+		}
+
+   }
+
+
+}
+
+   // парам конструктор  2 -1
+ TSins::TSins (const TEnvironment Environment
+		 ,const double MaxSig_Q, const double MaxSig_Psi, const double MaxSig_Tet
+		 ,const double MaxSig_dQdt, const double MaxSig_dPsidt,const double MaxSig_dTetdt
+		 ,const double MaxSig_H,const double MaxSig_VH,const double K1
+		  ,const double SigV , wchar_t* pwcharrFoldReport)
+
+ {
+	const double valCoeffEnv = ((double)Environment.mBallWave)/9. ;
+
+	mMaxSig_Q  = MaxSig_Q ;
+	mMaxSig_Psi = MaxSig_Psi ;
+	mMaxSig_Tet = MaxSig_Tet;
+	mMaxSig_dQdt = MaxSig_dQdt ;
+	mMaxSig_dPsidt = MaxSig_dPsidt ;
+	mMaxSig_dTetdt = MaxSig_dTetdt ;
+	mMaxSig_H = MaxSig_H ;
+	mMaxSig_VH = MaxSig_VH ;
+	mSig_Q  =  MaxSig_Q * valCoeffEnv;
+	mSig_Psi = MaxSig_Psi * valCoeffEnv;
+	mSig_Tet = MaxSig_Tet * valCoeffEnv;
+	mSig_dQdt =MaxSig_dQdt * valCoeffEnv;
+	mSig_dPsidt = MaxSig_dPsidt * valCoeffEnv;
+	mSig_dTetdt = MaxSig_dTetdt * valCoeffEnv;
+	mSig_H =  mMaxSig_H * valCoeffEnv;
+	mSig_VH =  mMaxSig_VH * valCoeffEnv;
+	mK1 = K1 ;
+	mSigV = SigV ;
+
+   // дл яотчета
+	mpwcharrFoldReport = NULL ;
+	mparrBuff   = NULL ;
+
+
+	mQuantPntReport = 0 ;
+	mLenMemoryAlloc = 2000 ;
+   if(pwcharrFoldReport != NULL)
+   {
+	   if ((mpwcharrFoldReport = (wchar_t *)malloc(300 * sizeof (wchar_t))) != NULL)
+		{
+		wcscpy(mpwcharrFoldReport, pwcharrFoldReport);
+
+		}
+		else
+		{
+		 ShowMessage(L"Not memory for mpwcharrFoldReport") ;
+		 Abort() ;
+		}
+
+		if((mparrBuff  = (double*)malloc( QUANT_COLS_BUFF_SINS * mLenMemoryAlloc * sizeof(double))) != NULL)
+		{
+
+		memset( mparrBuff,  0,  QUANT_COLS_BUFF_SINS * mLenMemoryAlloc * sizeof(double));
+		}
+		else
+		{
+		 ShowMessage(L"Not memory for mparrBuff ") ;
+		 Abort() ;
+		}
+
+	 }
+}
+
+
+	 // парам конструктор  3
+ TSins::TSins (const TEnvironment Environment
+	,const double MaxSig_Q, const double MaxSig_Psi, const double MaxSig_Tet
+	,const double MaxSig_dQdt, const double MaxSig_dPsidt,const double MaxSig_dTetdt
+	,const double MaxSig_H,const double MaxSig_VH,const double K1
+	,const double SigV
+	,const double  VAlT      // время
+	,const double VAlTrueVVess   // ист скорость
+	,const double  VAlTrueQ  // истинный угол курса
+	,const double  VAlTruePsi  // истинный угол килевой качки
+	,const double  VAlTrueTet  // истинный угол бортовой качки
+	,const double  VAlTrueVQ  //истинный скорость изменения угла курса
+	,const double  VAlTrueVPsi   //истинный скорость изменения угла килевой качки
+	,const double  VAlTrueVTet   //истинный вкорость изменения угла бортовой качуки
+	,const double VAlTrueH
+	,const double VAlTrueVH
+	,const double VAlT_Q
+	,const double  VAlT_Psi
+	,const double VAlT_Tet
+	, double *arrDelt
+	,wchar_t* pwcharrFoldReport)
+
+ {
+	const double valCoeffEnv = ((double)Environment.mBallWave)/9. ;
+
+	mMaxSig_Q  = MaxSig_Q ;
+	mMaxSig_Psi = MaxSig_Psi ;
+	mMaxSig_Tet = MaxSig_Tet;
+	mMaxSig_dQdt = MaxSig_dQdt ;
+	mMaxSig_dPsidt = MaxSig_dPsidt ;
+	mMaxSig_dTetdt = MaxSig_dTetdt ;
+	mMaxSig_H = MaxSig_H ;
+	mMaxSig_VH = MaxSig_VH ;
+	mSig_Q  =  MaxSig_Q * valCoeffEnv;
+	mSig_Psi = MaxSig_Psi * valCoeffEnv;
+	mSig_Tet = MaxSig_Tet * valCoeffEnv;
+	mSig_dQdt =MaxSig_dQdt * valCoeffEnv;
+	mSig_dPsidt = MaxSig_dPsidt * valCoeffEnv;
+	mSig_dTetdt = MaxSig_dTetdt * valCoeffEnv;
+	mSig_H =  mMaxSig_H * valCoeffEnv;
+	mSig_VH =  mMaxSig_VH * valCoeffEnv;
+	mK1 = K1 ;
+	mSigV = SigV ;
+
+
+ fillValues_Delts_and_Ests(VAlT,  VAlTrueVVess,	 VAlTrueQ, VAlTruePsi,	 VAlTrueTet, VAlTrueVQ
+	, VAlTrueVPsi,  VAlTrueVTet, VAlTrueH, VAlTrueVH, VAlT_Q,  VAlT_Psi, VAlT_Tet, arrDelt) ;
+
+   // дл яотчета
+	mpwcharrFoldReport = NULL ;
+	mparrBuff   = NULL ;
+
+
+	mQuantPntReport = 0 ;
+	mLenMemoryAlloc = 2000 ;
+   if(pwcharrFoldReport != NULL)
+   {
+	   if ((mpwcharrFoldReport = (wchar_t *)malloc(300 * sizeof (wchar_t))) != NULL)
+		{
+		wcscpy(mpwcharrFoldReport, pwcharrFoldReport);
+
+		}
+		else
+		{
+		 ShowMessage(L"Not memory for mpwcharrFoldReport") ;
+		 Abort() ;
+		}
+
+		if((mparrBuff  = (double*)malloc( QUANT_COLS_BUFF_SINS * mLenMemoryAlloc * sizeof(double))) != NULL)
+		{
+
+		memset( mparrBuff,  0,  QUANT_COLS_BUFF_SINS * mLenMemoryAlloc * sizeof(double));
+		}
+		else
+		{
+		 ShowMessage(L"Not memory for mparrBuff ") ;
+		 Abort() ;
+		}
+
+   }
+}
+// моделирование в соответствии с лабораторной моделью
+ void TSins::recalcSins_v0(const double valT, const double VVess,	const double Q
+	,const double Psi,	const double Tet,const double VQ
+	,const double VPsi, const double VTet,const double H,const double VH,const double T_Q
+	,const double  T_Psi,const double T_Tet, double *arrDelt)
+{
+  if ( valT < mTSins )
+	{
+		ShowMessage(L"Ошибка в заданиии иекущего времени") ;
+		return ;
+	 }
+	 fillValues_Delts_and_Ests( valT,  VVess,	 Q, Psi,	 Tet, VQ
+	, VPsi,  VTet, H, VH, T_Q,  T_Psi, T_Tet, arrDelt) ;
+
+	 if(mpwcharrFoldReport)
+	 updateReportData() ;
+
+}
+
+//формирование ошибок измерения и измерений СИНС
+ void TSins::fillValues_Delts_and_Ests(const double valT, const double VVess,	const double Q
+	,const double Psi,	const double Tet,const double VQ
+	,const double VPsi, const double VTet,const double H,const double VH,const double T_Q
+	,const double  T_Psi,const double T_Tet, double *arrDelt)
+{
+
+	mDelQ = mSig_Q * sin(2.*PI/T_Q * valT - arrDelt[0]);
+  // 11.ошибка определения скорости ищзменения угла курса:
+  mDelVQ = 2.*PI/T_Q * mSig_Q * cos(2.*PI/T_Q * valT - arrDelt[0]);
+  // 12.ошибка определения угла килевой качки :
+  mDelPsi = mSig_Psi * sin(2.*PI/T_Psi * valT - arrDelt[1]);
+  // 13.ошибка определения скорости ищзменения угла килевой качки:
+  mDelVPsi = 2.*PI/T_Psi * mSig_Psi * cos(2.*PI/T_Psi * valT - arrDelt[1]);
+  // 14.ошибка определения угла боротовой качки :
+  mDelTet = mSig_Tet * sin(2.*PI/T_Tet * valT - arrDelt[2]);
+  // 15. ошибка определения скорости ищзменения угла боротовой качки:
+  mDelVTet = 2.*PI/T_Tet * mSig_Tet * cos(2.*PI/T_Tet * valT - arrDelt[2]);
+  // 16.ошибка измерения высоты цетнтра корабля :
+  mDelH = mSig_H * sin(2. * PI/ T_Tet * valT - arrDelt[3]) ;
+	// 17.ошибка измерения скорости изменения  высоты цетнтра корабля :
+  mDelVH = 2. * PI/ T_Tet * mSig_H * cos(2. * PI/ T_Tet *valT - arrDelt[3]) ;
+  // 18.ошибка измерения скорости корабля:
+  mDelVVess = VVess * mK1;
+
+// ОЦЕНКИ (измерения) СИНС
+   // QUANT_COLS_BUFF_SINS.оценка ооценка угла курса :
+   mEstQ = Q + mDelQ;
+  // 20.оценкая скорости ищзменения угла курса:
+   mEstVQ = VQ + mDelVQ ;
+  // 21.оценка угла килевой качки :
+   mEstPsi = Psi +mDelPsi;
+  // 22.оценка скорости ищзменения угла килевой качки:
+   mEstVPsi = VPsi + mDelVPsi;
+  // 23.оценка угла боротовой качки :
+   mEstTet = Tet + mDelTet;
+  // 24. оценка скорости ищзменения угла боротовой качки:
+   mEstVTet = VTet + mDelVTet ;
+  // 25.оценка высоты цетнтра корабля :
+   mEstH = H + mDelH;
+  // 26.оценка скорости изменения  высоты цетнтра корабля :
+   mEstVH = VH + mDelVH;
+  // 27.оценка скорости корабля:
+	 mEstVVess = VVess + mDelVVess;
+	 mTSins =  valT;
+}
+// Усовершенствованное моделирование  на основе системы 1-го порядка,
+// позволяющее правильно имитировать ошибки оценивания скоростей изенения углов качек и курса
+ void TSins::recalcSins_v1(const double valT, const double VVess,	const double Q
+	,const double Psi,	const double Tet,const double VQ
+	,const double VPsi, const double VTet,const double H,const double VH,const double T_Q
+	,const double  T_Psi,const double T_Tet, double *arrDelt)
+{
+  if ( valT < mTSins )
+	{
+		ShowMessage(L"Ошибка в заданиии иекущего времени") ;
+		return ;
+	 }
+  const double h = valT - mTSins ;
+  // ошибка определения угла курса
+  double valDelQ1 = callStepSys1(mDelQ, h, mSig_Q, mSig_dQdt) ;
+  mDelVQ = valDelQ1 - mDelQ ;
+  mDelQ =  valDelQ1 ;
+
+  // 12.ошибки определения угла килевой качки :
+  double valDelPsi1 = callStepSys1(mDelPsi, h, mSig_Psi, mSig_dPsidt) ;
+  mDelVPsi = valDelPsi1 - mDelPsi ;
+  mDelPsi =  valDelPsi1 ;
+
+  // 14.ошибка определения угла боротовой качки :
+  double valDelTet1 = callStepSys1(mDelTet, h, mSig_Tet, mSig_dTetdt) ;
+  mDelVTet = valDelTet1 - mDelTet ;
+  mDelTet =  valDelTet1 ;
+
+
+  // 16.ошибка измерения высоты цетнтра корабля :
+  mDelH = mSig_H * sin(2. * PI/ T_Tet * valT - arrDelt[3]) ;
+  // 17.ошибка измерения скорости изменения  высоты цетнтра корабля :
+  mDelVH = 2. * PI/ T_Tet * mSig_H * cos(2. * PI/ T_Tet *valT - arrDelt[3]) ;
+  // 18.ошибка измерения скорости корабля:
+  mDelVVess = VVess * mK1;
+
+// ОЦЕНКИ (измерения) СИНС
+   // QUANT_COLS_BUFF_SINS.оценка ооценка угла курса :
+   mEstQ = Q + mDelQ;
+  // 20.оценкая скорости ищзменения угла курса:
+   mEstVQ = VQ + mDelVQ ;
+  // 21.оценка угла килевой качки :
+   mEstPsi = Psi +mDelPsi;
+  // 22.оценка скорости ищзменения угла килевой качки:
+   mEstVPsi = VPsi + mDelVPsi;
+  // 23.оценка угла боротовой качки :
+   mEstTet = Tet + mDelTet;
+  // 24. оценка скорости ищзменения угла боротовой качки:
+   mEstVTet = VTet + mDelVTet ;
+  // 25.оценка высоты цетнтра корабля :
+   mEstH = H + mDelH;
+  // 26.оценка скорости изменения  высоты цетнтра корабля :
+   mEstVH = VH + mDelVH;
+  // 27.оценка скорости корабля:
+   mEstVVess = VVess + mDelVVess;
+
+   // коррекция времени
+   mTSins = valT;
+
+   if(mpwcharrFoldReport)
+   updateReportData() ;
+
+}
+ // занесение информации в массивы для отчета
+ void TSins::updateReportData()
+ {
+
+     if(mpwcharrFoldReport == NULL) return ;
+	 if (mQuantPntReport ==  mLenMemoryAlloc)
+	 {
+	   mLenMemoryAlloc += 2000 ;
+	   mparrBuff = (double *)realloc(mparrBuff, QUANT_COLS_BUFF_SINS * mLenMemoryAlloc * sizeof(double)) ;
+
+	 }
+	   int num0 =  mQuantPntReport * QUANT_COLS_BUFF_SINS;
+
+	   mparrBuff [num0] =  mTSins ;
+
+	   mparrBuff [num0 +1]  =  mDelQ ;
+
+	   mparrBuff [num0 +2]  =  mDelVQ ;
+
+	   mparrBuff [num0 +3]  =  mDelPsi ;
+
+	   mparrBuff [num0 +4]  = mDelVPsi  ;
+
+	   mparrBuff [num0 +5]  = mDelTet ;
+
+	   mparrBuff [num0 +6]  = mDelVTet  ;
+
+	   mparrBuff [num0 +7]  =  mDelH  ;
+
+	   mparrBuff [num0 +8]  = mDelVH  ;
+
+	   mparrBuff [num0 +9]  =  mDelVVess ;
+
+	  mparrBuff [num0 +10] =  mEstQ ;
+
+
+	   mparrBuff [num0 +11]  = mEstVQ  ;
+
+
+	   mparrBuff [num0 +12] =  mEstPsi ;
+
+	   mparrBuff [num0 +13]  = mEstVPsi  ;
+
+
+	   mparrBuff [num0 +14]  =  mEstTet ;
+
+	   mparrBuff [num0 +15]  = mEstVTet  ;
+
+	   mparrBuff [num0 +16]  =  mEstH  ;
+
+	   mparrBuff [num0 +17]  = mEstVH  ;
+
+	   mparrBuff [num0 +18]  =  mEstVVess ;
+
+	   mQuantPntReport++ ;
+
+ }
+
+// публикация  отчета
+ void TSins::WriteReport()
+ {
+	 if (mpwcharrFoldReport == NULL )return ;
+	 wchar_t wcharrPath [300] = {0} ;
+	 wcscpy(wcharrPath, mpwcharrFoldReport);
+	 wcscat(wcharrPath, L"\\SinsReport");
+		_wmkdir(wcharrPath);
+		 wcscat(wcharrPath, L"\\");
+
+	 wchar_t wcharrFileNames[QUANT_COLS_BUFF_SINS * 30] = {0};
+	 wcscpy( &wcharrFileNames[ 0 * 30], L"t");
+	 wcscpy( &wcharrFileNames[ 1 * 30], L"DelQ");
+	 wcscpy( &wcharrFileNames[ 2* 30],  L"DelVQ");
+	 wcscpy( &wcharrFileNames[ 3 * 30], L"DelPsi");
+	 wcscpy( &wcharrFileNames[ 4 * 30], L"DelVPsi");
+	 wcscpy( &wcharrFileNames[ 5 * 30], L"DelTet");
+	 wcscpy( &wcharrFileNames[ 6 * 30], L"DelVTet");
+	 wcscpy( &wcharrFileNames[ 7* 30],  L"DelH");
+	 wcscpy( &wcharrFileNames[ 8 * 30], L"DelVH");
+	 wcscpy( &wcharrFileNames[ 9 * 30], L"DelVVess");
+	 wcscpy( &wcharrFileNames[10 * 30], L"EstQ");
+	 wcscpy( &wcharrFileNames[11 * 30], L"EstVQ");
+	 wcscpy( &wcharrFileNames[12 * 30], L"EstPsi");
+	 wcscpy( &wcharrFileNames[13 * 30], L"EstVPsi");
+	 wcscpy( &wcharrFileNames[14 * 30], L"EstTet");
+	 wcscpy( &wcharrFileNames[15 * 30], L"EstVTet");
+	 wcscpy( &wcharrFileNames[16 * 30], L"EstH");
+	 wcscpy( &wcharrFileNames[17 * 30], L"EstVH");
+	 wcscpy( &wcharrFileNames[18 * 30], L"EstVVess");
+
+	 double *parrScaleY = new double[QUANT_COLS_BUFF_SINS];
+	 for (int i = 0; i < QUANT_COLS_BUFF_SINS; i++) parrScaleY [i] = 10000.;
+	 parrScaleY [7] =  100. ;
+	 parrScaleY [8] =  100. ;
+	 parrScaleY [9] =  1. ;
+	 parrScaleY [16] = 100. ;
+	 parrScaleY [17] = 100. ;
+	 parrScaleY [18] = 1. ;
+
+	 for (int i = 1; i < QUANT_COLS_BUFF_SINS; i++)
+	 {
+	 TYrWriteShapeFile::WriteOneReport(wcharrPath  // путь к папке
+								  ,mparrBuff // массив с информацией - матрица nBuffRows x nBuffCols
+								  ,QUANT_COLS_BUFF_SINS // - к-во переменных о корорых накоплена информация в буфере
+								  ,mQuantPntReport  //  - к-во точек
+								  ,wcharrFileNames //матрица с именаими переменных - матрица nBuffCols x lenName
+								  ,30// максимальная длина имени переменной
+								  ,0  // номер переменной по оси X
+								  ,i // номер переменной по оси Y
+								  ,100 //  масштаб по оси Y
+								  ,parrScaleY [i]  // масштаб по оси Y
+								   )  ;
+	 }
+	wchar_t wchFileName [300] = {0} ;
+	wcscpy(wchFileName, wcharrPath );
+	wcscat(wchFileName, L"\\Axes.shp");
+
+
+	TYrWriteShapeFile::CreateShpAxes(wchFileName,-40000.,40000,-40000.,40000) ;
+ delete parrScaleY ;
+
+}
+
+// публикация  отчета перегруженная
+ void TSins::WriteReport(wchar_t *pwcharrPath)
+ {
+	 if (pwcharrPath == NULL )return ;
+	 wchar_t wcharrPath [300] = {0} ;
+	 wcscpy(wcharrPath, pwcharrPath);
+	 wcscat(wcharrPath, L"\\");
+
+
+	 wchar_t wcharrFileNames[QUANT_COLS_BUFF_SINS * 30] = {0};
+	 wcscpy( &wcharrFileNames[ 0 * 30], L"t");
+	 wcscpy( &wcharrFileNames[ 1 * 30], L"DelQ");
+	 wcscpy( &wcharrFileNames[ 2* 30],  L"DelVQ");
+	 wcscpy( &wcharrFileNames[ 3 * 30], L"DelPsi");
+	 wcscpy( &wcharrFileNames[ 4 * 30], L"DelVPsi");
+	 wcscpy( &wcharrFileNames[ 5 * 30], L"DelTet");
+	 wcscpy( &wcharrFileNames[ 6 * 30], L"DelVTet");
+	 wcscpy( &wcharrFileNames[ 7* 30],  L"DelH");
+	 wcscpy( &wcharrFileNames[ 8 * 30], L"DelVH");
+	 wcscpy( &wcharrFileNames[ 9 * 30], L"DelVVess");
+	 wcscpy( &wcharrFileNames[10 * 30], L"EstQ");
+	 wcscpy( &wcharrFileNames[11 * 30], L"EstVQ");
+	 wcscpy( &wcharrFileNames[12 * 30], L"EstPsi");
+	 wcscpy( &wcharrFileNames[13 * 30], L"EstVPsi");
+	 wcscpy( &wcharrFileNames[14 * 30], L"EstTet");
+	 wcscpy( &wcharrFileNames[15 * 30], L"EstVTet");
+	 wcscpy( &wcharrFileNames[16 * 30], L"EstH");
+	 wcscpy( &wcharrFileNames[17 * 30], L"EstVH");
+	 wcscpy( &wcharrFileNames[18 * 30], L"EstVVess");
+
+	 double *parrScaleY = new double[QUANT_COLS_BUFF_SINS];
+	 for (int i = 0; i < QUANT_COLS_BUFF_SINS; i++) parrScaleY [i] = 10000.;
+	 parrScaleY [7] =  100. ;
+	 parrScaleY [8] =  100. ;
+	 parrScaleY [9] =  1. ;
+	 parrScaleY [16] = 100. ;
+	 parrScaleY [17] = 100. ;
+	 parrScaleY [18] = 1. ;
+
+	 for (int i = 1; i < QUANT_COLS_BUFF_SINS; i++)
+	 {
+	 TYrWriteShapeFile::WriteOneReport(wcharrPath  // путь к папке
+								  ,mparrBuff // массив с информацией - матрица nBuffRows x nBuffCols
+								  ,QUANT_COLS_BUFF_SINS // - к-во переменных о корорых накоплена информация в буфере
+								  ,mQuantPntReport  //  - к-во точек
+								  ,wcharrFileNames //матрица с именаими переменных - матрица nBuffCols x lenName
+								  ,30// максимальная длина имени переменной
+								  ,0  // номер переменной по оси X
+								  ,i // номер переменной по оси Y
+								  ,100 //  масштаб по оси Y
+								  ,parrScaleY [i]  // масштаб по оси Y
+								   )  ;
+	 }
+	wchar_t wchFileName [300] = {0} ;
+	wcscpy(wchFileName, wcharrPath );
+	wcscat(wchFileName, L"Axes.shp");
+
+
+	TYrWriteShapeFile::CreateShpAxes(wchFileName,-40000.,40000,-40000.,40000) ;
+ delete parrScaleY ;
+
+}
+// расчет динамич системы 1-го порядка
+// INPUT:
+// valX- переменная. valX (t+h)= a * valX(t) + ksi
+//  h - шаг по времени
+//  valK - дисперсия valX
+//  valSigV*valSigV*h  - дисперсия разности valX[ t+h}- valX[ t+h]
+//
+// OUTPUT
+// valX (t + h)
+//
+//
+double TSins::callStepSys1(const double valX, const double h, const double SigX
+   ,const double valSigV)
+{
+  if (fabs(SigX ) < 0.00000001) return 0 ;
+
+  const double sig2V =  h * valSigV * valSigV ;
+  const double sig2X =  SigX * SigX ;
+  const double a = 1. - sig2V / sig2X/ 2. ;
+  if (( 1. - sig2V/sig2X/ 4.) > 0.)
+  {
+  const double sig2Ksi =  sig2V * ( 1. - sig2V/sig2X/ 4.) ;
+	double ksi = getGauss(0, sqrt(sig2Ksi) );
+  return a * valX + ksi ;
+  }
+  else
+  {
+	return getGauss(0, SigX );
+  }
+  }
+#pragma package(smart_init)

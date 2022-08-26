@@ -1,0 +1,113 @@
+//---------------------------------------------------------------------------
+
+#ifndef ShellBodyH
+#define ShellBodyH
+#include "URPolyLine.h"
+#include "Detonator.h"
+#include "Constants.h"
+
+
+
+
+class TURPolyLine;
+class TDetonator;
+
+
+
+// Класс описывает характеристики снаряда
+class TShellBody
+{
+public:
+// тип снаряда(калибр)
+	enumShellType  mEnumShellType  ;
+ // характерная длина снаряда, м
+	 double mL;
+// диаметр миделя, м
+	 double mDm ;
+// расстояние от основания гч до цм
+	 double mLc;
+ // длина гч
+	 double mLg ;
+// константа h_гоб для расчета дериываци функции  mh_gob =  Lc + 0.57*Lg -0.16*Dm
+	 double mh_gob ;
+// масса
+	 double mMass ;
+// момент инерции
+	 double mvalIx0 ;
+ // масса ВВ
+	 double mExplMass;
+// детонатор
+TDetonator mDetonator;
+//   таблицпа креффициентов согласования формы снарядав зависимости от от уга бросания по оси X
+	 TURPolyLine mplnCix;
+//   тадлицпа креффициентов согласования формы снарядав зависимости от от уга бросания по оси Y
+	 TURPolyLine mplnCiy;
+//   тадлицпа креффициентов согласования формы снарядав зависимости от от уга бросания по оси Z
+	 TURPolyLine mplnCiz;
+
+
+//   таблицпа креффициентов формы снаряда в зависимости от числа Маха
+	 TURPolyLine mplnCx;
+
+//   тадлицпа креффициентов формы снаряда в зависимости от числа Маха  по деривации
+	 TURPolyLine mplnKnm;
+
+//   тадлицпа креффициентов формы снаряда в зависимости от числа Маха  по угловой скорости
+	 TURPolyLine mplnMxOmx;
+
+	 //   тадлицпа креффициентов подъемной силы зависимости от числа Маха
+	 TURPolyLine mplnCz;
+	 // дисперсия разброса начального значения угловой  скорости
+	 double mDispOmega0;
+
+	 // дисперсия разброса начального значения путевой скорости
+	 double mDispV0;
+
+	 // дисперсия относительного  разброса Cx (1 + delta)
+	 double mDispCx;
+
+	 // дисперсия относительного  разброса Cz (1 + delta)
+	 double mDispCz;
+
+	 // дисперсия  разброса массы
+	 double mDispMass0;
+
+
+
+
+
+
+	 double mV0;   // нач скорость
+
+	 double mOmega0 ;  // нач угловая скорость
+//
+
+
+
+	// конструктор по умолчанию
+	TShellBody () ;
+	// конструктор копирования
+	TShellBody  (const TShellBody  &R) ;
+
+	// оператор присваивания
+	TShellBody  &operator=(const TShellBody   &R2) ;
+   // параметрическийц конструктор
+	 TShellBody( enumShellType EnumShellType) ;
+	 // параметрическийц конструктор
+	TShellBody( enumShellType EnumShellType, const TDetonator Detonator);
+
+
+	  void fnkCxEtal (const  double valM,  double &val_CxEtal, double &val_Grad_CxEtal) ;
+	  void fnkMxOmegax (const  double valM,  double &val_MxOmegax, double &val_Grad_MxOmegax) ;
+	  void fnkKnm (const  double valM,  double &val_Knm, double &val_Grad_Knm)  ;
+	 double calcBallisticCoeff();
+	 void fnkIx0 (const  double valTet0,  double &val_ix, double &val_Grad_ix);
+	 void fnkIz0 (const  double valTet0,  double &val_iz, double &val_Grad_iz) ;
+
+	 void fillShellVozmDispMatr_ShootingEarth (const double VAlSigTechAngAU
+, const double VAlSigPiAtm, double *arrMtrxShellDisp);
+	 double fnkCz (const  double valM);
+}  ;
+
+
+#endif

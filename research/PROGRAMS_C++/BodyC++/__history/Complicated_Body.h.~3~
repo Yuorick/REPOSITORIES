@@ -1,0 +1,35 @@
+//---------------------------------------------------------------------------
+
+#ifndef Complicated_BodyH
+#define Complicated_BodyH
+#include "SimpleBody_3D.h"
+
+#define MAX_POSSIBLE_QUANT_OF_SIMPLE_BODY 20
+class TSimpleBody_3D;
+class TComplicated_Body
+{
+public:
+
+	  TSimpleBody_3D marrSimpleBody_3D[MAX_POSSIBLE_QUANT_OF_SIMPLE_BODY];
+	  int mQuantSimpleBody;
+
+	__fastcall TComplicated_Body() ;
+
+	__fastcall TComplicated_Body(const int  QuantSimpleBody
+	 , TSimpleBody_3D *arrSimpleBody_3D);
+
+	TComplicated_Body  (const TComplicated_Body &R);
+
+	 TComplicated_Body operator=(TComplicated_Body  R);
+
+   //	virtual __fastcall ~TComplicated_Body() ;
+
+	virtual double calcCapacity() ;
+
+	virtual void calcCentreOfGravity(double *arrCentreGrav)  ;
+
+	virtual  void calcInertiaTensor(double *arrInertTens) ;
+
+
+};
+#endif

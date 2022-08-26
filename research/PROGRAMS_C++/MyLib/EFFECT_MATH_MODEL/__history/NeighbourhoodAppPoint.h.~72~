@@ -1,0 +1,198 @@
+//---------------------------------------------------------------------------
+
+#ifndef NeighbourhoodAppPointH
+#define NeighbourhoodAppPointH
+#include "Target.h"
+#include "ShellBody.h"
+#include "Fight.h"
+
+class  TTarget;
+class  TShellBody ;
+class TURPolygon;
+class TYrRastr;
+class TTable_3D;
+class TTable_2D ;
+class TNeighbourhoodAppPoint
+{
+public:
+// дальность точки встречи
+	double mDistAppPoint;
+// вектор промаха
+	double marrMiss[6];
+// корреляционная матрица разбросов вектора промаха в ГСК
+	double marrCorMatrxMiss[36];
+	//
+	// цель
+	TTarget mTarget;
+	// снаряд
+	TShellBody mShellBody;
+	// СКЗ разброса времени задержки АУ
+	double mSigmaCannonDelayT ;
+
+	// полетное время
+	double mTFly;
+
+	// Искусственный промах
+	 double mMissSimulated;
+
+	 // Искусственный Nedolet
+	 double mPereletSimulated;
+
+	// конструктор по умолчанию
+	TNeighbourhoodAppPoint () ;
+	// конструктор копирования
+	TNeighbourhoodAppPoint  (const TNeighbourhoodAppPoint  &R) ;
+	// оператор присваивания
+	TNeighbourhoodAppPoint  operator=(TNeighbourhoodAppPoint   R2) ;
+
+	// парам конструктор1
+	TNeighbourhoodAppPoint(double *arrMiss, double *arrCorMatrxMiss
+	 , const TTarget Target, const TShellBody ShellBody, const double VAlDistAppPoint, const double VAlSigmaCannonDelayT);
+
+     TNeighbourhoodAppPoint(double *arrMiss, double *arrCorMatrxMiss
+	 , const TTarget Target, const TShellBody ShellBody, const double VAlDistAppPoint
+	 , const double VAlSigmaCannonDelayT, const double VAlTFly);
+
+	 TNeighbourhoodAppPoint(double *arrMiss, double *arrCorMatrxMiss
+	 , const TTarget Target, const TShellBody ShellBody, const double VAlDistAppPoint
+	 , const double VAlSigmaCannonDelayT, const double VAlTFly,const double  VAlMissSimulated
+	 ,const double  VAlNedoletSimulated);
+
+ void calcProbSkaligaPlaneLaw( const double VAlR, const double VAlProbMean
+	 ,double *pvalDestruct, double *pvalDispMiss);
+
+ void calcProbSkaligaGarpunLaw( double *pvalDestruct, double *pvalDispMiss) ;
+
+ static double fncScaligaPlaneLaw(const double VAlR1
+ , const double VAlProbMean, const double VAlMiss);
+
+void calcProbDirectHitting(double *pvalDestruct, double *pvalDispMiss)  ;
+
+bool isDirectHit (int *iarrNumWorkingPlanePolygons, int iNumWorkingPlanePoligons
+	,double *arrPos, double *arrVelo);
+
+void createPointerArrayForWorkingPlanePoligons( const int iNum
+	,int *iarrNumWorkingPlanePolygons, int *iNumWorkingPlanePoligons);
+
+
+void calcDestructionProb_For_CoastTargs( const int  QAantIspit, const int  QUantShells
+	, const double  VAlKillingRange, double *pvalProb
+	,enumTypeOfControlAlgorithm EnumTypeOfControlAlgorithm, TURPointXY *ppntArrAimingPoints, int *piarrRepeatAimingPoints
+		, int* piQuantAimingPoints) ;
+
+
+void calcAimingPoints_For_OpenManPower(double *arrElK,const double VAlKillingRange
+		, const int QUantShells,const int  In, const int Im
+			,double *parrAimingPoints_X, int *piarrRepeatQuants_X, int *piQuantAimingPoints_X
+		, double *parrAimingPoints_Y, int *piarrRepeatQuants_Y,int *piQuantAimingPoints_Y
+		,	TURPointXY * ppntArrCorrecting) ;
+
+
+void calcProbDirectHitting_SeaTarg(double *pvalDestruct, double *pvalDispMiss);
+
+double calcRezultProbForSeaTarg( const int QUantShells, const double VAlProb0);
+
+static double calcRezultProbSeaTargSkaliga (const int QUantShells,const double VAlProb0
+	,const double VAlQuantNesessaryHits );
+
+double calcProbDirectHitting__(double *pvalDispMiss);
+
+static double max__(const double a, const double b);
+
+void calcDestructionProb_For_AirTargs (double *pvalDestruct, double *pvalDispMiss,double *arrCorMtrxCartinSK
+	,double *pvalDispNedolet , TURPolygon *pPlgProjection);
+
+//void calcCorrMatrx_CartinPlane(double *arrCorMtrxCartinSK);
+static void calcCorrMatrx_CartinPlane(double *arrVOtnos, double *arrCorMatrx_GSK_Inp,double *arrCorMtrxCartinSK);
+
+TURPolygon project_Polygons_Upon_CartinPlane(int *iarrNumWorkingPlanePolygons
+	,int *piNumWorkingPlanePoligons );
+
+void calcProbSkaligaPlaneLaw_New( const double VAlR, const double VAlProbMean
+	 ,double *pvalDestruct, double *pvalDispMiss);
+
+static void calcArray_Of_AimPoints(const double VAlL, const double VAlSig
+	,const double VAlKillingRange, const int QUantShells,const int  In, const int Im
+	, double *parrAimingPoints, int *piarrRepeatQuants, int *pQuantAimingPoints);
+
+static void fncMilitaryPlannerForCoastTarg( double *parrAimingPoints_X, int *piarrRepeatQuants_X, const int QUantAimingPoints_X
+															, double *parrAimingPoints_Y, int *piarrRepeatQuants_Y, const int QUantAimingPoints_Y
+															,TURPointXY *ppntArrCorrecting);
+
+double __calcProbDirectHitting__( double *pvalDispMiss
+, double *arrCorMtrxCartinSK, TURPolygon *pPlgProjection);
+
+
+
+
+void calcAimingPoints_For_OpenManPower_2D(double *arrElK, const double VAlKillingRange
+	,  const int QUantShells, TURPolygon plgTarg,TURPointXY *ppntArrAimingPoints, int *piarrRepeatAimingPoints
+		, int* piQuantAimingPoints);
+
+static void calcArray_Of_AimPoints_ForGroupLinedPointTargs(double *parrMtrxCorr
+	,const double VAlKillingRange, const int QUantShells,const int  In, double *parrx, const int LEnarrX
+	, double *parrAimingPoints, int *piarrRepeatQuants, int *pQuantAimingPoints);
+
+
+static void  calcDestructionProb_For_GroupLinedPointCoastTargs (const int  QAantIspit, double *parrMtrxCorr
+	,const double VAlKillingRange, const int QUantShells,const int  In, double *parrTargX, const int LEnarrX
+	, double *parrAimingPoints, int *piarrRepeatQuants, int *pQuantAimingPoints, TURPointXY *pPntArr_SKT
+	, double *pvalProb);
+
+static void calcDestructionProb_For_GroupNotLinedPointCoastTargs (const int  QAantIspit, double *parrMtrxCorr
+	,const double VAlKillingRange, const int QUantShells,  TURPolygon plgTarg, const double VAlCellSize
+			, TURPointXY *ppntArrAimingPoints , int *piQuantAimingPoints, int *piarrRepeatQuants
+			, double *pvalProb);
+
+static void calcArray_Of_AimPoints_ForGroupNotLinedPointTargs(double *arrElK
+	,const double VAlKillingRange, const int QUantShells, TURPolygon plgTarg, const double VAlCellSize
+			, TURPointXY *ppntArrAimingPoints , int *piQuantAimingPoints, int *piarrRepeatQuants);
+
+
+void calcCorrMtrxDiscretisation_And_CannonDelayT(double *arrCorrMtrxDiscret);
+
+void calcProb_DVM(TURPolyLine plnUZP,double *pvalDestruct, double *pvalDispMiss);
+
+void calcProb_TableUZP_MFIVU(TTable_3D TableUZP,double *pvalDestruct, double *pvalDispMiss);
+
+double calcRezultProbSeaTarg_MFIVU(const int QUantShells,const double VAlProb0
+	, TTable_2D TableUZP );
+
+static double calcOmega(double *arrSeaUZP, const int lenarr);
+
+void calcProb_TableUZP_BarrierDeton(TTable_2D TableUZP, const double VAlNedolet0
+	 , double *pvalDestruct, double *pvalDispMiss, double *pvalDispNedolet);
+
+//void calcCorrMatrx_CartinPlane(double *arrCorMtrxCartinSK, double *pvalDispNedolet); // ПЕРЕГРУЖЕННАЯ!!!
+static void calcCorrMatrx_CartinPlane(double *arrVOtnos, double *arrCorMatrx_GSK_Inp
+   ,double *arrCorMtrxCartinSK, double *pvalDispNedolet,double *arrCorMtrxXY,double *arrCorMtrxXZ); // ПЕРЕГРУЖЕННАЯ!!!
+
+void calcProb_TableUZP_BarrierDeton_(TTable_2D TableUZP_2D, const double VAlNedolet0
+	 , double *pvalDestruct, double *pvalDispMiss, double *pvalDispNedolet)  ;
+
+void _calcProb_TableUZP_BarrierDeton_(TTable_2D TableUZP_2D, const double VAlNedolet0
+	 , double *pvalDestruct, double *pvalDispMiss, double *pvalDispNedolet) ;
+
+static void calcDestractProb_PlnUZP( TURPolyLine plnUZP
+	, double *arrPosK, double *arrMiss , double *pvalDestruct
+	, double *pvalDispMiss, double *pvalDispNedolet);
+
+void calcProb_76Calibro_AR51_LM_Garpun(TTable_3D Table_3D_KZP, double *pvalDestruct, double *pvalDispMiss);
+
+void calcProb_76Calibro_DetonBarrier_Garpun(TTable_3D Table_3D_KZP, double *pvalDestruct, double *pvalDispMiss);
+
+double calcExplosiveProb(double *arrPosOtnKGSK);
+
+static double sqrt_(const double a);
+
+bool createTblUzp_For_130Cal_and_MFIVU(TTable_3D &TableUZP);
+
+TTable_2D  createTblUZP_130CAL_MFIVU_SEATARG()  ;
+
+static double calcKillingRange_For_CoastTargs(const enumShellType EnShell
+   , const enumDetonatorType  EnDetonatorType, const enumTargetType EnTargetType);
+}  ;
+
+
+
+#endif                               c

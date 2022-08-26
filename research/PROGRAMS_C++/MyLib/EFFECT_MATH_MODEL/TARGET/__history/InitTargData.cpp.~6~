@@ -1,0 +1,127 @@
+//---------------------------------------------------------------------------
+
+
+#pragma hdrstop
+
+#include "InitTargData.h"
+#include "Traject.h"
+#include <math.h>
+#include "MatrixProccess.h"
+extern  double PI ;
+
+TInitTargData::TInitTargData()
+{
+	//-  угол пеленга цели в ГСК
+	mBearing = PI/2.;
+	// угол курса цели в ГСК
+	mTargCourse = 1.5 * PI;
+	// угол между ветором скорости цели и напрвлением в зенит
+	mTargZenitAng = PI/2. ;
+	//- скорость
+	mV  = 1000. ;
+	// дальность,
+	mR =20000. ;
+	// высота
+	mH = 1000. ;
+	// время
+	mT = 0. ;
+
+}
+
+//---------------------------------------------------------------------------
+  __fastcall TInitTargData::~TInitTargData()
+{
+
+}
+
+// конструктор копирования
+ TInitTargData ::TInitTargData (const TInitTargData &R)
+ {
+	mBearing  =  R.mBearing ;
+	mTargCourse = R.mTargCourse;
+	mTargZenitAng = R.mTargZenitAng ;
+	mV   = R.mV ;
+	mR = R.mR ;
+	mH = R.mH ;
+	mT = R.mT ;
+
+ }
+ // оператор присваивания
+ TInitTargData TInitTargData::operator=(TInitTargData  R)
+ {
+	mBearing  =  R.mBearing ;
+	mTargCourse = R.mTargCourse;
+	mTargZenitAng = R.mTargZenitAng ;
+	mV   = R.mV ;
+	mR = R.mR ;
+	mH = R.mH ;
+	mT = R.mT ;
+
+
+
+	return *this ;
+ }
+
+  // парам конструктор1
+ TInitTargData::TInitTargData (const double Bearing, const double TargCourse, const double TargZenitAng ,const double V
+	 ,const double  R,const double H, const double T)
+ {
+   mBearing  = Bearing ;
+	mTargCourse = TargCourse ;
+	mTargZenitAng = TargZenitAng;
+	mV   = V ;
+	mR = R ;
+	mH = H ;
+	mT = T ;
+
+ }
+
+
+
+//---------------------------------------------------------------------------
+ // парам конструктор2
+ //Q0  ; // генеральный курс  кораюбля
+ //	 VVess  ;// скорость корабля своего
+ TInitTargData::TInitTargData (const double Bearing, const double TargZenitAng ,const double V
+	 ,const double  R,const double H, const double T, const double Q0, const double VVess )
+ {
+   mBearing  = Bearing ;
+  //	mTargCourse = TargCourse ;
+	mTargZenitAng = TargZenitAng;
+	mV   = V ;
+	mR = R ;
+	mH = H ;
+	mT = T ;
+	// вычисление курса цели,
+	// чтобы горизонтальная траектория цели пересекалась с траекторией корабля
+	//1. горизонтальная проекция скорости цели
+	double vTarg = V *sin (TargZenitAng);
+
+	// 2. вектор скорости корабля в гориз плоскости
+	double arrVVess[2] = {0.};
+	arrVVess[0] = VVess * sin(Q0);
+	arrVVess[1] = VVess * cos(Q0);
+
+	// 3.  начальный вектор положения цели в плоскости OXY ГСК
+	double S0 = sqrt(R * R - H * H);
+	double arrS0[2] = {0.};
+	arrS0[0] = S0 * sin (Bearing);
+	arrS0[1] = S0 * cos (Bearing);
+
+	// 4. время подлета цели
+	double scal = ScalProduct(arrS0 , arrVVess, 2) ;
+	double temp = vTarg * vTarg -  VVess * VVess;
+	double tfly =  (-scal + sqrt(scal * scal + S0 * S0 *temp))/temp;
+
+	// вектор направляющих косинусов цели
+	double arrCos[2] = {0.};
+	arrCos[0] = -(arrS0[0] -  tfly * arrVVess[0])/tfly / vTarg;
+	arrCos[1] = -(arrS0[1] -  tfly * arrVVess[1])/tfly / vTarg;
+
+	mTargCourse = atan2(arrCos[0], arrCos[1]);
+
+ }
+
+
+
+#pragma package(smart_init)

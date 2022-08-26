@@ -1,0 +1,48 @@
+//---------------------------------------------------------------------------
+
+#ifndef Veer4H
+#define Veer4H
+class TVeer4
+{
+public:
+
+//
+ int m_n;такнгенс
+ // длина волны
+ double	 mLambda ;
+
+
+ __fastcall  TVeer4 ::TVeer4() ;
+// Конструктор копирования
+__fastcall  TVeer4 (const TVeer4 &R2) ;
+ // парам констр
+ __fastcall TVeer4(const int n,const double d,const double Lambda) ;
+
+// оператор присваивания
+TVeer4   operator=(TVeer4  R2) ;
+double  fncFSource (const double valTetta);
+double  fnc_dFSource_po_dTetta (const double valTetta);
+double  fncFVeer4 (const double valTetta);
+double  fnc_dFVeer4_po_dTet (const double tet);
+
+
+
+static   double fnc_dF3_po_tet(const double val_gam, const double tet) ;
+
+static   double fnc_F3(const double val_gam, const double tet) ;
+
+static   double fnc_F4(const double v,const  double u, const double v1,const  double u1) ;
+
+double findDiagrWidth();
+
+void createDiagrGraphs(wchar_t *wchFoldName1 );
+
+ double findDiagrWidthApprox();
+
+ double  fncFVeer4Approx (const double valTetta) ;
+
+ double  fnc_dFVeer4Approx_po_dTet (const double tet);
+
+ double fnc_d2FVeer4Approx_po_dTet2(const double tet);
+};
+#endif

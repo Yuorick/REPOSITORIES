@@ -1,0 +1,52 @@
+//---------------------------------------------------------------------------
+
+
+#pragma hdrstop
+
+#include "ControlSyst.h"
+
+
+TBius::TBius()
+{
+	//Темп фильтрации
+		 mFiltT  =0. ;
+	// Задержка СИНС
+		 mSinsDelayT  =0. ;
+
+
+
+
+}
+
+//---------------------------------------------------------------------------
+
+
+// конструктор копирования
+ TBius ::TBius (const TBius &R)
+ {
+	mFiltT = R.mFiltT;
+	mSinsDelayT = R.mSinsDelayT;
+
+
+ }
+ // оператор присваивания
+ TBius TBius::operator=(TBius  R)
+ {
+	mFiltT = R.mFiltT;
+	mSinsDelayT = R.mSinsDelayT;
+
+
+
+	return *this ;
+ }
+
+  // парам конструктор1
+ TBius::TBius (const double FiltT, const double SinsDelayT)
+ {
+	mFiltT  = FiltT;
+	mSinsDelayT = SinsDelayT ;
+
+ }
+
+
+#pragma package(smart_init)

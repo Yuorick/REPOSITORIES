@@ -1,0 +1,229 @@
+//---------------------------------------------------------------------------
+
+
+#pragma hdrstop
+
+#include "Veer4.h"
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
+#include "YrWriteShapeFile.h"
+#include "URPolyLine.h"
+#include "UrPointXY.h"
+#include "DiagrSinX.h"
+#include "MatrixProccess.h"
+
+_fastcall  TVeer4 ::TVeer4()
+{
+  marrSumDgr[0] = TSimpleSumDgrm();
+  marrSumDgr[1] = TSimpleSumDgrm();
+  marrSumDgr[1].mScnSum = -marrSumDgr[1].mScnSum;
+//  marrDifDgr[0] = TSimpleDifDgrm(-60., -5. * 3000./ M_PI ) ;
+//  marrDifDgr[1] = TSimpleDifDgrm(-60., 5. * 3000./ M_PI ) ;
+   mTang = 60.;;
+ // угол сканирования разностной диаграммы
+  marrScnDif[0] = -5. * 3000./ M_PI;
+  marrScnDif[1] = 5. * 3000./ M_PI;
+
+
+}
+// Конструктор копирования
+__fastcall  TVeer4::TVeer4 (const TVeer4 &R)
+ {
+	marrSumDgr[0] = R.marrSumDgr[0] ;
+	marrSumDgr[1] = R.marrSumDgr[1] ;
+	mTang =  R.mTang;
+	marrScnDif[0] = R.marrScnDif[0] ;
+	marrScnDif[1] = R.marrScnDif[1] ;
+
+ }
+// оператор присваивания
+  TVeer4 TVeer4::operator=(TVeer4  R)
+ {
+	marrSumDgr[0] = R.marrSumDgr[0] ;
+	marrSumDgr[1] = R.marrSumDgr[1] ;
+	mTang =  R.mTang;
+	marrScnDif[0] = R.marrScnDif[0] ;
+	marrScnDif[1] = R.marrScnDif[1] ;
+   return *this ;
+ }
+
+ // парам констр
+ __fastcall TVeer4::TVeer4(const double Tang,  double *arrScnDif, const double KSum
+	   , const double ScnSum, const double Tension )
+ {
+	 marrSumDgr[0] = TSimpleSumDgrm( KSum ,  ScnSum,  Tension );
+	 marrSumDgr[1] = TSimpleSumDgrm( KSum , -ScnSum,  Tension );
+	 mTang = Tang ;
+	 marrScnDif[0] = arrScnDif[0] ;
+	 marrScnDif[1] = arrScnDif[1] ;
+ }
+
+//--------------------------------------------------------------------------------------
+// Нахождение оптимальных углов цели и антипода
+//
+// INPUT:
+// pSDifZv[2]   - массив измерений по разностным диаграммам (комплексные числа)
+// pSSumZv[2]   - массив измерений по суммарным диаграммам (комплексные числа)
+// ZTarg -  коэффициент отражения цели нач значение
+// ZAnt   - коэффициент отражения  антипода  нач значение
+// *alfTrg  - УМ цели   нач значение
+// *alfAnp  - УМ антипода  нач значение
+// OUTPUT:
+// ZTarg -  коэффициент отражения цели
+// ZAnt   - коэффициент отражения  антипода
+// *alfTrg  - УМ цели
+// *alfAnp  - УМ антипода
+// возвращает:
+// -2 - еслти матрица якоби вырождена
+// -3 - Если метод не сошелся
+
+int _fastcall TVeer4::solv4(TComp *pSDifZv,TComp *pSSumZv, TComp *pZTarg, TComp *pZAnt, double *palfTrg, double *palfAnp )
+{
+  int i = 0;
+  double arr_FGreek[2] ={0.},arr_dFGreek[4] ={0.},arr_dFGreekInv[4] ={0.} ;
+  double arrX[2] ={0.}, arrXT[2] ={0.}; // вектор с решениями
+  arrX[0] = *palfTrg ;
+  arrX[1] = *palfAnp;
+  double del = -2.;
+
+  for (i = 0; i < 100; i++)
+  {
+
+	double arr_F00[2] ={0.},arr_dF00[4] ={0.}, arrDelX[2] ={0.} ;
+
+	calc_vectG_and_mtrxH (pSDifZv,pSSumZv
+		,  *palfTrg, *palfAnp, arr_FGreek,  arr_dFGreek ) ;
+	///
+
+	if(!InverseMtrx2(arr_dFGreek, arr_dFGreekInv))
+	{
+	 *palfTrg = arrX[0]   ;
+	 *palfAnp = arrX[1]  ;
+	 return -2;
+	}
+	MtrxMultMatrx(arr_dFGreekInv ,2, 2, arr_FGreek,1, arrDelX) ;
+	del = NormVect(arrDelX, 2);
+	double arrT[2] ={0.};
+	MtrxMinusMatrx(arrX, arrDelX,1, 2, arrXT) ;
+	memcpy( arrX, arrXT, 2 * sizeof(double));
+	if (del< 0.00000001)
+	{
+
+	  *palfTrg = arrX[0]   ;
+	  *palfAnp = arrX[1]  ;
+	  return 0;
+	}
+ }
+
+  return -3;
+
+}
+
+
+int _fastcall TVeer4::calc_vectG_and_mtrxH (TComp *pSDifZv, TComp *pSSumZv
+		,  double alfTrg, double alfAnp, double* arr_FGreek, double* arr_dFGreek )
+{
+ 	double arr_Part_F[2] ={0.},arr_Part_dF[4] ={0.}, arrT[2]={0.}, arrT1[4]={0.};
+	memset(arr_FGreek, 0, 2 * sizeof(double));
+	memset(arr_dFGreek , 0, 4 * sizeof(double));
+
+	double valK11 = 0., valK12 =0., valK21 =0., valK22 =0., arr_gradK11[2] ={0.}, arr_gradK12[2] ={0.}, arr_gradK21[2] ={0.},
+	  arr_gradK22[2] ={0.}, arr_HessK11[4] ={0.}, arr_HessK12[4] ={0.}, arr_HessK21[4] ={0.},  arr_HessK22 [4] ={0.};
+	for (int i =0; i < 2; i++)
+	{
+
+	calc_CoeffOtrag(pSDifZv, alfTrg, alfAnp, &valK11, &valK12, &valK21, &valK22, arr_gradK11
+	, arr_gradK12, arr_gradK21, arr_gradK22, arr_HessK11, arr_HessK12
+	, arr_HessK21, arr_HessK22);
+
+	marrSumDgr[i].calcPartial_vectG_and_mtrxH (pSSumZv[i],alfTrg, alfAnp, valK11, valK12, valK21, valK22, arr_gradK11
+	, arr_gradK12, arr_gradK21, arr_gradK22, arr_HessK11, arr_HessK12
+	, arr_HessK21, arr_HessK22,  arr_FGreek,  arr_dFGreek ) ;
+
+	MtrxSumMatrx(arr_FGreek, arr_Part_F,1, 2, arrT) ;
+
+	memcpy(arr_FGreek,arrT, 2 * sizeof(double));
+
+	MtrxSumMatrx(arr_dFGreek, arr_Part_dF,2, 2, arrT1) ;
+
+	memcpy(arr_dFGreek,arrT1, 4 * sizeof(double));
+
+	}
+	return 0;
+}
+
+void _fastcall TVeer4::calc_CoeffOtrag(TComp *pSDifZv,double alfTrg,double  alfAnp,double* valK11, double* valK12
+	 ,double* valK21,double* valK22,double* arr_gradK11, double* arr_gradK12, double* arr_gradK21
+	 ,double* arr_gradK22, double*arr_HessK11, double* arr_HessK12, double* arr_HessK21,double* arr_HessK22)
+{
+   // преобразование массива измерений
+   TComp qZv[2], cmpTang(mTang, 0.);
+   TComp cmpi(0.,1.);
+   TComp cmpZero(0.,0.);
+   TComp cmpC0( marrSumDgr[0].mKSum, 0.);
+   TComp cmpC1( marrSumDgr[1].mKSum, 0.);
+   qZv[0] = cmpZero - (cmpi * pSDifZv[0] /cmpTang) * cmpC0;
+   qZv[1] = cmpZero - (cmpi * pSDifZv[1] /cmpTang) * cmpC1;
+   ///
+
+  // вычисление вспомогательных функций fi1, fi2, grad_f1? grad_f2, hess_fi1, hess_fi2
+  TComp cmpX1(alfTrg, 0.);
+  TComp cmpX2(alfAnp, 0.);
+  TComp cmpFi1, cmpFi2, cmpArrGradFi1[2], cmpArrGradFi2[2],cmpArrHessFi1[4], cmpArrHessFi2[4];
+  calcFncs_Fi1_and_Fi2( cmpX1, cmpX2, cmpFi1, cmpFi2);
+  calcVectrsGrad_Fi1_and_Fi2( cmpX1, cmpX2, cmpArrGradFi1, cmpArrGradFi2);
+  calcMtrxHess_Fi1_and_Fi2( cmpX1, cmpX2, cmpArrHessFi1, cmpArrHessFi2);
+  ///
+  // вычисление z1, z2, grad_z1, grad_z2, hess_z1, hess_z2
+  TComp cmpAlf1(marrSumDgr[0].mScnSum, 0.), cmpAlf2(marrSumDgr[1].mScnSum, 0.);
+  TComp cA1 = ( qZv[0] - qZv[1]) / (cmpAlf2 - cmpAlf1) ;
+  TComp cA2 = ( cmpAlf1 * qZv[1] -  cmpAlf2 *  qZv[0]) / (cmpAlf2 - cmpAlf1) ;
+  TComp cZ1 = cA1 * cmpFi1 +  cA2 * cmpFi2;
+  TComp cZ2 = cA1 - cZ1;
+  TComp  grad_z1[2], grad_z2[2], hess_z1[4], hess_z2[4], carrT0[2], carrT1[2]
+	, carrT2[4], carrT3[4];
+  MatrxMultScalar(cmpArrGradFi1, 2, 1, cA1,carrT0);
+  MatrxMultScalar(cmpArrGradFi2, 2, 1, cA2,carrT1);
+  MtrxSumMatrx(carrT0, carrT1, 2, 1, grad_z1) ;
+  TComp cmpMinus1(-1.,0.);
+  MatrxMultScalar(grad_z1, 2, 1, cmpMinus1,grad_z2);
+
+  MatrxMultScalar(cmpArrHessFi1, 4, 1, cA1,carrT2);
+  MatrxMultScalar(cmpArrHessFi2, 4, 1, cA2,carrT3);
+  MtrxSumMatrx(carrT2, carrT3, 4, 1, hess_z1) ;
+  MatrxMultScalar( hess_z1, 4, 1, cmpMinus1, hess_z2);
+  ///
+
+  *valK11 =  cZ1.m_Re;
+  *valK12 =  cZ1.m_Im;
+  *valK21 =  cZ2.m_Re;
+  *valK22 =  cZ2.m_Im;
+
+  MatrRe(grad_z1, 1, 2, arr_gradK11);
+  MatrIm(grad_z1, 1, 2, arr_gradK12);
+  MatrRe(grad_z2, 1, 2, arr_gradK21);
+  MatrIm(grad_z2, 1, 2, arr_gradK22);
+
+   MatrRe(hess_z1, 1, 4, arr_HessK11);
+   MatrIm(hess_z1, 1, 4, arr_HessK12);
+   MatrRe(hess_z2, 1, 4, arr_HessK21);
+   MatrIm(hess_z2, 1, 4, arr_HessK22);
+
+
+}
+
+void _fastcall TVeer4::calcFncs_Fi1_and_Fi2(const TComp  cmpX1, const TComp cmpX2,TComp& cmpFi1,TComp & cmpFi2)
+{
+
+}
+void _fastcall TVeer4::calcVectrsGrad_Fi1_and_Fi2(const TComp   cmpX1, const TComp  cmpX2,TComp* cmpArrGradFi1, TComp* cmpArrGradFi2)
+{
+
+}
+void _fastcall TVeer4::calcMtrxHess_Fi1_and_Fi2(const TComp  cmpX1,const TComp  cmpX2
+	   ,TComp* cmpArrHessFi1,TComp* cmpArrHessFi2)
+{
+
+}
+#pragma package(smart_init)

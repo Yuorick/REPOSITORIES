@@ -1,0 +1,215 @@
+//---------------------------------------------------------------------------
+
+#include <vcl.h>
+#include <math.h>
+#pragma hdrstop
+
+#include "Unit1.h"
+//---------------------------------------------------------------------------
+#pragma package(smart_init)
+#pragma resource "*.dfm"
+TForm1 *Form1;
+//---------------------------------------------------------------------------
+__fastcall TForm1::TForm1(TComponent* Owner)
+	: TForm(Owner)
+{
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm1::Button1Click(TObject *Sender)
+{
+double valTKel0 = 273.15 + 25.75;
+ double valH = 4500.;
+	  double valTKel = valTKel0  - 0.0065 * 5500;
+	  double valTCel = valTKel- 273.15;
+	  double valPAm = 101325. * exp(log(valTKel/ valTKel0) * 9.81* 0.028964/ 8.31/ 0.0065);
+	  double valRo =   valPAm * 0.028964/8.31/  valTKel;
+	  double valOmega =4.15 * 2.* M_PI;
+
+	  double valR = 7.2;
+	  double valMass = 8500.;
+	  double valCt = 2.* 9.81 * valMass/  (valRo   *M_PI * valR * valR *valR*valR  *valOmega *valOmega);
+
+	  int iii =0;
+
+
+}
+//---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+
+void __fastcall TForm1::fncInputData()
+{
+
+	String s_22 = LabeledEdit2->Text;
+	//if (wcschr(s_22.w_str(), L','))
+ //	{
+
+		// длина волны
+		mLambda = VAL_C / StrTo_Dbl_(LabeledEdit15->Text) * 100. / 1000000000.;
+		LabeledEdit13->Text = mLambda;
+
+		// расстояние между излучателями
+		mdEmitCol = mLambda * 0.55;
+		mdEmitRow = mLambda * 0.55;
+		LabeledEdit12->Text = mdEmitCol;
+
+		// ЭТАЛОННЫЙ СИГНАЛ ДЛЯ РАСЧЕТА АМПЛИТУДЫ
+		// амплитуда
+		mEtalonAmp = StrTo_Dbl_(LabeledEdit4->Text);
+		// дальность
+		mEtalonDist = StrTo_Dbl_(LabeledEdit10->Text) * 1000.;
+		// ЭПР
+		mEtalonAPR = StrTo_Dbl_(LabeledEdit16->Text);
+		// СКО внутр шума суммарной диаграммы 5П10
+		mNoiseSKZ_5P10 = StrTo_Dbl_(LabeledEdit17->Text);
+		// СКЗ разброса коэффиц усиления суммарной диаграммы 5П10
+		mEtalonSigAmplFact_5P10 = StrTo_Dbl_(LabeledEdit18->Text);
+
+		// мощность на передачу
+		mEtalonPowerPrd = StrTo_Dbl_(LabeledEdit36->Text);
+		// КУ на передачу
+		mEtalonKYPrd = StrTo_Dbl_(LabeledEdit38->Text);
+		// мощность на прием
+		mEtalonKYPriem = StrTo_Dbl_(LabeledEdit37->Text);
+
+
+		mEtalonSign = TEtalonSign(mEtalonAmp, mEtalonDist, mEtalonAPR,
+			mNoiseSKZ_5P10, mEtalonSigAmplFact_5P10, mEtalonPowerPrd, mEtalonKYPrd
+          , mEtalonKYPriem);
+		///
+
+		//  антенна на передачу
+        	// мощность на передачу
+		mPowerPrd = StrTo_Dbl_(LabeledEdit40->Text);
+		// КУ на передачу
+		 mKYPrd = StrTo_Dbl_(LabeledEdit39->Text);
+
+		 mTransmitAnt.mKYPrd  =mKYPrd;
+		 mTransmitAnt.mPowerPrd = mPowerPrd;
+		///
+
+
+		///
+
+
+
+
+		mSigSins  =  StrTo_Dbl_(LabeledEdit35->Text) / 1000.;
+
+		mSig_d_po_dt_Sins =   StrTo_Dbl_(LabeledEdit54->Text) / 1000.;
+
+			// интервал между измерениями
+		mMeasT = 1. / StrTo_Dbl_(LabeledEdit21->Text);
+		mSinsDelayT = StrTo_Dbl_(LabeledEdit48->Text);
+		mRzvT =  StrTo_Dbl_(LabeledEdit31->Text);
+
+		mControlSyst = TControlSyst(mMeasT, mSinsDelayT,mRzvT );
+
+
+
+
+ //	}
+ //	else
+ //	{
+		// ширинадиаграммы
+		// mWidthDgr =  StrTo_Dbl_(LabeledEdit3->Text) * M_PI/3000./2. ;
+ //	}
+
+
+
+	// к-во столбцов  излучателей
+
+	mNumEmitCols = StrToInt(LabeledEdit9->Text);
+	// к-во строк излучателей
+	mNumEmitRows = StrToInt(LabeledEdit11->Text);
+	// к-во столбцов АМ  (по горизонтали )
+	mNumAMCols = StrToInt(LabeledEdit5->Text);
+	// к-во строк АМ (по вертикали )
+	mNumAMRows = StrToInt(LabeledEdit6->Text);
+	// расстояние между АМ по вериткали
+	mdAMRow = ((double)mNumEmitRows) * mdEmitRow;
+	// расстояние между АМ по горизонтали
+	mdAMCol = ((double)mNumEmitCols) * mdEmitCol;
+	LabeledEdit8->Text = mdAMRow;
+	LabeledEdit7->Text = mdAMCol;
+	///
+
+	const double SigEmitNoise = mNoiseSKZ_5P10 / sqrt(((double)(8 * 16 * 28)));
+	const double SigEmitAmplFact = mEtalonSigAmplFact_5P10 / sqrt
+		(((double)(8 * 16 * 28)));
+	mAM_2D = TAM_2D(mNumEmitCols, mNumEmitRows, mdEmitCol, mdEmitRow,
+		SigEmitNoise, SigEmitAmplFact);
+	mSigmaR =  StrTo_Dbl_(LabeledEdit30->Text);
+
+	mFar_2D = TFar_2D(mNumAMCols, mNumAMRows, mLambda, mdAMCol, mdAMRow,
+		mAM_2D, mbarrAM, mSigmaR);
+
+	for (int i = 0; i < mNumAMCols * mNumAMRows; i++) {
+
+		if (!mbarrAM[i]) {
+			mFar_2D.mpAm2D[i].mOtklCoefUs = 1.;
+			mFar_2D.mpAm2D[i].mSigEmitNoise = 0.;
+		}
+	}
+
+   //
+ //*************************************************************************************
+ //******* СОЗДАНИЕ КОРАБЛЯ ******************************************************************************
+ //*************************************************************************************
+	  // 3.3 создание привода
+	mDriverSigBet  = StrTo_Dbl_(LabeledEdit19->Text) * 0.001;
+	mDriverSigEps  = StrTo_Dbl_(LabeledEdit20->Text)* 0.001;
+	mDriverDynamicSigBet = StrTo_Dbl_(LabeledEdit23->Text)* 0.001;
+	mDriverDynamicSigEps = StrTo_Dbl_(LabeledEdit22->Text)* 0.001;
+
+	 // 3.4  параметры корабля
+	   // константы
+	mVesselWidth = 0; // ширина(м)
+	mVesselLength = 0; // длина(м)
+
+
+
+	// парамеитры движения
+	mQ0 = StrTo_Dbl_(LabeledEdit28->Text) * M_PI / 180. ; // генеральный курс
+	mVVess = StrTo_Dbl_(LabeledEdit29->Text)* 0.514  ;// скорость корабля своего 20 узлов
+
+
+	mMaxAmp_AftFlexure  = StrTo_Dbl_(LabeledEdit25->Text)* M_PI/180.;
+	// период колебаний кормового изгиба
+	mT_AftFlexure =  StrTo_Dbl_(LabeledEdit27->Text);
+	//максимальная амплитуда бортового изгиба корабля в рад на 100 м
+	mMaxAmp_BoardFlexure =   StrTo_Dbl_(LabeledEdit24->Text)* M_PI/180.;
+	// период колебаний бортового изгиба
+	mT_BoardFlexure = StrTo_Dbl_(LabeledEdit26->Text);
+
+
+	/////////
+
+	 // 3.1 создание СИНС
+	mMaxSig_Q      =     mSigSins ; //0.000582;
+	mMaxSig_Psi    =      mSigSins ; //0.00145;
+	mMaxSig_Tet    =    mSigSins ; // 0.00145;
+	mMaxSig_dQdt   =      mSig_d_po_dt_Sins ;
+	mMaxSig_dPsidt =      mSig_d_po_dt_Sins ;
+	mMaxSig_dTetdt =      mSig_d_po_dt_Sins ;
+
+
+		for (int i = 0; i < 3; i++)
+		{
+			marrFarParallacs[i] = StrTo_Dbl_(StringGrid1->Cells[i + 1][1] );
+			marrArtParral[i] = StrTo_Dbl_(StringGrid1->Cells[i + 1][2]);
+		}
+
+
+
+
+	double valWind_V =  StrTo_Dbl_(LabeledEdit1->Text) ;
+	double valWind_VertV =  StrTo_Dbl_(LabeledEdit3->Text) ;
+	double valWind_Alf =  StrTo_Dbl_(LabeledEdit2->Text) / 180. * M_PI;
+	mEnvironment  = TEnvironment ( valWind_V , valWind_Alf, valWind_VertV );
+
+
+
+}
+
+//---------------------------------------------------------------------------

@@ -1,0 +1,65 @@
+//---------------------------------------------------------------------------
+
+#ifndef Complicated_BodyH
+#define Complicated_BodyH
+#include "SimpleBody_3D.h"
+ /*
+class TSimpleBody_3D;
+#define MAX_POSSIBLE_QUANT_OF_SIMPLE_BODY 20
+class TComplicated_Body
+{
+public:
+
+	  TSimpleBody_3D marrSimpleBody[MAX_POSSIBLE_QUANT_OF_SIMPLE_BODY];
+	  int mQuantSimpleBody;
+
+
+	__fastcall TComplicated_Body() ;
+
+__fastcall TComplicated_Body(const int  QuantSimpleBody
+  , TSimpleBody_3D **ppSimpleBody);
+
+	TComplicated_Body  (const TComplicated_Body &R);
+
+	 TComplicated_Body operator=(TComplicated_Body  R);
+
+
+
+}; */
+
+
+#include "CircleCylinder.h"
+#include "TruncatedConeCircle.h"
+
+
+#define MAX_POSSIBLE_QUANT_OF_SIMPLE_BODY 20
+class TCircleCylinder;
+class TTruncatedConeCircle;
+class TComplicated_Body
+{
+public:
+
+	  TCircleCylinder marrCircleCylinder[MAX_POSSIBLE_QUANT_OF_SIMPLE_BODY];
+	  int mQuantCircleCylinder;
+	  TTruncatedConeCircle marrTruncatedConeCircle[MAX_POSSIBLE_QUANT_OF_SIMPLE_BODY];
+	  int mQuantTruncatedConeCircle;
+
+	__fastcall TComplicated_Body() ;
+
+__fastcall TComplicated_Body(const int  QuantCircleCylinder
+  , TCircleCylinder *arrCircleCylinder, const int  QuantTruncatedConeCircle
+  , TTruncatedConeCircle *arrTruncatedConeCircle);
+
+	TComplicated_Body  (const TComplicated_Body &R);
+
+	TComplicated_Body operator=(TComplicated_Body  R);
+
+	__fastcall calcCapacity();
+	void calcCentreOfGravity(double *arrCentreGrav);
+
+
+
+};
+
+
+#endif

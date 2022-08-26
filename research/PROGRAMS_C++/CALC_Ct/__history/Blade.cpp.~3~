@@ -1,0 +1,71 @@
+//---------------------------------------------------------------------------
+
+
+#pragma hdrstop
+
+#include "Blade.h"
+
+
+__fastcall  TBlade::TBlade()
+{
+  // радиус винта
+	 mBladeR  = 0.;
+	// расстояние от оси вращения до  втулки ГШ
+	 mRadHorizHsarnir =0.;
+	// высота вертикального сечения  лопасти ближе к центру вращения
+	 mPofile_d0 =0.;
+	// высота вертикального сечения  лопасти дальше от центра вращения
+	 mPofile_d1=0.;
+	// масса лопасти
+	 mBladeM=0.;
+	// хорда лопасти
+	 mBlade_b=0.;
+
+}
+// Конструктор копирования
+__fastcall  TBlade::TBlade (const TBlade &R)
+ {
+	// радиус винта
+	 mBladeR  = R.mBladeR ;
+	// расстояние от оси вращения до  втулки ГШ
+	 mRadHorizHsarnir = R.mRadHorizHsarnir;
+	// высота вертикального сечения  лопасти ближе к центру вращения
+	 mPofile_d0 = R.mPofile_d0;
+	// высота вертикального сечения  лопасти дальше от центра вращения
+	 mPofile_d1 = R.mPofile_d1;
+	// масса лопасти
+	 mBladeM = R.mBladeM;
+	// хорда лопасти
+	 mBlade_b = R.mBlade_b;
+   }
+ // оператор присваивания
+  TBlade TBlade::operator=(TBlade  R)
+ {
+	// радиус винта
+	 mBladeR  = R.mBladeR ;
+	// расстояние от оси вращения до  втулки ГШ
+	 mRadHorizHsarnir = R.mRadHorizHsarnir;
+	// высота вертикального сечения  лопасти ближе к центру вращения
+	 mPofile_d0 = R.mPofile_d0;
+	// высота вертикального сечения  лопасти дальше от центра вращения
+	 mPofile_d1 = R.mPofile_d1;
+	// масса лопасти
+	 mBladeM = R.mBladeM;
+	// хорда лопасти
+	 mBlade_b = R.mBlade_b;
+	 return *this ;
+ }
+
+ // парам констр 1
+ __fastcall TBlade::TBlade(const double  BladeR,const double  RadHorizHsarnir
+   ,const double  Pofile_d0,const double  Pofile_d1,const double  BladeM  ,const double  Blade_b)
+ {
+   mBladeR = BladeR;
+   mRadHorizHsarnir = RadHorizHsarnir;
+   mPofile_d0 = Pofile_d0 ;
+   mPofile_d1 = Pofile_d1;
+   mBladeM = BladeM;
+   mBlade_b = Blade_b;
+ }
+
+#pragma package(smart_init)

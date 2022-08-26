@@ -1,0 +1,22 @@
+//---------------------------------------------------------------------------
+
+#ifndef SimpleBody_3DH
+#define SimpleBody_3DH
+
+class TSimpleBody_3D
+{
+public:
+
+	__fastcall TSimpleBody_3D() ;
+
+	virtual __fastcall ~TSimpleBody_3D() ;
+
+	virtual double calcCapacity() ;
+
+	virtual void calcCentreOfGravity(double *arrCentreGrav)  ;
+
+	virtual  void calcInertiaTensor(double *arrInertTens) ;
+
+
+};
+#endif

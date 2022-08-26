@@ -1,0 +1,65 @@
+//---------------------------------------------------------------------------
+
+#ifndef MainFormH
+#define MainFormH
+//---------------------------------------------------------------------------
+#include <Classes.hpp>
+#include <Controls.hpp>
+#include <StdCtrls.hpp>
+#include <Forms.hpp>
+#include <ExtCtrls.hpp>
+//---------------------------------------------------------------------------
+class TForm1 : public TForm
+{
+__published:	// IDE-managed Components
+	TPanel *Panel1;
+	TButton *Button1;
+	TLabeledEdit *LabeledEdit1;
+	TLabeledEdit *LabeledEdit2;
+	TLabeledEdit *LabeledEdit5;
+	TLabeledEdit *LabeledEdit6;
+	TPanel *Panel2;
+	TLabeledEdit *LabeledEdit8;
+	TLabeledEdit *LabeledEdit9;
+	TLabeledEdit *LabeledEdit10;
+	TButton *Button2;
+	TLabeledEdit *LabeledEdit11;
+	TLabeledEdit *LabeledEdit12;
+	TLabeledEdit *LabeledEdit13;
+	TLabeledEdit *LabeledEdit14;
+	TLabeledEdit *LabeledEdit15;
+	TLabeledEdit *LabeledEdit3;
+	TLabeledEdit *LabeledEdit4;
+	TLabeledEdit *LabeledEdit7;
+	void __fastcall Button1Click(TObject *Sender);
+	void __fastcall Button2Click(TObject *Sender);
+private:	// User declarations
+public:		// User declarations
+	__fastcall TForm1(TComponent* Owner);
+	// температура на поверхности земли
+	double mTKel0 ;
+	// высота
+	double mHeliH ;
+	// частота вращениеия винта
+	double mBladeOmega;
+	// радиус вмнта
+	double mBladeR ;
+	// масса вертолетв
+	double mHelicMass;
+
+	// радиус втулки ГШ
+	double mRadHorizHsarnir;
+	// высота вертикального сечения  лопасти ближе к центру вращения
+	double mPofile_d0;
+	// высота вертикального сечения  лопасти дальше от центра вращения
+	double mPofile_d1;
+
+		// масса лопасти
+	double mPofile_d1;
+
+	void __fastcall fncInputData();
+};
+//---------------------------------------------------------------------------
+extern PACKAGE TForm1 *Form1;
+//---------------------------------------------------------------------------
+#endif

@@ -1,0 +1,45 @@
+//---------------------------------------------------------------------------
+
+#ifndef CoatTargNeibourhoodH
+#define CoatTargNeibourhoodH
+class TURPointXY;
+class TCoastTargNeighbourhood
+{
+ public:
+ static void calcOptimalDestructionProb_For_GroupLinedPoints (const int  QAantIspit, double *parrMtrxCorr
+	,const double VAlKillingRange, const int QUantShells,const int  In, double *parrTargX, const int LEnarrX
+	, double *parrAimingPoints, int *piarrRepeatQuants, int *pQuantAimingPoints, TURPointXY *ppntArrAimingPoints_SKT
+	, double *pvalProb);
+
+ static void calcOptimalArray_Of_AimPoints_ForGroupLinedPoints(double *arrElK
+	,const double VAlKillingRange, const int QUantShells,const int  In, double *parrx, const int LEnarrX
+	, double *parrAimingPoints, int *piarrRepeatQuants, int *pQuantAimingPoints);
+
+ static void solvLinProg_ForLinedPoints(double *arrMtrx_eq, const double VAlLagr, const int NUmRows, const int NUmCols
+									, double *arr_x,  double *arr_DualVars,  double &fval) ;
+
+static void calcOptimalArray_Of_AimPoints_ForGroupLinedPoints__(double *arrElK
+	,const double VAlKillingRange, const int QUantShells,const int  In, double *parrx, const int LEnarrX
+	, double *parrAimingPoints, int *piarrRepeatQuants, int *pQuantAimingPoints) ;
+
+static void calcArray_Of_AimPoints_For_LineTarg(const double VAlL, const double VAlSig
+	,const double VAlKillingRange, const int QUantShells,const int  QUantNetPoint
+	, double *parrAimingPoints, int *piarrRepeatQuants, int *pQuantAimingPoints);
+
+static double calcMinObjectFunc_AlongWithLine(double *parr_L, const int LEnarrZ
+				 ,const int In,double * parrX, double * parrXZv, double *parrRez) ;
+
+static void calc_d2FGr_po_dx(double *parr_L, const int LEnarrZ
+				 ,const int In,double * parrX, double *arr_d2FGr_po_dx);
+
+static void  calcGradFGr(double *parr_L, const int LEnarrZ
+				 ,const int In,double * parrX,double * arrGrad);
+
+
+static double _MAX_double( double x, double y)
+{
+	return (x>y)?x:y;
+}
+
+};
+#endif

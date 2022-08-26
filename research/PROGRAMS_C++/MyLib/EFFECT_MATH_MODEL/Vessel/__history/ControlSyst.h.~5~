@@ -1,0 +1,37 @@
+//---------------------------------------------------------------------------
+
+#ifndef ControlSystH
+#define ControlSystH
+class TControlSyst
+{
+public:
+	//Темп фильтрации
+	double mFiltT;
+	// Задержка СИНС
+	double mSinsDelayT;
+
+	// Темп решения задачи РЗВ
+	double mRzvT;
+
+
+
+
+
+	// конструктор по умолчанию
+	TControlSyst () ;
+	// конструктор копирования
+	TControlSyst  (const TControlSyst  &R) ;
+	// оператор присваивания
+	TControlSyst  operator=(TControlSyst   R2) ;
+
+ //	TControlSyst (const double FiltT, const double SinsDelayT)  ;
+
+	TControlSyst (const double FiltT, const double SinsDelayT, const double RzvT)  ;
+
+
+
+
+
+
+}  ;
+#endif

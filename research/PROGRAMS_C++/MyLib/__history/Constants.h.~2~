@@ -1,0 +1,8 @@
+//---------------------------------------------------------------------------
+
+#ifndef ConstantsH
+#define ConstantsH
+
+#define LEN_ARR_SCATTERS 10
+
+#endif

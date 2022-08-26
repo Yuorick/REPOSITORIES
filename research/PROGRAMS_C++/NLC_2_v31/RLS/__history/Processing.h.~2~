@@ -1,0 +1,33 @@
+//---------------------------------------------------------------------------
+
+#ifndef ProcessingH
+#define ProcessingH
+#include "Faceta.h"
+#include "Far.h"
+class TComp;
+class TFaceta;
+class TFar;
+class TProcessing
+{
+public:
+
+
+
+ // Фар
+ TFar mFar;
+ // массив токов по модулям
+ TComp *mparrCmpElCurrent;
+
+//TProcessing(const double x1,const double y1);
+ TProcessing() ;
+ TProcessing(const double valTetSdvigRadian);
+ ~TProcessing();
+// конструктор копирования
+ TProcessing(const TProcessing &R) ;
+ TProcessing operator=(TProcessing  R2) ;
+ // парам констр
+ TProcessing(const TFar Far, TComp *parrCmpElCurrent);
+ TComp  _fastcall fncF (const double tet);
+ void  _fastcall createProcessingGraphs(wchar_t *wchFoldName1 );
+
+#endif

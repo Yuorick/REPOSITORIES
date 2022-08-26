@@ -1,0 +1,412 @@
+//---------------------------------------------------------------------------
+
+
+#pragma hdrstop
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <string.h>
+
+#include "CoastTargPicturte.h"
+#include "YrWriteShapeFile.h"
+#include "URPolygon.h"
+#include "URPointXY.h"
+#include "MatrixProccess.h"
+#include "URPolyLine.h"
+#include "ArcEllipse.h"
+#include "URFigure.h"
+
+// построение картинки для береговой цели
+// wchOutFold - папака с шейп файлами
+// arrElK[4] - коррел матрица рассеяния точки падения
+// VAlPsi - курсовой угол скорости снаряда в точке встречи
+void createNibourAppointmPointPictureForCoastTarg(wchar_t *wchOutFold, double *arrElK
+		 , TURPolygon Polygon, const double VAlTargCourse0, const double VAlPsi)
+{
+	// поворот полигона цели на угол  valRotateAng
+	const TURPointXY pntSdvig(0.,0.);
+	const double VAlRastigenie  = 1.;
+	TURPolygon  plgTarg0 = Polygon.LinTransform(VAlTargCourse0,pntSdvig, VAlRastigenie ) ;
+	///
+
+	// 1. полигон цели в ГСК
+	wchar_t wchFoldName[300] ={0}, wchFileNamePlg[300] ={0}
+	, wchFileNamePolygonEll1[300] ={0}, wchFileNamePolygonEll2[300] ={0}, wchFileNamePolygonEll3[300] ={0}
+	, wchFileArrow[300] ={0};
+	wcscpy(  wchFoldName,  wchOutFold);
+	wcscat(wchFoldName, L"\\");
+
+	wcscpy(  wchFileNamePlg,  wchFoldName);
+	wcscat(wchFileNamePlg, L"TargPlg.shp");
+
+	plgTarg0.WriteSetSHPFiles(wchFileNamePlg, &plgTarg0,1);
+ ///
+
+	//   arrF - матрица собственных векторов  коррел матрицы
+	double arrF[4] = {0.} , arrMtrxLamb[4] = {0.};
+	CalcProperVectors2(arrElK, arrF , arrMtrxLamb) ;
+
+	 ///
+
+	 // матрица линейного преобразования, формирующего вектор   разбросов координат точки падения
+	 // из двухмерного вектора некореллированных координат единичной дисперсии
+	double arrLinTrasf [4] ={0.}, arrLambSq[4] ={0.};
+	arrLambSq[0] =  sqrt(arrMtrxLamb[0]);
+	arrLambSq[3] =  sqrt(arrMtrxLamb[3]);
+	MtrxMultMatrx(arrF,2, 2, arrLambSq,2, arrLinTrasf) ;
+	///
+
+	// 2. формирование эллипса разбросов по уровню 1
+
+	TURPolygon plgCircle1 = TURPolygon::fncCreateCircle(pntSdvig,1, 1001) ; // это единичный круг
+	TURPolygon plgonEll1 = plgCircle1.fncLinTransform(arrLinTrasf );// это его линейное преобразование
+	wcscpy(  wchFileNamePolygonEll1,  wchFoldName);
+	wcscat( wchFileNamePolygonEll1, L"PolygonEll1.shp");
+
+	plgonEll1.WriteSetSHPFiles( wchFileNamePolygonEll1, &plgonEll1,1);
+
+	///
+
+	 // 3. формирование эллипса разбросов по уровню 2
+	TURPolygon plgCircle2 = TURPolygon::fncCreateCircle(pntSdvig
+	,2, 1001) ;  // это круг  радиуса 2
+
+	TURPolygon plgonEll2 = plgCircle2.fncLinTransform(arrLinTrasf ); // это его линейное преобразование
+
+	wcscpy(  wchFileNamePolygonEll2,  wchFoldName);
+	wcscat( wchFileNamePolygonEll2, L"PolygonEll2.shp");
+
+	plgonEll2.WriteSetSHPFiles( wchFileNamePolygonEll2, &plgonEll2,1);
+
+	///
+
+	// 4. формирование эллипса разбросов по уровню 3
+	TURPolygon plgCircle3 = TURPolygon::fncCreateCircle(pntSdvig
+	,3, 1001) ;// это круг  радиуса 3
+
+	TURPolygon plgonEll3 = plgCircle3.fncLinTransform(arrLinTrasf ); // это его линейное преобразование
+	wcscpy(  wchFileNamePolygonEll3,  wchFoldName);
+	wcscat( wchFileNamePolygonEll3, L"PolygonEll3.shp");
+
+	plgonEll3.WriteSetSHPFiles( wchFileNamePolygonEll3, &plgonEll3,1);
+	///
+
+	// 5. проекция вектора скорости снаряда на гориз. плоскость
+	double val_t  = -100.;
+	TURPointXY pointBegin (val_t * cos(VAlPsi), val_t * sin(VAlPsi) );
+	TURPointXY pointEnd(0.,0.);
+	TURPolyLine plnArrow = TURPolyLine::fncCreateArrow( pointBegin,  pointEnd
+	,10.,20. * M_PI / 180.);
+
+	wcscpy( wchFileArrow,  wchFoldName);
+	wcscat( wchFileArrow, L"ShellVelo.shp");
+	plnArrow.WriteSetSHPFiles( wchFileArrow, &plnArrow,1);
+	///
+
+	// оси  координат
+	wchar_t wchAxesFileName[300] ={0};
+	wcscpy(  wchAxesFileName,  wchFoldName);
+	wcscat(wchAxesFileName, L"AxesArr.shp");
+	TYrWriteShapeFile::CreateShpArrowedAxes(wchAxesFileName,-500., 500.
+	,-500., 500.,30.) ;
+
+
+}
+
+
+
+// построение картинки для береговой цели
+// wchOutFold - папака с шейп файлами
+// arrElK[4] - коррел матрица рассеяния точки падения
+// VAlPsi - курсовой угол скорости снаряда в точке встречи
+//
+//
+//
+//
+//
+
+void createNibourAppointmPointPictureForCoastTarg(wchar_t *wchOutFold, double *arrElK
+		 , TURFigure *pFigure, const double VAlTargCourse0, const double VAlPsi)
+{
+	// поворот полигона цели на угол  valRotateAng
+	const TURPointXY pntSdvig(0.,0.);
+	const double VAlRastigenie  = 1.;
+	pFigure->LinearTransformation(VAlTargCourse0,pntSdvig, VAlRastigenie ) ;
+	///
+
+	// 1. полигон цели в ГСК
+	wchar_t wchFoldName[300] ={0}, wchFileNamePlg[300] ={0}
+	, wchFileNamePolygonEll1[300] ={0}, wchFileNamePolygonEll2[300] ={0}, wchFileNamePolygonEll3[300] ={0}
+	, wchFileArrow[300] ={0};
+	wcscpy(  wchFoldName,  wchOutFold);
+	wcscat(wchFoldName, L"\\");
+
+	wcscpy(  wchFileNamePlg,  wchFoldName);
+	wcscat(wchFileNamePlg, L"Target.shp");
+
+	pFigure -> WriteSetSHPFiles(wchFileNamePlg);
+ ///
+
+ //
+ TURPolygon plgConv ;
+ pFigure->ConvexShell(&plgConv);
+	wchar_t wchTargConvShell[300] ={0};
+	wcscpy(  wchTargConvShell,  wchFoldName);
+	wcscat(wchTargConvShell, L"TargConvShell.shp");
+	plgConv. WriteSetSHPFiles(wchTargConvShell);
+ ///
+
+
+	//   arrF - матрица собственных векторов  коррел матрицы
+	double arrF[4] = {0.} , arrMtrxLamb[4] = {0.};
+	CalcProperVectors2(arrElK, arrF , arrMtrxLamb) ;
+
+	 ///
+
+	 // матрица линейного преобразования, формирующего вектор   разбросов координат точки падения
+	 // из двухмерного вектора некореллированных координат единичной дисперсии
+	double arrLinTrasf [4] ={0.}, arrLambSq[4] ={0.};
+	arrLambSq[0] =  sqrt(arrMtrxLamb[0]);
+	arrLambSq[3] =  sqrt(arrMtrxLamb[3]);
+	MtrxMultMatrx(arrF,2, 2, arrLambSq,2, arrLinTrasf) ;
+	///
+
+	// 2. формирование эллипса разбросов по уровню 1
+
+	TURPolygon plgCircle1 = TURPolygon::fncCreateCircle(pntSdvig,1, 1001) ; // это единичный круг
+	TURPolygon plgonEll1 = plgCircle1.fncLinTransform(arrLinTrasf );// это его линейное преобразование
+	wcscpy(  wchFileNamePolygonEll1,  wchFoldName);
+	wcscat( wchFileNamePolygonEll1, L"PolygonEll1.shp");
+
+	plgonEll1.WriteSetSHPFiles( wchFileNamePolygonEll1, &plgonEll1,1);
+
+	///
+
+	 // 3. формирование эллипса разбросов по уровню 2
+	TURPolygon plgCircle2 = TURPolygon::fncCreateCircle(pntSdvig
+	,2, 1001) ;  // это круг  радиуса 2
+
+	TURPolygon plgonEll2 = plgCircle2.fncLinTransform(arrLinTrasf ); // это его линейное преобразование
+
+	wcscpy(  wchFileNamePolygonEll2,  wchFoldName);
+	wcscat( wchFileNamePolygonEll2, L"PolygonEll2.shp");
+
+	plgonEll2.WriteSetSHPFiles( wchFileNamePolygonEll2, &plgonEll2,1);
+
+	///
+
+	// 4. формирование эллипса разбросов по уровню 3
+	TURPolygon plgCircle3 = TURPolygon::fncCreateCircle(pntSdvig
+	,3, 1001) ;// это круг  радиуса 3
+
+	TURPolygon plgonEll3 = plgCircle3.fncLinTransform(arrLinTrasf ); // это его линейное преобразование
+	wcscpy(  wchFileNamePolygonEll3,  wchFoldName);
+	wcscat( wchFileNamePolygonEll3, L"PolygonEll3.shp");
+
+	plgonEll3.WriteSetSHPFiles( wchFileNamePolygonEll3, &plgonEll3,1);
+	///
+
+	// 5. проекция вектора скорости снаряда на гориз. плоскость
+	double val_t  = -100.;
+	TURPointXY pointBegin (val_t * cos(VAlPsi), val_t * sin(VAlPsi) );
+	TURPointXY pointEnd(0.,0.);
+	TURPolyLine plnArrow = TURPolyLine::fncCreateArrow( pointBegin,  pointEnd
+	,10.,20. * M_PI / 180.);
+
+	wcscpy( wchFileArrow,  wchFoldName);
+	wcscat( wchFileArrow, L"ShellVelo.shp");
+	plnArrow.WriteSetSHPFiles( wchFileArrow, &plnArrow,1);
+	///
+
+	// оси  координат
+	wchar_t wchAxesFileName[300] ={0};
+	wcscpy(  wchAxesFileName,  wchFoldName);
+	wcscat(wchAxesFileName, L"AxesArr.shp");
+	TYrWriteShapeFile::CreateShpArrowedAxes(wchAxesFileName,-500., 500.
+	,-500., 500.,30.) ;
+
+
+}
+
+
+
+// построение картинки для береговой цели
+// wchOutFold - папака с шейп файлами
+// arrElK[4] - коррел матрица рассеяния точки падения
+// VAlPsi - курсовой угол скорости снаряда в точке встречи
+//
+//
+//
+//
+//
+
+void createNibourAppointmPointPictureForCoastTarg(wchar_t *wchOutFold, double *arrMtrxCorrFluct
+		 , double *arrMtrxCorrSyst, TURFigure *pFigure, const double VAlTargCourse0, const double VAlPsi)
+{
+	// поворот полигона цели на угол  valRotateAng
+	const TURPointXY pntSdvig(0.,0.);
+	const double VAlRastigenie  = 1.;
+	pFigure->LinearTransformation(VAlTargCourse0,pntSdvig, VAlRastigenie ) ;
+	///
+
+	// 1. полигон цели в ГСК
+	wchar_t wchFoldName[300] ={0}, wchFileNamePlg[300] ={0}
+	, wchFileNamePolygonEll1[300] ={0}, wchFileNamePolygonEll2[300] ={0}, wchFileNamePolygonEll3[300] ={0}
+	, wchFileArrow[300] ={0};
+	wcscpy(  wchFoldName,  wchOutFold);
+	wcscat(wchFoldName, L"\\");
+
+	wcscpy(  wchFileNamePlg,  wchFoldName);
+	wcscat(wchFileNamePlg, L"Target.shp");
+
+	pFigure -> WriteSetSHPFiles(wchFileNamePlg);
+ ///
+
+ //
+ TURPolygon plgConv ;
+ pFigure->ConvexShell(&plgConv);
+	wchar_t wchTargConvShell[300] ={0};
+	wcscpy(  wchTargConvShell,  wchFoldName);
+	wcscat(wchTargConvShell, L"TargConvShell.shp");
+	plgConv. WriteSetSHPFiles(wchTargConvShell);
+ ///
+
+	// 2. формирование эллипса флукт ошибки
+	TURPolygon  plgEllFluct =  TURPolygon::createEllips(arrMtrxCorrFluct, 1, 1001);
+
+	wcscpy(  wchFileNamePolygonEll1,  wchFoldName);
+	wcscat( wchFileNamePolygonEll1, L"PlgEll_Fluct.shp");
+
+	plgEllFluct.WriteSetSHPFiles( wchFileNamePolygonEll1, &plgEllFluct,1);
+
+	///
+
+	 // 3. формирование эллипса сист. ошибки
+	TURPolygon  plgEllSyst =  TURPolygon::createEllips(arrMtrxCorrSyst, 1, 1001);
+	wcscpy(  wchFileNamePolygonEll1,  wchFoldName);
+	wcscat( wchFileNamePolygonEll1, L"PlgEll_Syst.shp");
+	plgEllSyst.WriteSetSHPFiles( wchFileNamePolygonEll1, &plgEllSyst,1);
+	///
+
+	// 4. формирование эллипса сувммарнгой  ошибки
+	double arrMtrxCorrSum[4] ={0.};
+	MtrxSumMatrx(arrMtrxCorrFluct, arrMtrxCorrSyst,2, 2,arrMtrxCorrSum) ;
+	TURPolygon  plgEllSum =  TURPolygon::createEllips(arrMtrxCorrSum, 1, 1001);
+
+	wcscpy(  wchFileNamePolygonEll1,  wchFoldName);
+	wcscat( wchFileNamePolygonEll1, L"PlgEll_Sum.shp");
+
+	plgEllSum.WriteSetSHPFiles( wchFileNamePolygonEll1, &plgEllSum,1);
+
+    ///
+	// 5. проекция вектора скорости снаряда на гориз. плоскость
+	double val_t  = -100.;
+	TURPointXY pointBegin (val_t * cos(VAlPsi), val_t * sin(VAlPsi) );
+	TURPointXY pointEnd(0.,0.);
+	TURPolyLine plnArrow = TURPolyLine::fncCreateArrow( pointBegin,  pointEnd
+	,10.,20. * M_PI / 180.);
+
+	wcscpy( wchFileArrow,  wchFoldName);
+	wcscat( wchFileArrow, L"ShellVelo.shp");
+	plnArrow.WriteSetSHPFiles( wchFileArrow, &plnArrow,1);
+	///
+
+	// оси  координат
+	wchar_t wchAxesFileName[300] ={0};
+	wcscpy(  wchAxesFileName,  wchFoldName);
+	wcscat(wchAxesFileName, L"AxesArr.shp");
+	TYrWriteShapeFile::CreateShpArrowedAxes(wchAxesFileName,-500., 500.
+	,-500., 500.,30.) ;
+}
+
+// построение картинки для береговой цели
+// wchOutFold - папака с шейп файлами
+// arrElK[4] - коррел матрица рассеяния точки падения
+// VAlPsi - курсовой угол скорости снаряда в точке встречи
+void createNibourAppointmPointPictureForCoastTarg(wchar_t *wchOutFold, double *arrMtrxCorrFluct
+		 , double *arrMtrxCorrSyst,TURPolygon Polygon, const double VAlTargCourse0, const double VAlPsi)
+{
+	// поворот полигона цели на угол  valRotateAng
+	const TURPointXY pntSdvig(0.,0.);
+	const double VAlRastigenie  = 1.;
+	TURPolygon  plgTarg0 = Polygon.LinTransform(VAlTargCourse0,pntSdvig, VAlRastigenie ) ;
+	///
+
+	// 1. полигон цели в ГСК
+	wchar_t wchFoldName[300] ={0}, wchFileNamePlg[300] ={0}
+	, wchFileNamePolygonEll1[300] ={0}, wchFileNamePolygonEll2[300] ={0}, wchFileNamePolygonEll3[300] ={0}
+	, wchFileArrow[300] ={0};
+	wcscpy(  wchFoldName,  wchOutFold);
+	wcscat(wchFoldName, L"\\");
+
+	wcscpy(  wchFileNamePlg,  wchFoldName);
+	wcscat(wchFileNamePlg, L"TargPlg.shp");
+
+	plgTarg0.WriteSetSHPFiles(wchFileNamePlg, &plgTarg0,1);
+ ///
+
+	//   arrF - матрица собственных векторов  коррел матрицы
+	double arrF[4] = {0.} , arrMtrxLamb[4] = {0.};
+	CalcProperVectors2(arrElK, arrF , arrMtrxLamb) ;
+
+	 ///
+
+	 // матрица линейного преобразования, формирующего вектор   разбросов координат точки падения
+	 // из двухмерного вектора некореллированных координат единичной дисперсии
+	double arrLinTrasf [4] ={0.}, arrLambSq[4] ={0.};
+	arrLambSq[0] =  sqrt(arrMtrxLamb[0]);
+	arrLambSq[3] =  sqrt(arrMtrxLamb[3]);
+	MtrxMultMatrx(arrF,2, 2, arrLambSq,2, arrLinTrasf) ;
+	///
+
+	// 2. формирование эллипса флукт ошибки
+	TURPolygon  plgEllFluct =  TURPolygon::createEllips(arrMtrxCorrFluct, 1, 1001);
+
+	wcscpy(  wchFileNamePolygonEll1,  wchFoldName);
+	wcscat( wchFileNamePolygonEll1, L"PlgEll_Fluct.shp");
+
+	plgEllFluct.WriteSetSHPFiles( wchFileNamePolygonEll1, &plgEllFluct,1);
+
+	///
+
+	 // 3. формирование эллипса сист. ошибки
+	TURPolygon  plgEllSyst =  TURPolygon::createEllips(arrMtrxCorrSyst, 1, 1001);
+	wcscpy(  wchFileNamePolygonEll1,  wchFoldName);
+	wcscat( wchFileNamePolygonEll1, L"PlgEll_Syst.shp");
+	plgEllSyst.WriteSetSHPFiles( wchFileNamePolygonEll1, &plgEllSyst,1);
+	///
+
+	// 4. формирование эллипса сувммарнгой  ошибки
+	double arrMtrxCorrSum[4] ={0.};
+	MtrxSumMatrx(arrMtrxCorrFluct, arrMtrxCorrSyst,2, 2,arrMtrxCorrSum) ;
+	TURPolygon  plgEllSum =  TURPolygon::createEllips(arrMtrxCorrSum, 1, 1001);
+
+	wcscpy(  wchFileNamePolygonEll1,  wchFoldName);
+	wcscat( wchFileNamePolygonEll1, L"PlgEll_Sum.shp");
+
+	plgEllSum.WriteSetSHPFiles( wchFileNamePolygonEll1, &plgEllSum,1);
+
+    ///
+	// 5. проекция вектора скорости снаряда на гориз. плоскость
+	double val_t  = -100.;
+	TURPointXY pointBegin (val_t * cos(VAlPsi), val_t * sin(VAlPsi) );
+	TURPointXY pointEnd(0.,0.);
+	TURPolyLine plnArrow = TURPolyLine::fncCreateArrow( pointBegin,  pointEnd
+	,10.,20. * M_PI / 180.);
+
+	wcscpy( wchFileArrow,  wchFoldName);
+	wcscat( wchFileArrow, L"ShellVelo.shp");
+	plnArrow.WriteSetSHPFiles( wchFileArrow, &plnArrow,1);
+	///
+
+	// оси  координат
+	wchar_t wchAxesFileName[300] ={0};
+	wcscpy(  wchAxesFileName,  wchFoldName);
+	wcscat(wchAxesFileName, L"AxesArr.shp");
+	TYrWriteShapeFile::CreateShpArrowedAxes(wchAxesFileName,-500., 500.
+	,-500., 500.,30.) ;
+}
+
+
+
+#pragma package(smart_init)

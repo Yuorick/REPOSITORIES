@@ -1,0 +1,43 @@
+//---------------------------------------------------------------------------
+
+#ifndef ControlSystH
+#define ControlSystH
+
+#include "Table_1D.h"
+
+class TTable_1D;
+class TControlSyst
+{
+public:
+	//Темп фильтрации
+	double mFiltT;
+	// Задержка СИНС
+	double mSinsDelayT;
+
+	// Темп решения задачи РЗВ
+	double mRzvT;
+
+     // Искусственный перелет
+	 TTable_1D mTblPereletSimulated;
+
+
+
+	// конструктор по умолчанию
+	TControlSyst () ;
+	// конструктор копирования
+	TControlSyst  (const TControlSyst  &R) ;
+	// оператор присваивания
+	TControlSyst  operator=(TControlSyst   R2) ;
+
+ //	TControlSyst (const double FiltT, const double SinsDelayT)  ;
+
+	TControlSyst (const double FiltT, const double SinsDelayT, const double RzvT)  ;
+
+    TControlSyst (const double FiltT, const double SinsDelayT
+  , const double RzvT, const TTable_1D TblPereletSimulated);
+
+
+
+
+}  ;
+#endif

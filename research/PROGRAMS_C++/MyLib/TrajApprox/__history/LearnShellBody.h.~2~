@@ -1,0 +1,98 @@
+//---------------------------------------------------------------------------
+
+#ifndef LearnShellBodyH
+#define LearnShellBodyH
+#include "URPolyLine.h"
+#include "Detonator.h"
+
+
+
+
+class TURPolyLine;
+class TDetonator;
+enum enumShellType {CALIBRO_130, CALIBRO_100, CALIBRO_76_SHTAT,CALIBRO_76_BARRIER, CALIBRO_30, CALIBRO_UNKNOWN};//Типы снкарядов
+
+
+// Класс описывает характеристики снаряда
+class TLearnShellBody
+{
+public:
+// тип снаряда(калибр)
+	enumShellType  mEnumShellType  ;
+ // характерная длина снаряда, м
+	 double mL;
+// диаметр миделя, м
+	 double mDm ;
+// расстояние от основания гч до цм
+	 double mLc;
+ // длина гч
+	 double mLg ;
+// константа h_гоб для расчета дериываци функции  mh_gob =  Lc + 0.57*Lg -0.16*Dm
+	 double mh_gob ;
+// масса
+	 double mMass ;
+// момент инерции
+	 double mvalIx0 ;
+// детонатор
+TDetonator mDetonator;
+//   таблицпа креффициентов формы снарядав зависимости от от уга бросания по оси X
+	 TURPolyLine mplnCix;
+//   тадлицпа креффициентов формы снарядав зависимости от от уга бросания по оси Y
+	 TURPolyLine mplnCiy;
+//   тадлицпа креффициентов формы снарядав зависимости от от уга бросания по оси Z
+	 TURPolyLine mplnCiz;
+
+	 // дисперсия разброса начального значения угловой  скорости
+	 double mDispOmega0;
+
+	 // дисперсия разброса начального значения путевой скорости
+	 double mDispV0;
+
+	 // дисперсия относительного  разброса Cx (1 + delta)
+	 double mDispCx;
+
+	 // дисперсия относительного  разброса Cz (1 + delta)
+	 double mDispCz;
+
+	 // дисперсия  разброса массы
+	 double mDispMass0;
+
+
+
+
+
+
+	 double mV0;   // нач скорость
+
+	 double mOmega0 ;  // нач угловая скорость
+//
+
+
+
+	// конструктор по умолчанию
+	TLearnShellBody () ;
+	// конструктор копирования
+	TLearnShellBody  (const TLearnShellBody  &R) ;
+
+	// оператор присваивания
+	TLearnShellBody  operator=(TLearnShellBody   R2) ;
+   // параметрическийц конструктор
+	 TLearnShellBody( enumShellType EnumShellType) ;
+	 // параметрическийц конструктор
+	TLearnShellBody( enumShellType EnumShellType, const TDetonator Detonator);
+
+
+	 static void fnkCxEtal (const  double valM,  double &val_CxEtal, double &val_Grad_CxEtal) ;
+	 static void fnkMxOmegax (const  double valM,  double &val_MxOmegax, double &val_Grad_MxOmegax) ;
+	 static void fnkKnm (const  double valM,  double &val_Knm, double &val_Grad_Knm)  ;
+	 double calcBallisticCoeff();
+	 void fnkIx0 (const  double valTet0,  double &val_ix, double &val_Grad_ix);
+	 void fnkIz0 (const  double valTet0,  double &val_iz, double &val_Grad_iz) ;
+	 void fillShellVozmDispMatr_ShootingEarth (double *arrMtrxShellDisp);
+	 /*
+
+	 void fnkIy0 (const  double valTet1,  double &val_iy, double &val_Grad_iy);
+   */
+}  ;
+
+#endif

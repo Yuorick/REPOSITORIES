@@ -1,0 +1,33 @@
+//---------------------------------------------------------------------------
+
+#ifndef ProbabilityTheoryH
+#define ProbabilityTheoryH
+class TProbabilityTheory
+{
+public:
+static double __fastcall funcDistributionOfProbabilitiesForBinom (const int QUantIsp,
+   const double VAlP, const double VAlNesessarySuccess );
+
+static double __fastcall fncGaussDistrib01_Dim1 (const double VAlx);
+
+static double __fastcall calcGaussIntegral(const double VAlx );
+
+static double __fastcall calcBinomSuccessProbability(const double VAl_q, const int QUantM, const int QUantN );
+
+static double SIGNUM(const double VAlx)
+{
+	return (VAlx > 0.)? 1.:-1.;
+}
+
+static double calcIntegralNormalDensity(const double VAla, const double VAlSig
+	, const double VAlX0, const double VAlX1,  const double VAlStepIntegr);
+
+static double  calcIntegralNormalDensity_2D(const double VAlX, const double VAlY
+			,double * arrElK, const double  VAlKillingRange,const double VAlStepIntegr)  ;
+
+static double  calcDispRavnomern(const double VAlL);
+
+
+};
+
+#endif

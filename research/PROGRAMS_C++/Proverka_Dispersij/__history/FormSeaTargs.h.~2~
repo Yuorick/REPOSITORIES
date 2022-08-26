@@ -1,0 +1,248 @@
+//---------------------------------------------------------------------------
+
+#ifndef FormSeaTargsH
+#define FormSeaTargsH
+//---------------------------------------------------------------------------
+#include <Classes.hpp>
+#include <Controls.hpp>
+#include <StdCtrls.hpp>
+#include <Forms.hpp>
+#include <Dialogs.hpp>
+#include <ExtCtrls.hpp>
+//---------------------------------------------------------------------------
+
+
+#include "SingleSign.h"
+#include "InitTargData.h"
+#include "EtalonSign.h"
+#include "Target.h"
+#include "TransmitAnt.h"
+#include "AM_2D.h"
+#include "Far_2D.h"
+#include "URPointZ.h"
+
+#include "Environment.h"
+#include "MyShellTraj.h"
+#include "Bius.h"
+#include "ArtCannon.h"
+#include "ArtComplex.h"
+#include "Vessel.h"
+#include "Fight.h"
+#include "ArtCannon.h"
+#include <ButtonGroup.hpp>
+
+
+
+#define MAX_QUANT_AM 1600
+ enum enumTargetType;
+ enum enumShellType;
+ enum enumCannonType;
+//---------------------------------------------------------------------------
+class TAM_2D;
+class TFar_2D;
+class TURPointZ;
+class  TSingleSign;
+class TInitTargData;
+class TEtalonSign;
+class TTransmitAnt;
+class TWind;
+class TEnvironment;
+class TBius;
+class TArtCannon;
+class TArtComplex;
+class TVessel;
+class TFight;
+//----------------------------------------------------------------------------------------
+class TForm4 : public TForm
+{
+__published:	// IDE-managed Components
+	TPanel *Panel3;
+	TLabel *Label9;
+	TLabel *Label7;
+	TLabel *Label4;
+	TLabel *Label5;
+	TComboBox *ComboBox3;
+	TComboBox *ComboBox1;
+	TComboBox *ComboBox2;
+	TOpenDialog *OpenDialog1;
+	TPanel *Panel2;
+	TLabel *Label2;
+	TLabeledEdit *LabeledEdit46;
+	TLabeledEdit *LabeledEdit34;
+	TPanel *Panel10;
+	TLabel *Label1;
+	TLabeledEdit *LabeledEdit49;
+	TLabeledEdit *LabeledEdit51;
+	TLabeledEdit *LabeledEdit52;
+	TLabeledEdit *LabeledEdit53;
+	TLabeledEdit *LabeledEdit50;
+	TLabeledEdit *LabeledEdit2;
+	TPanel *Panel7;
+	TLabel *Label8;
+	TLabeledEdit *LabeledEdit25;
+	TLabeledEdit *LabeledEdit27;
+	TLabeledEdit *LabeledEdit29;
+	TLabeledEdit *LabeledEdit23;
+	TLabeledEdit *LabeledEdit28;
+	TButton *Button1;
+	TLabeledEdit *LabeledEdit10;
+	TComboBox *ComboBox5;
+	TLabel *Label6;
+	TPanel *Panel5;
+	TSaveDialog *SaveDialog1;
+	TButton *Button2;
+	TButton *Button5;
+	TEdit *Edit1;
+	TLabel *Label11;
+	TPanel *Panel1;
+	TLabel *Label3;
+	TButton *Button4;
+	TEdit *Edit2;
+	TPanel *Panel4;
+	TButton *Button3;
+	void __fastcall Button4Click(TObject *Sender);
+	void __fastcall Button1Click(TObject *Sender);
+	void __fastcall Button3Click(TObject *Sender);
+	void __fastcall Button2Click(TObject *Sender);
+
+	void __fastcall Button5Click(TObject *Sender);
+private:	// User declarations
+public:		// User declarations
+	__fastcall TForm4(TComponent* Owner);
+		// путь к папке с нрафиками
+	wchar_t *mpwchOutFile0;
+	// путь к папке с графиками  результатов расчета диаграмм
+	wchar_t mwchOutFold[400]; //
+
+		// путь к к файлу с ИД по ТАРАНУ
+   wchar_t *mpwchOutDataFileTaran;
+	// Снаряд
+
+	//тип взрывателя
+	enumDetonatorType mDetonatorType;
+	enumShellType mEnumShellType;
+	enumCannonType menumCannonType;
+	//
+	//к-во снарядов
+	int mQuantShells;
+	
+	///
+
+	// Цель
+
+	//тип цели
+	enumTargetType  mEnumTargType;
+	//угол пеленга, град
+	double mBearing0;
+	//высота, м
+	double mElev0;
+	//скорость, м/с
+	double mVelocity0;
+	//дальность, м
+	double mDist0;
+
+	//скз шума движения, м/с/с
+ 	double mWSkz;
+	//
+	double mTargZenitAng0;
+	//угол курса
+	double mTargCourse0;
+	// ЭПР цели
+	double mTargEPR ;
+
+	// задержка в работе АУ
+	double mAUDelayT;
+
+	// арткомплекс
+	// темп стрельбы
+	double mRateOfFire;
+
+	// 	точногсть отработки привода углов
+	double  mSigDrivAY_U ;
+
+	// 	точногсть отработки приводом скорости  углов
+	double  mSigDrivAY_dU_po_dt ;
+
+	// СКЗ угловой ошибки СИНС (углов качек)
+	double	mSigSins;
+
+	// СКЗ угловой ошибки СИНСпо скорости углов (углов качек)
+	double	mSig_d_po_dt_Sins;
+
+	// корабль наш
+	double mVesselWidth ; // ширина(м)
+	double mVesselLength ;
+	double marrFarParallacs[3] ;
+
+	double mMaxQ ; /// максимальный угол отклонения от генерального курса(амплитуда угла рыскания)
+	double mT_Q; // период рыскания
+	double mMaxPsi ;// максимальный угол килевой качки(амплитуда)
+	double mT_Psi ; // период килевой качки
+	double mMaxTet ; //максимальный угол боротовой качки(амплитуда)
+	double mT_Tet; // период бортовой качки
+	double mMaxVert  ;
+
+	// парамеитры движения  корабля нашего
+	double mQ0  ; // генеральный курс
+	double mVVess  ;// скорость корабля своего 20 узлов
+	double marrDelt[4] ;//  начальные фазы
+
+	//максимальная амплитуда кормового изгиба корабля в рад на 100 м
+	double mMaxAmp_AftFlexure;
+	// период колебаний кормового изгиба
+	double mT_AftFlexure;
+	//максимальная амплитуда бортового изгиба корабля в рад на 100 м
+	double mMaxAmp_BoardFlexure;
+	// период колебаний бортового изгиба
+	double mT_BoardFlexure;
+
+	// 3.1 создание СИНС
+	TSins mSins ;
+	double mMaxSig_Q ;
+	double mMaxSig_Psi  ;
+	double mMaxSig_Tet  ;
+	double mMaxSig_dQdt ;
+	double mMaxSig_dPsidt ;
+	double mMaxSig_dTetdt ;
+	double mK1         ;
+	double mSigV      ;
+	double mSigH     ;
+	double mMaxSig_H ;
+	double mMaxSig_VH ;
+	// тип алгоритма фильтрации
+
+
+	// привод
+	double mDriverSigBet ;// точность измерения угла Bet привода
+	double mDriverSigEps ;// точность измерения угла Eps  привода (угла места)
+	double mDriverDynamicSigBet ;// точность отработки угла курса  привода
+	double mDriverDynamicSigEps ;// точность  привода отработки угла места
+
+	//
+	 double marrArtParral[3]; // вектор параллакса АУ
+	//Темп фильтрации
+	// интервал между измерениями
+	double mMeasT;
+
+	// Задержка СИНС
+	double mSinsDelayT;
+
+
+	TBius mBius;
+	TFar_2D mFar_2D;
+	TArtCannon mArtCannon ;
+	TArtComplex mArtComplex;  // АУ
+	TTransmitAnt mTransmitAnt;
+	TEtalonSign mEtalonSign;
+	TVessel mVessel;
+	TFight mFight;
+	TEnvironment mEnvironment;
+	TInitTargData mInitTargData;
+	TShellBody mShellBody;
+
+	void __fastcall fncInputData();
+};
+//---------------------------------------------------------------------------
+extern PACKAGE TForm4 *Form4;
+//---------------------------------------------------------------------------
+#endif

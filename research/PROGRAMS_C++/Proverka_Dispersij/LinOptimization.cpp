@@ -1,0 +1,384 @@
+#pragma hdrstop
+//**************************************************
+//Функция решения задачи линейного программирования
+//**************************************************
+
+#include <fstream>
+#include <vcl.h>
+#include <tchar.h>
+#include <stdio.h>
+#include <windows.h>
+#include <stdlib.h>
+#include "LinOptimization.h"
+#include <math.h>
+
+using namespace std;
+
+
+ const double EPS1 = 0.00001 ;
+
+typedef bool (typRunFunctions_1) (double*, double*, double*, double*,
+									double*, double*, double*,
+									long*, double*, long, long, int);
+
+
+
+HINSTANCE hInstance_1 = NULL; // целое число - идентификатор загруженной DLL
+typRunFunctions_1 * pRunFunctions_1 = NULL;// указатель на процедуру из DLL
+int iSchetschik_1 = 0;
+
+
+//для разреженной матрицы
+typedef long (typRunFunctions_2)(  double* ObjVals, double* X, long* ia, long*  ja,double* A,
+		  double* rhs, double* lb, double* ub, double* c, long * rowtype,  double* pi,
+		  long n, long m, long nwi, long iopt, long MBTS, long ITLM ,long klog, char* logfile, double eps);
+
+HINSTANCE hInstance_2 = NULL; // целое число - идентификатор загруженной DLL
+typRunFunctions_2* pRunFunctions_2 = NULL;// указатель на процедуру из DLL
+int iSchetschikInt_2 = 0;
+
+
+ // задача минимизации
+int  LinNumericalSolver( int nvars,int bvars, double *f, int nrows,
+							double *a, double *b,int  nrows_eq,
+					double *a_eq, double *b_eq, double *lb,
+							double *ub,int *ix, double *x, double &fval)
+{
+	if (0 == iSchetschikInt_2)
+	{
+
+//		hInstance_2 = LoadLibrary(L"..\\MIODll\\R30_HI\\MIO3.dll");
+//		hInstance_2 = LoadLibrary(L"..\\MIODll\\Debug30\\MIO3.dll");
+		hInstance_2 = LoadLibrary(L"MIO3.dll");
+		if(!hInstance_2)
+		{
+			ShowMessage(L"MIO3_Finish.dll \n НЕ была найдена. ");
+		}
+		else
+		{
+			LPTSTR sFunkName = MAKEINTRESOURCE(1); //!!!!!!!!!!!!!!
+			char * cFunkName = (char *) sFunkName;   // convert?
+			pRunFunctions_2 = (typRunFunctions_2 *) GetProcAddress((HMODULE) hInstance_2, "MioGP");  // "MioGP");//
+			if (!pRunFunctions_2) { // библиотека НЕ содержит функцию MioGP
+				if(FreeLibrary(hInstance_2)) hInstance_2 = NULL;
+				ShowMessage(L"1) MIO3_Finish.dll была загружена. \n 2) MIO15.dll не содержит функции MioGP(..)");
+			}
+		}
+		iSchetschikInt_2++;
+	}
+
+
+
+// nvars -число переменных
+// f - вектор целевой функции
+// nrows - число строк в матрице неравенств
+// nrows_eq - число строк в матрице равенств
+// a_eq - матрица равенст
+// b_eq - вектор правой части равенст
+// lb - вектор нижних границ переменных
+// ub - вектор верхних границ переменных
+// x - [output] вектор значений переменных
+// fval - [output] оптимальное значение целевой функции
+
+
+
+
+		double  *rhs = new double [nrows + nrows_eq ] ;
+		memcpy(rhs,b,sizeof(double) * nrows) ;
+		memcpy( &rhs[nrows], b_eq, sizeof(double)*nrows_eq ) ;
+
+		double *xBig = new double [nvars ] ;
+		memset(xBig,0,sizeof(double) *nvars);
+
+
+
+		long *irowtype = new long [nrows + nrows_eq ] ;
+		memset(irowtype,0,sizeof(long) *(nrows + nrows_eq ));
+		for (int i = 0; i < nrows ; i++)
+		{
+		  irowtype[i] = 1 ;
+		}
+		double *dualVars = new double [nrows + nrows_eq] ;
+		memset(dualVars,0,sizeof(double) * (nrows + nrows_eq ));
+		// формирование матрицы parrASprased
+
+		int lenASprased =  QuantNotZeroElements(a, nvars * nrows) + QuantNotZeroElements(a_eq, nvars * nrows_eq) ;
+
+		double * parrASprased =  new double [lenASprased +1] ;
+		memset(parrASprased,0,sizeof(double) * (lenASprased +1)) ;
+
+		long *iarrI = new long [lenASprased +1] ;
+		memset(iarrI,0,sizeof(long) * (lenASprased +1)) ;
+		long *iarrJ = new long [lenASprased +1] ;
+		memset(iarrJ,0,sizeof(long) * (lenASprased +1)) ;
+
+
+		int iCur = 0;
+
+		for (long j = 0; j < nvars; j++)
+		{
+			for (long i = 0; i < nrows; i++)
+			{
+			  if (fabs(a [ (long) nvars * i + j]) > EPS1)
+			  {
+				parrASprased[iCur] =  a [ i* nvars + j] ;
+				iarrI [iCur] =  i + 1 ;
+				iarrJ [iCur] =  j  + 1 ;
+				iCur++ ;
+			  }
+			 }
+			for (long i = 0; i < nrows_eq; i++)
+			{
+			  if (fabs(a_eq [ (long) nvars * i + j]) > EPS1)
+			  {
+				parrASprased[iCur] =  a_eq [ (long)nvars * i + j] ;
+				iarrI [iCur] = (long) nrows + i + 1 ;
+				iarrJ [iCur] =  j + 1 ;
+				iCur++ ;
+			  }
+			}
+		}
+		parrASprased[iCur] = 1;
+		iarrI [iCur] = (long) nrows  + 1 ;
+		iarrJ [iCur] =  (long) nvars + 1;
+		if (iCur != lenASprased)
+		{
+		  ShowMessage(L"ERROR LP_Int_SpraseMtrx_Malkov_dll\n iCur != lenASprased") ;
+		}
+		long iexit = 1;
+		double  ObjVals[4] = {0};
+		long iopt = 1 ; // минмимум. Если максимум, то  -1
+	   //	long MBTS = 10;
+		long MBTS = 100;
+		long ITLM = 30000 ;
+
+        // Нахождение пути к папке с временными файлами
+		DWORD dwBufSize = 256 ;
+		char logfile[256] = {0} ;
+		DWORD dwRetVal;
+		wchar_t lpPathBuffer[256];
+		dwRetVal = GetTempPath(dwBufSize,     // length of the buffer
+					   lpPathBuffer); // buffer for path
+
+		if (dwRetVal > dwBufSize)
+		{
+		ShowMessage (L"GetTempPath failed with error ") ;
+
+		}
+		for (unsigned int i = 0; i < wcslen(lpPathBuffer); i++)logfile[i] =  lpPathBuffer[i] ;
+		strcat(logfile,"log.");
+		//
+
+
+			 long l_nvars =  nvars;
+			 long l_m = nrows + nrows_eq;
+			 long l_bvars = bvars ;
+			 long klog = 200;
+			 double eps = 0.001;
+
+
+   long k = (*pRunFunctions_2)(ObjVals,xBig,iarrI,iarrJ ,parrASprased
+	,rhs,lb,ub,f, irowtype, dualVars, l_nvars, l_m, l_bvars,iopt,MBTS,ITLM,klog,logfile,eps);
+   if( k!= 0)
+   {
+	 String sOut = L" k = ";
+   //	ShowMessage (sOut + k + L";  nFields = " +nrows_eq) ;
+   }
+		fval =  ObjVals[0]; //!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+		 for (int i = 0; i < (nvars - bvars ); i++) x[i] = xBig[ bvars + i] ; //!!!!!!!!!!!!
+
+
+		for (int i = 0; i < bvars; i++)
+		{
+		  ix[i] = (int)(xBig[i] + 0.01) ; //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		}
+		delete []rhs ;
+		delete  []irowtype ;
+		delete [] dualVars ;
+		delete [] xBig;
+		delete  [] parrASprased ;
+		delete  [] iarrI ;
+		delete  [] iarrJ ;
+
+	return k;
+}
+
+
+
+ // задача минимизации     ПЕРЕГРУЖЕННАЯ, С ВЫВОДОМ ДВОЙСТВЕННЫХ ПЕРЕМЕННЫХ
+int  LinNumericalSolver( int nvars,int bvars, double *f, int nrows,
+							double *a, double *b,int  nrows_eq,
+					double *a_eq, double *b_eq, double *lb,
+							double *ub,int *ix, double *x, double * dualVars, double &fval)
+{
+	if (0 == iSchetschikInt_2)
+	{
+
+//		hInstance_2 = LoadLibrary(L"..\\MIODll\\R30_HI\\MIO3.dll");
+//		hInstance_2 = LoadLibrary(L"..\\MIODll\\Debug30\\MIO3.dll");
+		hInstance_2 = LoadLibrary(L"MIO3.dll");
+		if(!hInstance_2)
+		{
+			ShowMessage(L"MIO3_Finish.dll \n НЕ была найдена. ");
+		}
+		else
+		{
+			LPTSTR sFunkName = MAKEINTRESOURCE(1); //!!!!!!!!!!!!!!
+			char * cFunkName = (char *) sFunkName;   // convert?
+			pRunFunctions_2 = (typRunFunctions_2 *) GetProcAddress((HMODULE) hInstance_2, "MioGP");  // "MioGP");//
+			if (!pRunFunctions_2) { // библиотека НЕ содержит функцию MioGP
+				if(FreeLibrary(hInstance_2)) hInstance_2 = NULL;
+				ShowMessage(L"1) MIO3_Finish.dll была загружена. \n 2) MIO15.dll не содержит функции MioGP(..)");
+			}
+		}
+		iSchetschikInt_2++;
+	}
+
+
+
+// nvars -число переменных
+// f - вектор целевой функции
+// nrows - число строк в матрице неравенств
+// nrows_eq - число строк в матрице равенств
+// a_eq - матрица равенст
+// b_eq - вектор правой части равенст
+// lb - вектор нижних границ переменных
+// ub - вектор верхних границ переменных
+// x - [output] вектор значений переменных
+// fval - [output] оптимальное значение целевой функции
+
+
+
+
+		double  *rhs = new double [nrows + nrows_eq ] ;
+		memcpy(rhs,b,sizeof(double) * nrows) ;
+		memcpy( &rhs[nrows], b_eq, sizeof(double)*nrows_eq ) ;
+
+		double *xBig = new double [nvars ] ;
+		memset(xBig,0,sizeof(double) *nvars);
+
+
+
+		long *irowtype = new long [nrows + nrows_eq ] ;
+		memset(irowtype,0,sizeof(long) *(nrows + nrows_eq ));
+		for (int i = 0; i < nrows ; i++)
+		{
+		  irowtype[i] = 1 ;
+		}
+
+		memset(dualVars,0,sizeof(double) * (nrows + nrows_eq ));
+		// формирование матрицы parrASprased
+
+		int lenASprased =  QuantNotZeroElements(a, nvars * nrows) + QuantNotZeroElements(a_eq, nvars * nrows_eq) ;
+
+		double * parrASprased =  new double [lenASprased +1] ;
+		memset(parrASprased,0,sizeof(double) * (lenASprased +1)) ;
+
+		long *iarrI = new long [lenASprased +1] ;
+		memset(iarrI,0,sizeof(long) * (lenASprased +1)) ;
+		long *iarrJ = new long [lenASprased +1] ;
+		memset(iarrJ,0,sizeof(long) * (lenASprased +1)) ;
+
+
+		int iCur = 0;
+
+		for (long j = 0; j < nvars; j++)
+		{
+			for (long i = 0; i < nrows; i++)
+			{
+			  if (fabs(a [ (long) nvars * i + j]) > EPS1)
+			  {
+				parrASprased[iCur] =  a [ i* nvars + j] ;
+				iarrI [iCur] =  i + 1 ;
+				iarrJ [iCur] =  j  + 1 ;
+				iCur++ ;
+			  }
+			 }
+			for (long i = 0; i < nrows_eq; i++)
+			{
+			  if (fabs(a_eq [ (long) nvars * i + j]) > EPS1)
+			  {
+				parrASprased[iCur] =  a_eq [ (long)nvars * i + j] ;
+				iarrI [iCur] = (long) nrows + i + 1 ;
+				iarrJ [iCur] =  j + 1 ;
+				iCur++ ;
+			  }
+			}
+		}
+		parrASprased[iCur] = 1;
+		iarrI [iCur] = (long) nrows  + 1 ;
+		iarrJ [iCur] =  (long) nvars + 1;
+		if (iCur != lenASprased)
+		{
+		  ShowMessage(L"ERROR LP_Int_SpraseMtrx_Malkov_dll\n iCur != lenASprased") ;
+		}
+		long iexit = 1;
+		double  ObjVals[4] = {0};
+		long iopt = 1 ; // минмимум. Если максимум, то  -1
+	   //	long MBTS = 10;
+		long MBTS = 100;
+		long ITLM = 30000 ;
+
+        // Нахождение пути к папке с временными файлами
+		DWORD dwBufSize = 256 ;
+		char logfile[256] = {0} ;
+		DWORD dwRetVal;
+		wchar_t lpPathBuffer[256];
+		dwRetVal = GetTempPath(dwBufSize,     // length of the buffer
+					   lpPathBuffer); // buffer for path
+
+		if (dwRetVal > dwBufSize)
+		{
+		ShowMessage (L"GetTempPath failed with error ") ;
+
+		}
+		for (unsigned int i = 0; i < wcslen(lpPathBuffer); i++)logfile[i] =  lpPathBuffer[i] ;
+		strcat(logfile,"log.");
+		//
+
+
+			 long l_nvars =  nvars;
+			 long l_m = nrows + nrows_eq;
+			 long l_bvars = bvars ;
+			 long klog = 200;
+			 double eps = 0.001;
+
+
+   long k = (*pRunFunctions_2)(ObjVals,xBig,iarrI,iarrJ ,parrASprased
+	,rhs,lb,ub,f, irowtype, dualVars, l_nvars, l_m, l_bvars,iopt,MBTS,ITLM,klog,logfile,eps);
+   if( k!= 0)
+   {
+	 String sOut = L" k = ";
+   //	ShowMessage (sOut + k + L";  nFields = " +nrows_eq) ;
+   }
+		fval =  ObjVals[0]; //!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+		 for (int i = 0; i < (nvars - bvars ); i++) x[i] = xBig[ bvars + i] ; //!!!!!!!!!!!!
+
+
+		for (int i = 0; i < bvars; i++)
+		{
+		  ix[i] = (int)(xBig[i] + 0.01) ; //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		}
+		delete rhs ;
+		delete  irowtype ;
+
+		delete  xBig;
+		delete   parrASprased ;
+		delete   iarrI ;
+		delete   iarrJ ;
+
+	return k;
+}
+
+int QuantNotZeroElements(double *parr, const int lenarr)
+{
+	int quantElem = 0 ;
+	for (int i = 0 ; i < lenarr; i++)  if (fabs (parr[i]) > EPS1) quantElem++ ;
+	return quantElem ;
+}
+
+
+//---------------------------------------------------------------------------
+#pragma package(smart_init)

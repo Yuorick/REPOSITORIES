@@ -1,0 +1,422 @@
+//---------------------------------------------------------------------------
+
+
+#pragma hdrstop
+#include <vcl.h>
+#include "DriverMech.h"
+#include "Traject.h"
+#include <stdlib.h>
+#include <dir.h>
+#include <string.h>
+ #include "YrWriteShapeFile.h"
+  #include "Gauss.h"
+
+const int QUANT_COLS_BUFF_DRIVER =  7  ;
+TDriverMech::TDriverMech()
+{
+	mSigBet  =  0.000021 ;
+	mSigEps  = 0.000021 ;
+	mSigDrBet = 0.003141;
+	mSigDrEps = 0.003141;
+	mpwcharrFoldReport = NULL ;
+	mparrBuff   = NULL ;
+	mQuantPntReport = 0;
+	mLenMemoryAlloc = 0 ;
+
+}
+
+//---------------------------------------------------------------------------
+ __fastcall TDriverMech::~TDriverMech()
+{
+   if (mparrBuff != NULL)
+   {
+   free( mparrBuff)  ;
+   mparrBuff = NULL ;
+   }
+   if ( mpwcharrFoldReport != NULL)
+   {
+   free( mpwcharrFoldReport );
+   mpwcharrFoldReport = NULL ;
+   }
+ }
+
+
+// конструктор копирования
+ TDriverMech ::TDriverMech (const TDriverMech &R)
+ {
+	mSigBet  =  R.mSigBet ;
+	mSigEps = R.mSigEps;
+	mSigDrBet = R.mSigDrBet ;
+	mSigDrEps = R.mSigDrEps ;
+	mTDr = R.mTDr; // текущее время привязки иныормации
+	mEstEps = R.mEstEps;// оценка(измерение) угла Eps
+	mEstBet = R.mEstBet; // оценка(измерение) угла Bet
+	mRealEps = R.mRealEps;// истинный угол Eps
+	mRealBet = R.mRealBet; // истинный угол Bet
+	mDelEps = R.mDelEps;// ошибка по  Eps
+	mDelBet = R.mDelBet;
+		// для отчета
+	mLenMemoryAlloc = R.mLenMemoryAlloc ;
+	mQuantPntReport = R.mQuantPntReport ;
+
+	////
+	mparrBuff  = NULL;
+
+	if(R.mparrBuff  != NULL)
+	{
+		if((mparrBuff  = (double*)malloc( 7 * R.mLenMemoryAlloc * sizeof(double))) != NULL)
+		{
+		memcpy( mparrBuff ,R.mparrBuff , 7 * R.mLenMemoryAlloc * sizeof(double));
+		}
+		else
+		{
+		 ShowMessage(L"Not memory for mparrBuff ") ;
+		 Abort() ;
+		}
+
+	}
+
+	//
+	mpwcharrFoldReport = NULL;
+	if(R.mpwcharrFoldReport != NULL)
+	{
+		if ((mpwcharrFoldReport = (wchar_t *)malloc(300 * sizeof (wchar_t))) != NULL)
+		{
+		wcscpy(mpwcharrFoldReport, R.mpwcharrFoldReport);
+
+		}
+		else
+		{
+		 ShowMessage(L"Not memory for mpwcharrFoldReport") ;
+		 Abort() ;
+		}
+
+	}
+
+
+
+ }
+
+ // оператор присваивания
+ TDriverMech TDriverMech::operator=(TDriverMech  R)
+ {
+	mSigBet  =  R.mSigBet ;
+	mSigEps = R.mSigEps;
+	mSigDrBet = R.mSigDrBet ;
+	mSigDrEps = R.mSigDrEps ;
+	mTDr = R.mTDr; // текущее время привязки иныормации
+	mEstEps = R.mEstEps;// оценка(измерение) угла Eps
+	mEstBet = R.mEstBet; // оценка(измерение) угла Bet
+	mRealEps = R.mRealEps;// истинный угол Eps
+	mRealBet = R.mRealBet; // истинный угол Bet
+	mDelEps = R.mDelEps;// ошибка по  Eps
+	mDelBet = R.mDelBet;
+		// для отчета
+	mLenMemoryAlloc = R.mLenMemoryAlloc ;
+	mQuantPntReport = R.mQuantPntReport ;
+
+	////
+	mparrBuff  = NULL;
+
+	if(R.mparrBuff  != NULL)
+	{
+		if((mparrBuff  = (double*)malloc( QUANT_COLS_BUFF_DRIVER * R.mLenMemoryAlloc * sizeof(double))) != NULL)
+		{
+		memcpy( mparrBuff ,R.mparrBuff , QUANT_COLS_BUFF_DRIVER * R.mLenMemoryAlloc * sizeof(double));
+		}
+		else
+		{
+		 ShowMessage(L"Not memory for mparrBuff ") ;
+		 Abort() ;
+		}
+
+	}
+
+	//
+	mpwcharrFoldReport = NULL;
+	if(R.mpwcharrFoldReport != NULL)
+	{
+		if ((mpwcharrFoldReport = (wchar_t *)malloc(300 * sizeof (wchar_t))) != NULL)
+		{
+		wcscpy(mpwcharrFoldReport, R.mpwcharrFoldReport);
+
+		}
+		else
+		{
+		 ShowMessage(L"Not memory for mpwcharrFoldReport") ;
+		 Abort() ;
+		}
+
+	}
+
+
+
+	return *this ;
+ }
+  // парам конструктор 1
+ TDriverMech  :: TDriverMech ( const double SigBet, const double SigEps
+	, const double SigDrBet, const double SigDrEps, wchar_t *pwcharrFoldReport)
+ {
+	mSigDrEps = SigDrEps ;
+	mSigDrBet = SigDrBet ;
+	mSigEps = SigEps;
+	mSigBet = SigBet ;
+
+	  // дл отчета
+	mpwcharrFoldReport = NULL ;
+	mparrBuff   = NULL ;
+	mQuantPntReport = 0 ;
+	mLenMemoryAlloc = 0 ;
+	if(pwcharrFoldReport != NULL)
+	{
+	if ((mpwcharrFoldReport = (wchar_t *)malloc(300 * sizeof (wchar_t))) != NULL)
+	{
+	wcscpy(mpwcharrFoldReport, pwcharrFoldReport);
+
+	}
+	else
+	{
+	ShowMessage(L"Not memory for mpwcharrFoldReport") ;
+	Abort() ;
+	}
+
+	mLenMemoryAlloc = 2000;
+	if((mparrBuff  = (double*)malloc( QUANT_COLS_BUFF_DRIVER * mLenMemoryAlloc * sizeof(double))) != NULL)
+	{
+
+	memset( mparrBuff,  0,  QUANT_COLS_BUFF_DRIVER * mLenMemoryAlloc * sizeof(double));
+	}
+	else
+	{
+	ShowMessage(L"Not memory for mparrBuff ") ;
+	Abort() ;
+	}
+
+	}
+
+ }
+
+	 // парам конструктор 2
+ TDriverMech :: TDriverMech ( const double DriverSigBet // точность измерения угла Bet привода
+								,const double DriverSigEps // точность измерения угла Eps  привода (угла места)
+								,const double DriverDynamicSigBet // точность отработки угла курса  привода
+								,const double DriverDynamicSigEps // точность  привода отработки угла места
+								,const double TDr  // текущее время привязки иныормации
+								,const double VAlEstEps // оценка(измерение) угла Eps
+								,const double VAlEstBet  // оценка(измерение) угла Bet
+								,const double VAlRealEps // истинный угол Eps
+								,const double VAlRealBet  // истинный угол Bet
+								,const double VAlDelEps // ошибка по  Eps
+								,const double VAlDelBet  // ошибка по Bet
+								,wchar_t *pwcharrFoldReport)
+ {
+		mSigDrEps = DriverDynamicSigEps ;
+		mSigDrBet = DriverDynamicSigBet ;
+		mSigEps = DriverSigEps;
+		mSigBet = DriverSigBet;
+		mEstEps = VAlEstEps ;// оценка(измерение) угла Eps
+		mEstBet =  VAlEstBet; // оценка(измерение) угла Bet
+		mRealEps = VAlRealEps;// истинный угол Eps
+		mRealBet = VAlRealBet; // истинный угол Bet
+		mDelEps = VAlDelEps;// ошибка по  Eps
+		mDelBet = VAlDelBet; // ошибка по Bet
+		mTDr = TDr;
+	  // дл отчета
+	mpwcharrFoldReport = NULL ;
+	mparrBuff   = NULL ;
+	mQuantPntReport = 0 ;
+	mLenMemoryAlloc = 0 ;
+	if(pwcharrFoldReport != NULL)
+	{
+	if ((mpwcharrFoldReport = (wchar_t *)malloc(300 * sizeof (wchar_t))) != NULL)
+	{
+	wcscpy(mpwcharrFoldReport, pwcharrFoldReport);
+
+	}
+	else
+	{
+	ShowMessage(L"Not memory for mpwcharrFoldReport") ;
+	Abort() ;
+	}
+
+	mLenMemoryAlloc = 2000;
+	if((mparrBuff  = (double*)malloc( QUANT_COLS_BUFF_DRIVER * mLenMemoryAlloc * sizeof(double))) != NULL)
+	{
+
+	memset( mparrBuff,  0,  QUANT_COLS_BUFF_DRIVER * mLenMemoryAlloc * sizeof(double));
+	}
+	else
+	{
+	ShowMessage(L"Not memory for mparrBuff ") ;
+	Abort() ;
+	}
+
+	}
+
+ }
+
+
+ //--------------------------------------------------
+ // инициализация привода по конкретной цели
+ void TDriverMech :: init (	 const double TDr  // текущее время привязки иныормации
+							,const double VAlEstEps // оценка(измерение) угла Eps
+							,const double VAlEstBet  // оценка(измерение) угла Bet
+							,const double VAlRealEps // истинный угол Eps
+							,const double VAlRealBet  // истинный угол Bet
+							,const double VAlDelEps // ошибка по  Eps
+							,const double VAlDelBet  // ошибка по Bet
+								)
+ {
+
+		mEstEps = VAlEstEps ;// оценка(измерение) угла Eps
+		mEstBet =  VAlEstBet; // оценка(измерение) угла Bet
+		mRealEps = VAlRealEps;// истинный угол Eps
+		mRealBet = VAlRealBet; // истинный угол Bet
+		mDelEps = VAlDelEps;// ошибка по  Eps
+		mDelBet = VAlDelBet; // ошибка по Bet
+		mTDr = TDr;
+
+
+ }
+
+ // моделирование привода
+ // INPUT
+ // valEps0, valBet0 - целеуказания
+ void TDriverMech::recalcDriver(const double valT,const double valEps0,const double valBet0 )
+ {
+   if ( valT < mTDr )
+	{
+		ShowMessage(L"Ошибка в заданиии иекущего времени") ;
+		return ;
+	 }
+	 mRealEps = valEps0 + getGauss(0, mSigDrEps ); // истинный угол Eps
+	 mRealBet = valBet0 + getGauss(0, mSigDrBet );  // истинный угол Bet
+	 mDelEps = 0.;//getGauss(0, mSigEps );// ошибка по  Eps
+	 mDelBet = 0.;//getGauss(0, mSigBet ); // ошибка по Bet
+   mEstEps = mRealEps + mDelEps ;
+   mEstBet = mRealBet + mDelBet ;
+	mTDr =  valT ;
+	updateReportData();
+ }
+
+
+ // занесение информации в массивы для отчета
+ void TDriverMech::updateReportData()
+ {
+     if(mpwcharrFoldReport == NULL) return ;
+	 if (mQuantPntReport ==  mLenMemoryAlloc)
+	 {
+	   mLenMemoryAlloc += 2000 ;
+	   mparrBuff = (double *)realloc(mparrBuff,QUANT_COLS_BUFF_DRIVER * mLenMemoryAlloc * sizeof(double)) ;
+
+	 }
+
+	   int num0 =  mQuantPntReport * QUANT_COLS_BUFF_DRIVER;
+
+	   mparrBuff [num0] =     mTDr ;
+
+	   mparrBuff [num0 +1]  =  mEstEps;
+
+	   mparrBuff [num0 +2]  =  mEstBet ;
+
+	   mparrBuff [num0 +3]  =  mRealEps ;
+
+	   mparrBuff [num0 +4]  = mRealBet  ;
+
+	   mparrBuff [num0 +5]  = mDelEps ;
+
+	   mparrBuff [num0 +6]  = mDelBet  ;
+
+		mQuantPntReport++ ;
+
+ }
+
+// публикация  отчета
+ void TDriverMech::WriteReport()
+ {
+	 if (mpwcharrFoldReport == NULL )return ;
+
+	 wchar_t wcharrPath [300] = {0} ;
+	 wcscpy(wcharrPath, mpwcharrFoldReport);
+	 wcscat(wcharrPath, L"\\DriverReport");
+		_wmkdir(wcharrPath);
+			 wcscat(wcharrPath, L"\\");
+
+
+	 wchar_t wcharrFileNames[QUANT_COLS_BUFF_DRIVER * 30] = {0};
+	 wcscpy( &wcharrFileNames[ 0 * 30], L"t");
+	 wcscpy( &wcharrFileNames[ 1 * 30], L"EstEps");
+	 wcscpy( &wcharrFileNames[ 2* 30],  L"EstBet");
+	 wcscpy( &wcharrFileNames[ 3 * 30], L"RealEps ");
+	 wcscpy( &wcharrFileNames[ 4 * 30], L"RealBet");
+	 wcscpy( &wcharrFileNames[ 5 * 30], L"DelEps");
+	 wcscpy( &wcharrFileNames[ 6 * 30], L"DelBet");
+
+
+
+	 for (int i = 1; i < QUANT_COLS_BUFF_DRIVER; i++)
+	 {
+	 TYrWriteShapeFile::WriteOneReport(wcharrPath  // путь к папке
+								  ,mparrBuff // массив с информацией - матрица nBuffRows x nBuffCols
+								  ,QUANT_COLS_BUFF_DRIVER // - к-во переменных о корорых накоплена информация в буфере
+								  ,mQuantPntReport  //  - к-во точек
+								  ,wcharrFileNames //матрица с именаими переменных - матрица nBuffCols x lenName
+								  ,30// максимальная длина имени переменной
+								  ,0  // номер переменной по оси X
+								  ,i // номер переменной по оси Y
+								  ,100 //  масштаб по оси Y
+								  ,10000  // масштаб по оси X
+								   )  ;
+	 }
+
+	wchar_t wchFileName [300] = {0} ;
+	wcscpy(wchFileName, wcharrPath );
+	wcscat(wchFileName, L"Axes.shp");
+	TYrWriteShapeFile::CreateShpAxes(wchFileName,-40000.,40000,-40000.,40000) ;
+ }
+
+
+ // публикация  отчета  перегруженная
+ void TDriverMech::WriteReport(wchar_t *pwcharrPath)
+ {
+
+
+
+	 if (pwcharrPath == NULL )return ;
+	 wchar_t wcharrPath [300] = {0} ;
+	 wcscpy(wcharrPath, pwcharrPath);
+	 wcscat(wcharrPath, L"\\");
+
+	 wchar_t wcharrFileNames[QUANT_COLS_BUFF_DRIVER * 30] = {0};
+	 wcscpy( &wcharrFileNames[ 0 * 30], L"t");
+	 wcscpy( &wcharrFileNames[ 1 * 30], L"EstEps");
+	 wcscpy( &wcharrFileNames[ 2* 30],  L"EstBet");
+	 wcscpy( &wcharrFileNames[ 3 * 30], L"RealEps ");
+	 wcscpy( &wcharrFileNames[ 4 * 30], L"RealBet");
+	 wcscpy( &wcharrFileNames[ 5 * 30], L"DelEps");
+	 wcscpy( &wcharrFileNames[ 6 * 30], L"DelBet");
+
+
+
+	 for (int i = 1; i < QUANT_COLS_BUFF_DRIVER; i++)
+	 {
+	 TYrWriteShapeFile::WriteOneReport(wcharrPath  // путь к папке
+								  ,mparrBuff // массив с информацией - матрица nBuffRows x nBuffCols
+								  ,QUANT_COLS_BUFF_DRIVER // - к-во переменных о корорых накоплена информация в буфере
+								  ,mQuantPntReport  //  - к-во точек
+								  ,wcharrFileNames //матрица с именаими переменных - матрица nBuffCols x lenName
+								  ,30// максимальная длина имени переменной
+								  ,0  // номер переменной по оси X
+								  ,i // номер переменной по оси Y
+								  ,100 //  масштаб по оси Y
+								  ,10000  // масштаб по оси X
+								   )  ;
+	 }
+
+	wchar_t wchFileName [300] = {0} ;
+	wcscpy(wchFileName, wcharrPath );
+	wcscat(wchFileName, L"Axes.shp");
+	TYrWriteShapeFile::CreateShpAxes(wchFileName,-40000.,40000,-40000.,40000) ;
+ }
+
+#pragma package(smart_init)

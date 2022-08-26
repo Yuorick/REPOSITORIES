@@ -1,0 +1,33 @@
+//---------------------------------------------------------------------------
+
+#ifndef EnvironmentH
+#define EnvironmentH
+//---------------------------------------------------------------------------
+// 9 балов волнения соответствует 20 м/с скорости ветра
+class TEnvironment
+{
+public:
+// Волнение на море по шкале Significance Wave Height (SWH). от 0 до 9 баллов
+	int  mBallWave;
+//  Сила ветра м/с
+	 double mWind_V  ;
+	 // направление откуда дует веьтер
+	 double mWind_Alf ;
+	 //
+	 double mWind_VertV;
+
+
+	// конструктор по умолчанию
+	 __fastcall TEnvironment () ;
+	// конструктор копирования
+	 __fastcall TEnvironment  (const TEnvironment  &R) ;
+	// оператор присваивания
+      TEnvironment  &operator=(const TEnvironment   &R2) ;
+
+	 // парам конструктор
+	 __fastcall  TEnvironment (const int BallWave, const double Wind_V);
+
+	  __fastcall  TEnvironment (const double Wind_V, const double Wind_Alf, const double  Wind_VertV)
+;
+}  ;
+#endif

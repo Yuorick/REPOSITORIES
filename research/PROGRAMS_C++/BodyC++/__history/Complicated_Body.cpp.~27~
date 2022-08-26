@@ -1,0 +1,329 @@
+//---------------------------------------------------------------------------
+
+
+#pragma hdrstop
+#include <string.h>
+#include "Complicated_Body.h"
+#include "SimpleBody_3D.h"
+#include "MatrixProccess.h"
+
+/*
+_fastcall TComplicated_Body::TComplicated_Body()
+{
+	mQuantSimpleBody = 0;
+}
+
+// конструктор копирования
+ TComplicated_Body ::TComplicated_Body  (const TComplicated_Body &R)
+  {
+		mQuantSimpleBody   = R.mQuantSimpleBody;
+		memcpy(marrSimpleBody, R.marrSimpleBody,  mQuantSimpleBody * sizeof(TSimpleBody_3D));
+ }
+
+  // оператор присваивания
+  TComplicated_Body TComplicated_Body::operator=(TComplicated_Body  R)
+  {
+		mQuantSimpleBody   = R.mQuantSimpleBody;
+		memcpy(marrSimpleBody, R.marrSimpleBody,  mQuantSimpleBody * sizeof(TSimpleBody_3D));
+		return *this;
+ }
+
+//---------------------------------------------------------------------------
+__fastcall TComplicated_Body::TComplicated_Body(const int  QuantSimpleBody
+  , TSimpleBody_3D **ppSimpleBody)
+{
+	 mQuantSimpleBody = QuantSimpleBody;
+	 for (int i =0; i < QuantSimpleBody; i++)
+	 {
+	   marrSimpleBody[i] = (*ppSimpleBody)[i];
+	 }
+} */
+
+_fastcall TComplicated_Body::TComplicated_Body()
+{
+	mQuantCircleCylinder = 0;
+	mQuantTruncatedConeCircle  = 0;
+	memset(marrCentreMass, 0, 3 * sizeof(double));
+
+}
+
+// конструктор копирования
+ TComplicated_Body ::TComplicated_Body  (const TComplicated_Body &R)
+  {
+		mQuantCircleCylinder   = R.mQuantCircleCylinder;
+		mQuantTruncatedConeCircle   = R.mQuantTruncatedConeCircle ;
+		memcpy(marrCircleCylinder, R.marrCircleCylinder,  mQuantCircleCylinder * sizeof(TCircleCylinder));
+		memcpy(marrTruncatedConeCircle, R.marrTruncatedConeCircle,  mQuantTruncatedConeCircle * sizeof(TTruncatedConeCircle));
+		memcpy(marrCentreMass, R.marrCentreMass, 3 * sizeof(double));
+ }
+
+  // оператор присваивания
+  TComplicated_Body TComplicated_Body::operator=(TComplicated_Body  R)
+  {
+		mQuantCircleCylinder   = R.mQuantCircleCylinder;
+		mQuantTruncatedConeCircle   = R.mQuantTruncatedConeCircle ;
+		memcpy(marrCircleCylinder, R.marrCircleCylinder,  mQuantCircleCylinder * sizeof(TCircleCylinder));
+		memcpy(marrTruncatedConeCircle, R.marrTruncatedConeCircle,  mQuantTruncatedConeCircle * sizeof(TTruncatedConeCircle));
+		memcpy(marrCentreMass, R.marrCentreMass, 3 * sizeof(double));
+
+		return *this;
+ }
+
+//---------------------------------------------------------------------------
+__fastcall TComplicated_Body::TComplicated_Body(const int  QuantCircleCylinder
+  , TCircleCylinder *arrCircleCylinder, const int  QuantTruncatedConeCircle
+  , TTruncatedConeCircle *arrTruncatedConeCircle)
+{
+	 mQuantCircleCylinder = QuantCircleCylinder;
+	 mQuantTruncatedConeCircle = QuantTruncatedConeCircle;
+	 memcpy(marrTruncatedConeCircle, arrTruncatedConeCircle,  mQuantTruncatedConeCircle * sizeof(TTruncatedConeCircle));
+	 memcpy(marrCircleCylinder, arrCircleCylinder,  mQuantCircleCylinder * sizeof(TCircleCylinder));
+	 memset(marrCentreMass, 0, 3 * sizeof(double));
+
+
+}
+
+
+//---------------------------------------------------------------------------
+// Параметрический консьтруктор 2 для вертолета
+// вертолет задается в виде массива из 5 простейшмих объемных фигур
+// носовая часть - круговой конус
+// кабина - цилиндр
+// середина - цилиндр
+// хвостовая часть - конус
+// Вал винта - конус
+// связанная сиситема координат  - ось X направлена от хвоста к носу.
+ // Начинается из крайней точки хвоста
+
+// VAlH1 и  VAlR1 - высота конуса хвоста  и радиус основания хвоста
+// VAlH2 - высиота цилиндра средней части (радиус совпадает с радиусом хвоста)
+// VAlH3 и  VAlR3 - высота и радиус основания  цилиндра кабины
+// VAlH4 - высота конусв носа (радиус основания совпадает с радиусом цилиндра кабины)
+//  VAlX5 - координата X ближней о  начала координат нижней точки сечения цилиндра вала винта
+//  VAlR5 и  VAlH5 - радиус и высота цилиндра вала винта
+__fastcall TComplicated_Body::TComplicated_Body(const double VAlM,const double VAlH1
+  , const double VAlR1, const double VAlH2, const double VAlH3
+  , const double VAlR3, const double VAlH4, const double VAlX5
+  , const double VAlR5, const double VAlH5)
+{
+	 memset(marrCentreMass, 0, 3 * sizeof(double));
+	 mQuantCircleCylinder = 3;
+	 mQuantTruncatedConeCircle = 2;
+	 TCircleCylinder arrCircleCylinder[MAX_POSSIBLE_QUANT_OF_SIMPLE_BODY];
+	 TTruncatedConeCircle arrTruncatedConeCircle[MAX_POSSIBLE_QUANT_OF_SIMPLE_BODY];
+// Cоздание конуса хвоста
+	 double arrS0[3] = {0.}, arrF[9] = {0.};
+	 arrS0[0] = VAlH1;
+
+	 arrF[0] = -1.;
+	 arrF [4] = 1.;
+	 arrF[8] = -1.;
+	 TPlane Plane(arrS0, arrF);
+	 arrTruncatedConeCircle[0] = TTruncatedConeCircle(Plane, VAlR1, 0.,VAlH1,1.);
+	 ///
+
+	 // цилиндр средней части
+	 memset(arrS0, 0, 3 * sizeof(double));
+	 memset(arrF,  0, 9 * sizeof(double));
+	 arrS0[0] = VAlH1;
+	 arrF[0] = 1.;
+	 arrF[4] = 1.;
+	 arrF[8] = 1.;
+	 Plane =  TPlane(arrS0, arrF);
+	 arrCircleCylinder[0] = TCircleCylinder(Plane, VAlR1, VAlH2, 1.);
+	 ///
+
+	 // цилиндр кабины
+	 memset(arrS0, 0, 3 * sizeof(double));
+	 memset(arrF,  0, 9 * sizeof(double));
+	 arrS0[0] = VAlH1 + VAlH2;
+	 arrS0[1] = -VAlR1 + VAlR3;
+	 arrF[0] = 1.;
+	 arrF[4] = 1.;
+	 arrF[8] = 1.;
+	 Plane =  TPlane(arrS0, arrF);
+	 arrCircleCylinder[1] = TCircleCylinder(Plane, VAlR1, VAlH2, 1.);
+	 ///
+
+
+
+
+// создание конуса хвостовой части
+	memset(arrS0, 0, 3 * sizeof(double));
+	memset(arrF,  0, 9 * sizeof(double));
+	arrS0[0] = VAlH1 + VAlH2+ VAlH3;
+	arrS0[1] = -VAlR1 + VAlR3;
+	arrF[0] =  arrF [4] = arrF[8] = 1.;
+	Plane =  TPlane(arrS0, arrF);
+
+	arrTruncatedConeCircle[1] = TTruncatedConeCircle(Plane, VAlR3, 0.,VAlH4,1.);
+	///
+
+	// создание цилитндра вала винта
+    memset(arrS0, 0, 3 * sizeof(double));
+	memset(arrF,  0, 9 * sizeof(double));
+	arrS0[0] = VAlX5 + VAlR5 /2. ;
+	arrS0[1] = VAlR1 ;
+	arrF[1]  =  1.;
+	arrF[3]  =  1.;
+	arrF[8]  = -1.;
+	Plane =  TPlane(arrS0, arrF);
+
+	arrCircleCylinder[2] = TCircleCylinder(Plane, VAlR5, VAlH5, 1.);
+	///
+
+	TComplicated_Body TempBody(3, arrCircleCylinder, 2, arrTruncatedConeCircle);
+	double valTotalCapacity = TempBody.calcCapacity();
+
+	TSimpleBody_3D *pSimpleBody[5];
+	pSimpleBody[0] =  &(arrTruncatedConeCircle[0]);
+	pSimpleBody[1] =  &(arrTruncatedConeCircle[1]);
+	pSimpleBody[2] =  &(arrCircleCylinder[0]);
+	pSimpleBody[3] =  &(arrCircleCylinder[1]);
+	pSimpleBody[4] =  &(arrCircleCylinder[2]);
+	for (int i=0; i < 5; i++ )
+	{
+      // вычисление массы каждого простого тела
+	 (pSimpleBody[i])->mM =  ((pSimpleBody[i])->  calcCapacity())/valTotalCapacity * VAlM;
+
+	}
+
+
+	 memcpy(marrTruncatedConeCircle, arrTruncatedConeCircle,  mQuantTruncatedConeCircle * sizeof(TTruncatedConeCircle));
+	 memcpy(marrCircleCylinder, arrCircleCylinder,  mQuantCircleCylinder * sizeof(TCircleCylinder));
+}
+
+//---------------------------------------------------------------------------
+
+__fastcall TComplicated_Body::calcCapacity()
+{
+	double valCapacity =0.;
+	for (int i = 0; i < mQuantCircleCylinder; i++)
+	{
+	 TSimpleBody_3D *pSimpleBody_3D = &marrCircleCylinder[i];
+	 valCapacity += pSimpleBody_3D->calcCapacity();
+	}
+	for (int i = 0; i < mQuantTruncatedConeCircle; i++)
+	{
+	 TSimpleBody_3D *pSimpleBody_3D = &marrTruncatedConeCircle[i];
+	 valCapacity += pSimpleBody_3D->calcCapacity();
+	}
+	return valCapacity;
+}
+
+// вычисление центра масс
+void TComplicated_Body::calcCentreOfGravity(double *arrCentreGrav)
+{
+   memset(arrCentreGrav, 0, 3 * sizeof(double));
+   double valMass = calcMass();
+   double arrCentreGravTEmp[3] = {0.}, arrT0[3] ={0.};
+   /*TSimpleBody_3D *pSimpleBody_3D[MAX_POSSIBLE_QUANT_OF_SIMPLE_BODY ];
+   for (int i = 0; i < mQuantCircleCylinder; i++)
+	{
+	  pSimpleBody_3D[i] = &(marrCircleCylinder[i]);
+	}
+
+	 for (int i = 0; i < mQuantTruncatedConeCircle; i++)
+	{
+	  pSimpleBody_3D[mQuantCircleCylinder + i] = &(marrTruncatedConeCircle[i]);
+	}  */
+	TSimpleBody_3D *pSimpleBody_3D[MAX_POSSIBLE_QUANT_OF_SIMPLE_BODY ];
+	setupPointersArray(pSimpleBody_3D ) ;
+
+
+	for (int i = 0; i < (mQuantCircleCylinder + mQuantTruncatedConeCircle); i++)
+	{
+	// TSimpleBody_3D *pSimpleBody_3D = &marrCircleCylinder[i];
+	// pSimpleBody_3D->calcCentreOfGravityComplicatedAxes(arrCentreGravTEmp);
+	 pSimpleBody_3D[i]->calcCentreOfGravityComplicatedAxes(arrCentreGravTEmp);
+	 MatrxMultScalar(arrCentreGravTEmp, 3, 1, pSimpleBody_3D[i]->mM,arrCentreGravTEmp);
+	 MtrxSumMatrx(arrCentreGravTEmp, arrCentreGrav,3, 1, arrT0) ;
+	 memcpy(arrCentreGrav,arrT0, 3 * sizeof(double));
+	}
+   /*	for (int i = 0; i < mQuantTruncatedConeCircle; i++)
+	{
+	 TSimpleBody_3D *pSimpleBody_3D = &marrTruncatedConeCircle[i];
+	 pSimpleBody_3D->calcCentreOfGravity(arrCentreGravTEmp);
+	 MatrxMultScalar(arrCentreGravTEmp, 3, 1, pSimpleBody_3D->mM,arrCentreGravTEmp);
+		MtrxSumMatrx(arrCentreGravTEmp, arrCentreGrav,3, 1, arrT0) ;
+	 memcpy(arrCentreGrav,arrT0, 3 * sizeof(double));
+	}   */
+	MatrxMultScalar(arrCentreGrav, 3, 1, 1./valMass,arrCentreGrav);
+}
+
+// вычисление суммарной массы
+double TComplicated_Body::calcMass()
+{
+	double valMass = 0.;
+	for (int i = 0; i < mQuantCircleCylinder; i++)
+	{
+	 TSimpleBody_3D *pSimpleBody_3D = &marrCircleCylinder[i];
+	 valMass += pSimpleBody_3D->mM;
+	}
+	for (int i = 0; i < mQuantTruncatedConeCircle; i++)
+	{
+	 TSimpleBody_3D *pSimpleBody_3D = &marrTruncatedConeCircle[i];
+	 valMass += pSimpleBody_3D->mM;
+	}
+	return valMass;
+}
+
+// установка массива указателей на составные простые тела
+void TComplicated_Body::setupPointersArray(TSimpleBody_3D **pSimpleBody_3D )
+{
+   for (int i = 0; i < mQuantCircleCylinder; i++)
+	{
+	  pSimpleBody_3D[i] = &(marrCircleCylinder[i]);
+	}
+
+	 for (int i = 0; i < mQuantTruncatedConeCircle; i++)
+	{
+	  pSimpleBody_3D[mQuantCircleCylinder + i] = &(marrTruncatedConeCircle[i]);
+	}
+}
+
+
+// "центрирование" сложного тела
+// изначально сложное тело задано в виде массвов простых тел
+//  геометрия каждого простого тела задана в своей начальной связанной системе координат
+// Эти системы координат описаны в файлах с соответствующими классами простых тел
+// оринтация и положение начальной связанной сиситемы координат простого тела
+// описаны в члене класса  TSimpleBody_3D под названием  mPlane
+// начальные сиситемы координат простых тел зпданы в начальной сиситеме координат всего сложного тела
+// например, привязанной к хвосту вертолета
+// для работы с динамикой полета сложного тела уджобно, чтобы простые тела были бы заданы
+// относительно центра масс всего сложного тела
+// Для этого надо :
+// 1. вычислить координаты центра масс сложного тела в начальной связанной системе координат arrScm0
+// для каждого простого тела :
+// 2. Вычислить координаты  центра масс в его начальной связанной сиситеме координат  arrQ
+// 3. скорректировать вектор сдвига  mPlane.marrS0 следующим образом:
+// mPlane.marrS0 = mPlane.marrS0  +  arrQ -  arrScm0
+// после этой коррекции  вектор mPlane.marrS0 будет представлять из себя
+// вектор положения центра тяжести простого тела в
+// связаннгой сиситеме координат сложного тела, привязанной к центру масс всего сложного тела
+// для дальнейшей работы может понадобиться положение центра тяжести сложного тела
+// в начальной системе связанных координат
+// поэтому, этот вектор фиксируется в классе в виде члена
+void TComplicated_Body::doCentreUp()
+{
+   TSimpleBody_3D *pSimpleBody_3D[MAX_POSSIBLE_QUANT_OF_SIMPLE_BODY ];
+   setupPointersArray(pSimpleBody_3D ) ;
+  // вычисление координат центра масс сложного тела
+  double arrCentreGrav[3] = {0};
+  calcCentreOfGravity(arrCentreGrav) ;
+  ///
+
+  for (int i =0; i < (mQuantCircleCylinder + mQuantTruncatedConeCircle); i++)
+  {
+	double arrCentreGravTemp[3] = {0.}, arrT0[3] = {0.};
+	pSimpleBody_3D[i] -> calcCentreOfGravityComplicatedAxes(arrCentreGravTemp) ;
+	MtrxMinusMatrx(arrCentreGravTemp, arrCentreGrav, 3, 1, arrT0);
+	memcpy((*pSimpleBody_3D)[i].mPlane.marrS0, arrT0, 3 * sizeof(double));
+  }
+
+}
+
+
+
+#pragma package(smart_init)

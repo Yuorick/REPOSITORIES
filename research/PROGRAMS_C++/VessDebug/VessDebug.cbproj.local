@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2019.11.14 18:37:36.170.cpp,C:\Users\Yuriy\Documents\RAD Studio\Projects\Unit1.cpp=D:\REPOSITORIES\research\PROGRAMS_C++\VessDebug\MainForm.cpp</Transaction>
+    <Transaction>2019.11.14 18:37:36.170.h,C:\Users\Yuriy\Documents\RAD Studio\Projects\Unit1.h=D:\REPOSITORIES\research\PROGRAMS_C++\VessDebug\MainForm.h</Transaction>
+    <Transaction>2019.11.14 18:37:36.170.dfm,C:\Users\Yuriy\Documents\RAD Studio\Projects\Unit1.dfm=D:\REPOSITORIES\research\PROGRAMS_C++\VessDebug\MainForm.dfm</Transaction>
+    <Transaction>2019.11.14 18:37:49.605.cbproj,C:\Users\Yuriy\Documents\RAD Studio\Projects\Project1.cbproj=D:\REPOSITORIES\research\PROGRAMS_C++\VessDebug\VessDebug.cbproj</Transaction>
+  </Transactions>
+</BorlandProject>

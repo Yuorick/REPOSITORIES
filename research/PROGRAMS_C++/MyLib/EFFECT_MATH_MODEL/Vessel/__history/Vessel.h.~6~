@@ -1,0 +1,236 @@
+﻿// ---------------------------------------------------------------------------
+
+#ifndef VesselH
+#define VesselH
+#include "Sins.h"
+#include "DriverMech.h"
+#include "InitTargData.h"
+#include "Environment.h"
+#include "Far_2D.h"
+#include "ShellBody.h"
+#include "ControlSyst.h"
+#include "ArtComplex.h"
+#include "TransmitAnt.h"
+
+class TSins;
+class TDriverMech;
+class TInitTargData;
+class TEnvironment;
+class TFar_2D;
+class TZamer;
+class TShellBody;
+class TControlSyst;
+class ArtComplex;
+class TTransmitAnt;
+
+class TVessel
+{
+public:
+	TSins mSins;
+	TFar_2D mFar_2D;
+	// антенна на передачу
+	TTransmitAnt mTransmitAnt ;
+
+	TDriverMech mDriver;
+	TShellBody mShellBody;
+	TArtComplex mArtComplex; // АУ
+	double marrArtParral[3]; // вектор параллакса АУ
+	// параметры корабля
+	double mWidth; // ширина(м)
+	double mLength; // длина(м)
+	double marrParral[3]; // вектор параллакса  РЛС
+	double mMaxQ; // максимальный угол отклонения от генерального курса(амплитуда угла рыскания)
+	double mT_Q; // период рыскания
+	double mMaxPsi; // максимальный угол килевой качки(амплитуда)
+	double mT_Psi; // период килевой качки
+	double mMaxTet; // максимальный угол боротовой качки(амплитуда)
+	double mT_Tet; // период бортовой качки
+	double mMaxVert; // амплитуда вертикальной качки
+
+	// парамеитры движения
+	double mQ0; // генеральный курс
+	double mVVess; // скорость корабля своего
+	double mTVess; // время привязки траекторной информации
+	// protected:
+	// парметры углов палубы в центре качания
+	double mQ; // угол курса
+	double mPsi; // угол килевой качки
+	double mTet; // угол бортовой качки
+	double mVQ; // скорость изменения угла курса
+	double mVPsi; // скорость изменения угла килевой качки
+	double mVTet; // вкорость изменения угла бортовой качуки
+
+	// угла начальных фаз колебания угла курса, килевой качки, бортовой качки, высоты
+	double marrDelt[4];
+	// вектор состояния корабля в ГСК истинный
+	double marrVectSost[9];
+
+	// оценка вектора состояния корабля в ГСК
+	double marrEstVectSost[9];
+
+	// амплитуда угла кормового изгиба корабля в рад на 100 м (пси)
+	double mAmp_AftFlexure;
+	// период колебаний  угла кормового изгиба
+	double mT_AftFlexure;
+	// амплитуда  угла бортового изгиба корабля в рад на 100 м (тетта)
+	double mAmp_BoardFlexure;
+	// период колебаний угла бортового изгиба
+	double mT_BoardFlexure;
+	// угол начальной фазы колебаний кормового изгиба корпуса корабля
+	double mPhase0_AftFlexure;
+	// угол начальной фазы колебаний бортового изгиба корпуса корабля
+	double mPhase0_BoardFlexure;
+
+	// сиситема управления
+	TControlSyst mControlSyst;
+
+	// ОТЧЕТ
+	// К-ВО ТОЧЕК В БУФУЕРЕ
+	int mQuantPntReport;
+	// ПАРАМЕТР ЗАРЕЗЕРВИРОВАННОЙ ПАМАЯТИ
+	int mLenMemoryAlloc;
+	// БУФЕР ПАМЯТИ
+	double *mparrBuff;
+	// ПУТЬ К ПАПКЕ С ОТЧЕТОМ
+	wchar_t *mpwcharrFoldReport;
+
+	__fastcall~TVessel();
+	// конструктор по умолчанию
+	TVessel();
+	// конструктор копирования
+	TVessel(const TVessel &R);
+	// оператор присваивания
+	TVessel operator = (TVessel R2);
+
+	// парам конструктор1
+	TVessel(const TSins Sins, const TFar_2D Far_2D, const TDriverMech Driver,
+		const double Width, const double Length, double *arrPar,
+		const double MaxQ, const double T_Q, const double MaxPsi, const double T_Psi,
+		const double MaxTet, const double T_Tet, const double MaxVert, const double Q0,
+		const double VVess, const double TVess, double *arrVectSost,
+		double *arrEstVectSost, const double Q, const double Psi, const double Tet,
+		const double VQ, const double VPsi, const double VTet,
+		wchar_t *pwcharrFoldReport);
+
+	TVessel(const TFar_2D Far_2D, const double DriverSigBet
+		// точность измерения угла Bet привода
+		, const double DriverSigEps // точность измерения угла Eps  привода (угла места)
+		, const double DriverDynamicSigBet // точность отработки угла курса  привода
+		, const double DriverDynamicSigEps // точность  привода отработки угла места
+		, const double MaxSig_Q, const double MaxSig_Psi,
+		const double MaxSig_Tet // СИНС
+		, const double MaxSig_dQdt, const double MaxSig_dPsidt,
+		const double MaxSig_dTetdt // СИНС
+		, const double MaxSig_H, const double MaxSig_VH, const double K1,
+		const double SigV // СИНС
+		, const TEnvironment Environment, const double Width,
+		const double Length, double *arrPar, const double MaxQ, const double T_Q,
+		const double MaxPsi, const double T_Psi, const double MaxTet, const double T_Tet,
+		const double MaxVert, const double Q0, const double VVess,
+		const TInitTargData InitTargData, const double MaxAmp_AftFlexure,
+		const double T_AftFlexure, const double MaxAmp_BoardFlexure,
+		const double T_BoardFlexure, wchar_t *pwcharrFoldReport);
+	// парам конструктор 5
+	TVessel(const TShellBody ShellBody, const TFar_2D Far_2D,
+		const double DriverSigBet // точность измерения угла Bet привода
+		, const double DriverSigEps // точность измерения угла Eps  привода (угла места)
+		, const double DriverDynamicSigBet // точность отработки угла курса  привода
+		, const double DriverDynamicSigEps // точность  привода отработки угла места
+		, const double MaxSig_Q, const double MaxSig_Psi,
+		const double MaxSig_Tet // СИНС
+		, const double MaxSig_dQdt, const double MaxSig_dPsidt,
+		const double MaxSig_dTetdt // СИНС
+		, const double MaxSig_H, const double MaxSig_VH, const double K1,
+		const double SigV // СИНС
+		, const TEnvironment Environment, const double Width,
+		const double Length, double *arrPar, const double MaxQ, const double T_Q,
+		const double MaxPsi, const double T_Psi, const double MaxTet, const double T_Tet,
+		const double MaxVert, const double Q0, const double VVess,
+		const TInitTargData InitTargData, const double MaxAmp_AftFlexure,
+		const double T_AftFlexure, const double MaxAmp_BoardFlexure,
+		const double T_BoardFlexure, wchar_t *pwcharrFoldReport);
+
+	// парам конструктор 6
+	TVessel( const TShellBody ShellBody
+								  ,const TFar_2D  Far_2D
+								  ,const TTransmitAnt TransmitAnt
+								  ,const double DriverSigBet // точность измерения угла Bet привода
+								,const double DriverSigEps // точность измерения угла Eps  привода (угла места)
+								,const double DriverDynamicSigBet // точность отработки угла курса  привода
+								,const double DriverDynamicSigEps // точность  привода отработки угла места
+								,const double MaxSig_Q, const double MaxSig_Psi, const double MaxSig_Tet      // СИНС
+								,const double MaxSig_dQdt, const double MaxSig_dPsidt,const double MaxSig_dTetdt   // СИНС
+								,const double MaxSig_H,const double MaxSig_VH,const double K1,const double SigV   // СИНС
+								,const TEnvironment Environment
+								,const double Width,const double Length, double *arrPar,const  double MaxQ ,const  double T_Q
+								,const double MaxPsi,const double T_Psi ,const  double MaxTet
+								,const double T_Tet,const double MaxVert, const double Q0,const double VVess
+								,const TInitTargData InitTargData
+								,const double MaxAmp_AftFlexure,const double T_AftFlexure,const double MaxAmp_BoardFlexure
+								,const double T_BoardFlexure, const TControlSyst ControlSyst, double *arrArtPar,TArtComplex ArtComplex
+								, wchar_t *pwcharrFoldReport);
+
+	double calcAmpAftFlexure(const double VAly);
+
+	double calcAmpBoardFlexure(const double VAly);
+
+	void calcCentreDeckAngles(const double valT);
+
+	void calcDeckAngles(const double valT, double *arrPointPositionPSK,
+		double *pvalQ, double *pvalVQ, double *pvalPsi, double *pvalVPsi, double *pvalTet,
+		double *pvalVTet);
+
+	void calcVectTrueDeckAngles_For_Far(double *arrMu);
+
+	void recalcVess(const double valT, const double VAlTargDesEps,
+		const double VAlTargDesBet);
+	static void recalcCoord_INTO_Spherical
+		(double *arrInp, double &valR, double &valBet, double &valEps);
+
+	void updateReportData();
+	void WriteReport();
+
+	void Move(const double valT, const double valStep);
+
+	void VSProlong(const double valTExtr, double *arrVSVesselExtr);
+
+	void GetZamer_IN_KGSK(TZamer InpASKZamer, TZamer *pOutKGSKZamer);
+
+	void calcSummarizedCorMtrx_ErrMes_In_GSK
+		(TZamer InpASKZamer, double *arrCorrMtrx_GSK);
+
+	void GetZamer_IN_GSK(TZamer InpASKZamer, TZamer *pOutGSKZamer);
+	void WriteReport(wchar_t *pwcharrPath);
+
+   /*	void createMeasure(const double VAlTrue_R,const double VAlTrue_V, const double VAlTrue_U
+	, const double VAlT, const double VAlTargDesEps, const double VAlTargDesBet
+	 , TEtalonSign EtalonSign , const double VAlTargEPR
+	, const double VAlPowerPrd, const double VAlKYPrd, TZamer *pOutASKZamer ); */
+
+	void createMeasure(const double VAlCoefAntp,const double VAlTrue_R,const double VAlTrue_V, const double VAlTrue_U
+	, const double VAlT, const double VAlTargDesEps, const double VAlTargDesBet
+	 , TEtalonSign EtalonSign , const double VAlTargEPR
+	, const double VAlPowerPrd, const double VAlKYPrd, TZamer *pOutASKZamer );
+
+	void __fastcall RecalcVect_PSK_CT_True_INTO_KGSK_True
+		(double *arrPSK, const double VAlTargDesEps, const double VAlTargDesBet, double *arrKGSK,
+		int lenarrPSK);
+
+	void __fastcall calcAY_Position(double *arr_AY_Position_KGSK);
+
+	void extrapolateTrueVS_GSK(const double VAlTExtr,
+		double *arrVessExtrapVS_GSK);
+
+	void calcDispExtrapDeckAngles_SINS(const double VAlTExtrap, double *pvalDispDEltaExtrIS_Psi
+	 , double *pvalDispDEltaExtrIS_Tet, double *pvalDispDEltaExtrIS_Q);
+
+	void calcDispExtrapDeckAngles_Deform(double *pvalDispDEltaExtrIS_Psi
+	 , double *pvalDispDEltaExtrIS_Tet);
+
+	void createMeasure_ForSingleTarg(const double VAlTrue_R,const double VAlTrue_V, const double VAlTrue_U
+	, const double VAlT, const double VAlTargDesEps, const double VAlTargDesBet
+	 , TEtalonSign EtalonSign , const double VAlTargEPR
+	, const double VAlPowerPrd, const double VAlKYPrd, TZamer *pOutASKZamer );
+
+};
+#endif

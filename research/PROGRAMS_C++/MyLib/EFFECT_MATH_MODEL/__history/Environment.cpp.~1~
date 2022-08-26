@@ -1,0 +1,68 @@
+//---------------------------------------------------------------------------
+
+
+#pragma hdrstop
+#include <math.h>
+#include "Environment.h"
+
+//---------------------------------------------------------------------------
+
+__fastcall TEnvironment::TEnvironment()
+{
+	// ¬олнение на море по шкале Significance Wave Height (SWH). от 0 до 9 баллов
+	 mBallWave = 0.;
+//  —корость ветра  горизонтальна€  м/с
+	 mWind_V = 0. ;
+
+//  —корость ветра  вертикальна€  м/с
+	 mWind_VertV = 0. ;
+	 // направление откуда дует веьтер
+	 mWind_Alf = 0. ;
+
+}
+
+//---------------------------------------------------------------------------
+  __fastcall TEnvironment::~TEnvironment()
+{
+
+}
+
+// конструктор копировани€
+  __fastcall TEnvironment ::TEnvironment (const TEnvironment &R)
+ {
+   mBallWave = R.mBallWave;
+   mWind_V = R.mWind_V ;
+   mWind_Alf = R.mWind_Alf;
+   mWind_VertV = R.mWind_VertV;
+
+ }
+ // оператор присваивани€
+ TEnvironment TEnvironment::operator=(TEnvironment  R)
+ {
+   mBallWave = R.mBallWave;
+   mWind_V = R.mWind_V ;
+   mWind_Alf = R.mWind_Alf;
+   mWind_VertV = R.mWind_VertV;
+	return *this ;
+ }
+
+
+  // парам конструктор
+  __fastcall TEnvironment::TEnvironment (const int BallWave, const double Wind_V)
+ {
+	mBallWave  = BallWave ;
+	mWind_V  = Wind_V  ;
+	mWind_VertV = 0.;
+
+ }
+
+  // парам конструктор
+  __fastcall TEnvironment::TEnvironment (const double Wind_V, const double Wind_Alf, const double  Wind_VertV)
+ {
+	mWind_V  = Wind_V  ;
+	mWind_Alf = mWind_Alf;
+	mBallWave  = int (Wind_V / 20. * 9. +0.0001)  ;
+	mWind_VertV = Wind_VertV;
+
+ }
+#pragma package(smart_init)

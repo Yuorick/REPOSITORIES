@@ -1,0 +1,42 @@
+//---------------------------------------------------------------------------
+
+#ifndef InitTargDataH
+#define InitTargDataH
+//---------------------------------------------------------------------------
+// хранение данных по исходному пеленгу цели
+class TInitTargData
+{
+public:
+	//  угол пеленга цели в √— 
+	double mBearing ;
+	// угол курса цели в √— 
+	double mTargCourse ;
+	// угол между ветором скорости цели и напрвлением в зенит
+	double mTargZenitAng ;
+	//- скорость
+	double mV;
+	// дальность,
+	double mR ;
+	// высота
+	double mH ;
+	//
+	double mT ;
+
+	 __fastcall ~TInitTargData() ;
+	// конструктор по умолчанию
+	TInitTargData () ;
+	// конструктор копировани€
+	TInitTargData  (const TInitTargData  &R) ;
+	// оператор присваивани€
+	TInitTargData  operator=(TInitTargData   R2) ;
+
+	// парам конструктор1
+	TInitTargData (const double Bearing, const double TargCourse, const double TargZenitAng ,const double V
+	 ,const double  R,const double H, const double T);
+
+	TInitTargData (const double Bearing,  const double TargZenitAng ,const double V
+	 ,const double  R,const double H, const double T, const double Q0, const double VVess );
+
+
+}  ;
+#endif

@@ -1,0 +1,32 @@
+//---------------------------------------------------------------------------
+
+#ifndef ArtCannonH
+#define ArtCannonH
+
+enum enumCannonType {A_192M,A_190_01, AK_630,AK_630_2M,CANNON_UNKNOWN};
+class TArtCannon
+{
+public:
+ // тип
+  enumCannonType menumCannonType ;
+// скорострельность. с
+	double mRateOfFire;
+// кучность по углу, рад, сигма
+	double mAngGroupedFire;
+// задержка в работе ј”
+	double mSigmaDelayT;
+	// конструктор по умолчанию
+	TArtCannon () ;
+	// конструктор копировани€
+	TArtCannon  (const TArtCannon  &R) ;
+	// оператор присваивани€
+	TArtCannon  operator=(TArtCannon   R2) ;
+
+	// парам конструктор2
+	TArtCannon (const double RateOfFire, const double AngGroupedFire,  const double CannonDelayT);
+  	// парам конструктор2
+	TArtCannon (enumCannonType EnumCannonType, const double CannonDelayT);
+
+
+}  ;
+#endif

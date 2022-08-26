@@ -1,0 +1,101 @@
+//---------------------------------------------------------------------------
+
+#ifndef LearnShellBodyH
+#define LearnShellBodyH
+#include "URPolyLine.h"
+#include "Detonator.h"
+#include "Constants.h"
+
+
+
+class TURPolyLine;
+class TDetonator;
+
+
+
+// Класс описывает характеристики снаряда
+class TLearnShellBody
+{
+public:
+// тип снаряда(калибр)
+	enumShellType  mEnumShellType  ;
+ // характерная длина снаряда, м
+	 double mL;
+// диаметр миделя, м
+	 double mDm ;
+// расстояние от основания гч до цм
+	 double mLc;
+ // длина гч
+	 double mLg ;
+// константа h_гоб для расчета дериываци функции  mh_gob =  Lc + 0.57*Lg -0.16*Dm
+	 double mh_gob ;
+// масса
+	 double mMass ;
+// момент инерции
+	 double mvalIx0 ;
+
+//   таблицпа креффициентов формы снаряда в зависимости от числа Маха
+	 TURPolyLine mplnCx;
+
+//   тадлицпа креффициентов формы снаряда в зависимости от числа Маха  по деривации
+	 TURPolyLine mplnKnm;
+
+//   тадлицпа креффициентов формы снаряда в зависимости от числа Маха  по угловой скорости
+	 TURPolyLine mplnMxOmx;
+
+	 //   тадлицпа креффициентов подъемной силы зависимости от числа Маха
+	 TURPolyLine mplnCz;
+
+	 // дисперсия разброса начального значения угловой  скорости
+	 double mDispOmega0;
+
+	 // дисперсия разброса начального значения путевой скорости
+	 double mDispV0;
+
+	 // дисперсия относительного  разброса Cx (1 + delta)
+	 double mDispCx;
+
+	 // дисперсия относительного  разброса Cz (1 + delta)
+	 double mDispCz;
+
+	 // дисперсия  разброса массы
+	 double mDispMass0;
+
+
+
+
+
+
+	 double mV0;   // нач скорость
+
+	 double mOmega0 ;  // нач угловая скорость
+//
+
+
+
+	// конструктор по умолчанию
+	TLearnShellBody () ;
+	// конструктор копирования
+	TLearnShellBody  (const TLearnShellBody  &R) ;
+
+	// оператор присваивания
+	TLearnShellBody  operator=(TLearnShellBody   R2) ;
+   // параметрическийц конструктор
+	 TLearnShellBody( enumShellType EnumShellType) ;
+	 // параметрическийц конструктор
+	TLearnShellBody( enumShellType EnumShellType, const TDetonator Detonator);
+
+	TLearnShellBody( enumShellType EnumShellType, const TURPolyLine PLN_CxEtal0
+	 , const TURPolyLine PLN_Knm0 ,const TURPolyLine PLN_MxOmegax0);
+
+
+	 void fnkCxEtal (const  double valM,  double &val_CxEtal, double &val_Grad_CxEtal) ;
+	 void fnkMxOmegax (const  double valM,  double &val_MxOmegax, double &val_Grad_MxOmegax) ;
+	 void fnkKnm (const  double valM,  double &val_Knm, double &val_Grad_Knm)  ;
+	 double calcBallisticCoeff();
+
+	 void fillShellVozmDispMatr_ShootingEarth (double *arrMtrxShellDisp);
+
+}  ;
+
+#endif

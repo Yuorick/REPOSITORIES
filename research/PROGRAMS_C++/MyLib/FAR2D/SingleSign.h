@@ -1,0 +1,35 @@
+//---------------------------------------------------------------------------
+
+#ifndef SingleSignH
+#define SingleSignH
+// одиночный сигнал
+class TSingleSign
+{
+public:
+
+   // угол курса
+	double mBet;
+	// угол места
+	double mEps;
+	// амплитуда
+	double mAmpl;
+	// фаза
+	double mPhase;
+
+
+
+
+ __fastcall  TSingleSign() ;
+// Конструктор копирования
+__fastcall  TSingleSign (const TSingleSign &R2) ;
+ // парам констр
+ __fastcall TSingleSign(const double Bet,const double Eps, const double Amp, const double Phase);
+
+ // оператор присваивания
+ TSingleSign   &operator=(const TSingleSign  &R2) ;
+
+
+
+
+};
+#endif

@@ -1,0 +1,651 @@
+//---------------------------------------------------------------------------
+
+
+#pragma hdrstop
+#include <vcl.h>
+#include <dir.h>
+#include "DiagrSet.h"
+#include <math.h>
+#include <string.h>
+#include "Comp.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include "YrWriteShapeFile.h"
+#include "URPolyLine.h"
+#include "UrPointXY.h"
+#include "Diagr.h"
+#include "MatrixProccess.h"
+#include "Gauss.h"
+
+
+ TDiagrSet::~TDiagrSet()
+{
+
+ if(mpDiagr)
+ {
+	 free (mpDiagr);
+ }
+}
+// Конструктор копирования
+TDiagrSet::TDiagrSet (const TDiagrSet &R2)
+ {
+ //
+  mNumDiagr = R2.mNumDiagr;
+
+
+  if (mpDiagr)
+  {
+   //	free (mpDiagr);
+	mpDiagr = NULL;
+  }
+  if (R2.mpDiagr)
+  {
+   mpDiagr = (TDiagr*)malloc(mNumDiagr * sizeof(TDiagr));
+   memcpy(mpDiagr, R2.mpDiagr, mNumDiagr * sizeof(TDiagr));
+  }
+
+ }
+
+ // оператор присваивания
+ TDiagrSet TDiagrSet::operator=(TDiagrSet  R2)
+{
+ //
+  mNumDiagr = R2.mNumDiagr;
+
+
+  if (mpDiagr)
+  {
+	free (mpDiagr);
+	mpDiagr = NULL;
+  }
+  if (R2.mpDiagr)
+  {
+   mpDiagr = (TDiagr*)malloc(mNumDiagr * sizeof(TDiagr));
+   memcpy(mpDiagr, R2.mpDiagr, mNumDiagr * sizeof(TDiagr));
+  }
+	return *this ;
+}
+
+ TDiagrSet::TDiagrSet()
+ {
+   mNumDiagr = 0;
+   mpDiagr = NULL;
+ }
+// парам конструктор
+ TDiagrSet::TDiagrSet(const int NumDiagr, double *arrAlfaDiagr)
+ {
+  mNumDiagr =  NumDiagr;
+  mpDiagr =  (TDiagr*)malloc(mNumDiagr * sizeof(TDiagr));
+  for (int i =0; i < mNumDiagr; i++)
+  {
+   mpDiagr[i] = TDiagr(arrAlfaDiagr[i]) ;
+  }
+ }
+
+ // парам конструктор2
+ TDiagrSet::TDiagrSet(const int NumDiagr, TDiagr *pDiagr)
+ {
+  mNumDiagr =  NumDiagr;
+  mpDiagr =  (TDiagr*)malloc(mNumDiagr * sizeof(TDiagr));
+  for (int i =0; i < mNumDiagr; i++)
+  {
+   mpDiagr[i] = pDiagr[i] ;
+  }
+ }
+
+ /// Решение задачи ММП методом группового спуска
+ //INPUT:
+ // pcmpSZv - массив измерений дианрамм, комплексный
+ // OUTPUT:
+ // pZTarg - комплексный коэфф  отражения цели
+ // pZAnt -  комплексный коэфф  отражения антипода
+ // palfTrg - угол цели
+ // palfAnp -  угол антипода
+ int  _fastcall TDiagrSet::MMP_GroupRelax(TComp *pcmpSZv, TComp *pZTarg, TComp *pZAnt, double *palfTrg, double *palfAnp )
+ {
+
+  int ireturn = -3;
+  double alfTargTemp = *palfTrg, alfAntTemp =*palfAnp;
+  for (int i = 0; i < 1000; i++)
+  {
+	// нахождение коэффициентов отражения при фиксированных углах путем решения
+	// 2 задач квадрат программирования без ограничений 2-го порядка
+
+  if(! find_ZTarg_and_ZAnt( pcmpSZv, pZTarg, pZAnt, *palfTrg, *palfAnp ) )
+  {
+   return -3;
+  }
+
+	///
+
+	int irez =  find_AlfTarg_and_AlfAnt( pcmpSZv, *pZTarg, *pZAnt, &alfTargTemp, &alfAntTemp  );
+
+	 if (irez !=0)
+	 {
+	  return irez ;
+	 }
+
+
+		double del = sqrt((alfTargTemp - *palfTrg) * (alfTargTemp - *palfTrg) + (alfAntTemp -*palfAnp)* (alfAntTemp -*palfAnp));
+		*palfTrg =alfTargTemp ;
+		*palfAnp = alfAntTemp ;
+	if (del< 0.00001)
+	{
+	 ireturn = 0;
+
+	 break ;
+	}
+
+  }
+
+  return ireturn;
+}
+
+
+ // Вычисление целевой функции ММП
+// INPUT:
+// pcmpSZv   - массив измерений по диаграммам (комплексные числа)
+// cmpZ1  - комплексный коэффициент отражения цели
+// cmpZ2  - комплексный коэффициент отражения антипода
+// alfTrg - угол места цели
+// alfAnp - угол места антипода
+double  _fastcall TDiagrSet::calcFncObj_MMP(TComp *pcmpSZv,TComp cmpZTrg, TComp cmpZAnp, double alfTrg, double alfAnp )
+{
+
+ double valRez = 0.;
+ for (int i =0; i < mNumDiagr; i++)
+ {
+   double valPartTemp =   mpDiagr[i].calcFncObjPartial_MMP(  pcmpSZv[i],  cmpZTrg,  cmpZAnp,  alfTrg,  alfAnp );
+ valRez +=  valPartTemp ;
+ }
+return valRez;
+}
+
+
+// Нахождение оптимальных коэффициетов отражения  цели и антипода при фиксированных углах
+// положения цели и антипода
+// для вертикального веера
+// INPUT:
+// pcmpSZv   - массив измерений по диаграммам (комплексные числа)
+// alfTrg- угол места цели  в радианах
+// alfAnp - угол места антипода в радианах
+
+// OUTPUT:
+// *pZTarg -  коэффициент отражения цели
+// *pZAnt   - коэффициент отражения  антипода
+// возвращает:
+//  -1 - если к-во диаграмм quantDiagr< 3
+// -2 - еслти матрица якоби вырождена
+// -3 - Если метод не сошелся
+bool  _fastcall TDiagrSet::find_ZTarg_and_ZAnt( TComp *pcmpSZv, TComp *pZTarg, TComp *pZAnp, double alfTrg, double alfAnp )
+{
+// нахождение коэффициентов отражения при фиксированных углах
+	// 2 задач квадрат программирования без ограничений 2-го порядка
+	double arrZ[4] ={0.};
+
+	double arrAATSum[16] ={0.}, arrAATCur[16] ={0.}, arrATSSum[4]={0.}, arrATSCur[4]={0.}, arrT0[16] ={0.}
+	, arrT1[4]={0.}, arrAATSumInv[16]={0.};
+	for (int i =0; i < mNumDiagr; i++)
+	{
+	 mpDiagr[i].calc_ATA_andATS(pcmpSZv[i], alfTrg,  alfAnp, arrAATCur, arrATSCur );
+	 MtrxSumMatrx(arrAATSum, arrAATCur,4, 4, arrT0) ;
+	 memcpy(arrAATSum,arrT0, 16 * sizeof(double));
+	 MtrxSumMatrx(arrATSSum, arrATSCur,4, 1, arrT1) ;
+	 memcpy(arrATSSum,arrT1, 4 * sizeof(double));
+
+	}
+  if(!	InverseMtrx4(arrAATSum, arrAATSumInv)) return false ;
+  MtrxMultMatrx(arrAATSumInv,4, 4, arrATSSum ,1, arrZ) ;
+  (*pZTarg).m_Re = arrZ[0] ;
+  (*pZTarg).m_Im = arrZ[1] ;
+  (*pZAnp).m_Re = arrZ[2] ;
+  (*pZAnp).m_Im = arrZ[3] ;
+	return true;
+}
+// Нахождение оптимальных углов цели и антипода при фиксированных коэффиц отражения
+// для вертикального веера
+// INPUT:
+// pcmpSZv   - массив измерений по диаграммам (комплексные числа)
+// ZTarg -  коэффициент отражения цели
+// ZAnt   - коэффициент отражения  антипода
+// *alfTrg  - УМ цели
+// *alfAnp  - УМ антипода
+// OUTPUT:
+// arrMilradAngles[0] - угол места цели   в радианах
+// arrMilradAngles[1]  - угол места антипода в милирадианах
+// возвращает:
+//  -1 - если к-во диаграмм quantDiagr< 3
+// -2 - еслти матрица якоби вырождена
+// -3 - Если метод не сошелся
+// ZTarg
+// ZAnt
+int  _fastcall TDiagrSet::find_AlfTarg_and_AlfAnt( TComp *pcmpSZv, TComp ZTarg, TComp ZAnt, double *alfTrg, double *alfAnp )
+{
+  int i = 0;
+  double arr_FGreek[2] ={0.},arr_dFGreek[4] ={0.},arr_dFGreekInv[4] ={0.} ;
+  double arrX[2] ={0.}, arrXT[2] ={0.}; // вектор с решениями
+  arrX[0] = *alfTrg ;
+  arrX[1] = *alfAnp;
+  double del = -2.;
+
+  for (i = 0; i < 100; i++)
+  {
+
+	double arr_F00[2] ={0.},arr_dF00[4] ={0.}, arrDelX[2] ={0.} ;
+
+	calc_F_and_dF_po_dAlf ( pcmpSZv, ZTarg,  ZAnt, arrX[0], arrX[1] , arr_FGreek, arr_dFGreek ) ;
+	///
+	double temp0 = arr_dFGreek[0]/ 1000000. * arr_dFGreek[3]/ 1000000. - arr_dFGreek[1]/ 1000000. * arr_dFGreek[2]/ 1000000.;
+
+	////
+	if(!InverseMtrx2(arr_dFGreek, arr_dFGreekInv))
+	{
+     *alfTrg = arrX[0]   ;
+	 *alfAnp = arrX[1]  ;
+	 return -2;
+	}
+	MtrxMultMatrx(arr_dFGreekInv ,2, 2, arr_FGreek,1, arrDelX) ;
+	del = NormVect(arrDelX, 2);
+	double arrT[2] ={0.};
+	MtrxMinusMatrx(arrX, arrDelX,1, 2, arrXT) ;
+	memcpy( arrX, arrXT, 2 * sizeof(double));
+	if (del< 0.000001)
+	{
+
+	  *alfTrg = arrX[0]   ;
+	  *alfAnp = arrX[1]  ;
+	  return 0;
+	}
+ }
+
+  return -3;
+}
+
+void  _fastcall TDiagrSet::calc_F_and_dF_po_dAlf ( TComp *pcmpSZv, TComp ZTarg, TComp ZAnt
+, double alfTrg, double alfAnp, double* arr_FGreek,double* arr_dFGreek )
+{
+	double arr_Part_F[2] ={0.},arr_Part_dF[4] ={0.}, arrT[2]={0.}, arrT1[4]={0.};
+	memset(arr_FGreek, 0, 2 * sizeof(double));
+	memset(arr_dFGreek , 0, 4 * sizeof(double));
+	for (int i =0; i < mNumDiagr; i++)
+	{
+	 mpDiagr[i].calcPartial_F_and_dF_po_dAlf(pcmpSZv[i], ZTarg,  ZAnt
+		, alfTrg, alfAnp , arr_Part_F, arr_Part_dF ) ;
+	 MtrxSumMatrx(arr_FGreek, arr_Part_F,1, 2, arrT) ;
+	 memcpy(arr_FGreek,arrT, 2 * sizeof(double));
+	 MtrxSumMatrx(arr_dFGreek, arr_Part_dF,2, 2, arrT1) ;
+	 memcpy(arr_dFGreek,arrT1, 4 * sizeof(double));
+
+	}
+}
+
+
+/// Решение задачи ММП методом Ньютона
+// Коэффициенты отражеия находятся путем решения сиситемы линейных уравнений
+// После этого задача сводиться к решению сиситемы 2-х нелинейных уравнений
+// относительно  palfTrg  и palfAnp
+// Матрица Якоби рассчитывается разностным методом, для этогно по каждой переменной
+// palfTrg  и palfAnp даются приращения и частные производные вычисляются разногстным методом
+ //INPUT:
+ // pcmpSZv - массив измерений дианрамм, комплексный
+ // palfTrg  и palfAnp - начальные пнриближения угла цели и антипода
+ // OUTPUT:
+ // pZTarg - комплексный коэфф  отражения цели
+ // pZAnt -  комплексный коэфф  отражения антипода
+ // palfTrg - угол цели
+ // palfAnp -  угол антипода
+ int  _fastcall TDiagrSet::solvNewtonMeth_Razn(const double valSigNoise,TComp *pcmpSZv, TComp *pZTarg, TComp *pZAnt
+	   , double *palfTrg, double *palfAnp, double *arrMtrxCorr )
+ {
+
+  int breturn = -3;
+  int i = 0;
+  double arr_FGreek[2] ={0.},arr_dFGreek[4] ={0.},arr_dFGreekInv[4] ={0.} ;
+  double arrX[2] ={0.}, arrXT[2] ={0.}; // вектор с решениями
+  arrX[0] = *palfTrg ;
+  arrX[1] = *palfAnp;
+  double del = -2.;
+
+  for (i = 0; i < 100; i++)
+  {
+
+	double arr_F00[2] ={0.},arr_dF00[4] ={0.}, arrDelX[2] ={0.}, arrDelX1[2] ={0.} ;
+
+	calc_vectG_and_mtrxH_NewtonMeth_Razn (pcmpSZv
+		,  arrX[0], arrX[1], arr_FGreek,  arr_dFGreek, pZTarg, pZAnt   ) ;
+		 //	 проверка положит определ для отлажки!!!
+		double parrRez[4] ={0.}, parrRez1[4] ={0.};
+		MatrxMultScalar(arr_dFGreek, 2, 2, 0.000001,parrRez);
+		double valPos = arr_dFGreek[0] *arr_dFGreek[3] - arr_dFGreek[1] * arr_dFGreek[2];
+		if (!((arr_dFGreek[0] > 0.)&&(valPos > 0.)))
+		{
+		 breturn = -3;
+		 break;
+		}
+	///
+
+   //	if(!InverseMtrx2(parrRez, parrRez1))
+	if(!InverseMtrx2(arr_dFGreek, arr_dFGreekInv))
+	{
+	 *palfTrg = arrX[0]   ;
+	 *palfAnp = arrX[1]  ;
+	 breturn = -2;
+	 break;
+	}
+   //	MatrxMultScalar(parrRez1, 2, 2, 1000000.,arr_dFGreekInv);
+	MtrxMultMatrx(arr_dFGreekInv ,2, 2, arr_FGreek,1, arrDelX) ;
+	del = NormVect(arrDelX, 2);
+	double arrT[2] ={0.};
+	MatrxMultScalar(arrDelX, 2, 1, 0.1,arrDelX1);
+	memcpy( arrDelX, arrDelX1, 2 * sizeof(double));
+	MtrxMinusMatrx(arrX, arrDelX,1, 2, arrXT) ;
+	memcpy( arrX, arrXT, 2 * sizeof(double));
+	if (del< 0.00001 )
+	{
+
+	  *palfTrg = arrX[0]   ;
+	  *palfAnp = arrX[1]  ;
+	  //calcMtrxCorrel(valSigNoise, *palfTrg, *palfAnp, *pZTarg,  *pZAnt, arr_dFGreekInv, arrMtrxCorr);
+	  calcMtrxCorrel_Mistake(valSigNoise, *palfTrg, *palfAnp, *pZTarg,  *pZAnt, arr_dFGreekInv, arrMtrxCorr);
+	  breturn= 0;
+	  break;
+	}
+ }
+
+  return breturn;
+
+}
+
+
+/// Решение задачи ММП методом Ньютона  с перебором по начальным условиям  ум цели
+// итерационного процесса
+// valXMax - максимальное значение ум цели (рад),
+// valStepX - шаг перебора  (рад)
+ //INPUT:
+ // pcmpSZv - массив измерений дианрамм, комплексный
+ // valXMax - максимальное значение ум цели (рад),
+// valStepX - шаг перебора  (рад)
+ // valSigNoise - скз шума
+ // OUTPUT:
+ // pZTarg - комплексный коэфф  отражения цели
+ // pZAnt -  комплексный коэфф  отражения антипода
+ // palfTrg - угол цели
+ // palfAnp -  угол антипода
+ // arrMtrxCorr[4] - кореляц матрица ошибок оценивания углов цели и антипода
+ int  _fastcall TDiagrSet::solvNewtonMeth_RaznPerebor(const double valSigNoise
+  , const double valXMax,const double valStepX, TComp *pcmpSZv, TComp *pZTarg, TComp *pZAnt
+	   , double *palfTrg, double *palfAnp, double *arrMtrxCorr )
+ {
+  int breturn = -3;
+
+  const int iN = valXMax/ valStepX;
+  TComp cmpZTargTemp(0.,0.), cmpZAntTemp(0.,0.);
+  double alfTrgTemp = 0., alfAnpTemp = 0., arrMtrxCorrTemp[4] ={0.};
+  double objMin = 1000000000.;
+
+  for ( int i = 0; i < iN; i++)
+  {
+  alfTrgTemp = ((double)i) *  valStepX;
+  alfAnpTemp =  -alfTrgTemp ;
+  int irez = solvNewtonMeth_Razn( valSigNoise, pcmpSZv,& cmpZTargTemp, &cmpZAntTemp
+	   , &alfTrgTemp, &alfAnpTemp, arrMtrxCorrTemp );
+
+  if (irez != 0) continue;
+  breturn  =irez;
+  double objTemp = calcFncObj_MMP(pcmpSZv,cmpZTargTemp, cmpZAntTemp , alfTrgTemp, alfAnpTemp);
+  if (objTemp < objMin)
+  {
+	*pZTarg =  cmpZTargTemp   ;
+	*pZAnt = cmpZAntTemp;
+	*palfTrg = alfTrgTemp;
+	*palfAnp = alfAnpTemp ;
+	memcpy(arrMtrxCorr , arrMtrxCorrTemp, 4 * sizeof(double));
+	objMin = objTemp ;
+
+  }
+  }
+
+  return breturn;
+
+}
+
+// вычисление корреляционной матрицы ошибок оценивания ум цели и и антипода
+// INPUT:
+// alfTrg - ум цели
+// alfAnp - ум антипода
+// cmpZTarg - коэфф отражения цели
+// cmpZAnt  - коэфф отражения антипода
+// arr_dFGreekInv[4] - матрица Якоби в точке (alfTrg, alfAnp )
+// OUTPUT:
+// arrMtrxCorr[4] - корреляционная матрица
+//
+void  _fastcall TDiagrSet::calcMtrxCorrel(const double valSigNoise,const double alfTrg, const double alfAnp
+  , const TComp cmpZTarg,const TComp cmpZAnt,double* arr_dFGreekInv,double* arrMtrxCorr)
+{
+   // вычисление суммы матриц HR
+   double *parrHsRSum = new double [mpDiagr[0].mFar.m_N  * 4];
+   memset(parrHsRSum, 0, mpDiagr[0].mFar.m_N  * 4 * sizeof(double));
+   double *parrHsRTemp = new double [mpDiagr[0].mFar.m_N * 4];
+   double *parrHsRTemp1 = new double [mpDiagr[0].mFar.m_N * 4];
+   double *parrTemp2 = new double [mpDiagr[0].mFar.m_N * 4];
+   double *parrTemp3 = new double [mpDiagr[0].mFar.m_N * 4];
+   for (int j = 0; j < mNumDiagr; j++)
+   {
+	 mpDiagr[j].calcMtrxHR( alfTrg,  alfAnp,  cmpZTarg, cmpZAnt,parrHsRTemp) ;
+	 MtrxSumMatrx(parrHsRTemp, parrHsRSum,mpDiagr[0].mFar.m_N  * 4, 1, parrHsRTemp1) ;
+	 memcpy(parrHsRSum, parrHsRTemp1, sizeof(double) *mpDiagr[0].mFar.m_N  * 4  );
+   }
+   ///
+
+   // умножение слева на матрицу  arr_dFGreekInv
+	MtrxMultMatrx(arr_dFGreekInv,2, 2, parrHsRSum, mpDiagr[0].mFar.m_N * 2, parrTemp2) ;
+	///
+
+	//
+	memcpy(parrTemp3, parrTemp2,  mpDiagr[0].mFar.m_N  * 4 * sizeof(double));
+	///
+	double arrRez0[4] ={0.};
+	MtrxMultMatrxTransp(parrTemp2,2, mpDiagr[0].mFar.m_N * 2, parrTemp3, 2 , arrRez0) ;
+	MatrxMultScalar(arrRez0, 2, 2, valSigNoise * valSigNoise, arrMtrxCorr);
+
+   delete parrHsRTemp;
+   delete parrHsRSum;
+   delete parrHsRTemp1;
+   delete parrTemp2 ;
+   delete parrTemp3 ;
+}
+
+// вычисление корреляционной матрицы ошибок оценивания ум цели и и антипода
+// принято, что ошибки диаграмм некоррелированы между собой
+// INPUT:
+// alfTrg - ум цели
+// alfAnp - ум антипода
+// cmpZTarg - коэфф отражения цели
+// cmpZAnt  - коэфф отражения антипода
+// arr_dFGreekInv[4] - матрица Якоби в точке (alfTrg, alfAnp )
+// OUTPUT:
+// arrMtrxCorr[4] - корреляционная матрица
+//
+void  _fastcall TDiagrSet::calcMtrxCorrel_Mistake(const double valSigNoise,const double alfTrg, const double alfAnp
+  , const TComp cmpZTarg,const TComp cmpZAnt,double* arr_dFGreekInv,double* arrMtrxCorr)
+{
+   // вычисление суммы матриц HR
+	double arrHs[4] = {0.}, arrT0[4] = {0.}, arrT1[4] = {0.}, arrT2[4] = {0.}, arrSum[4] = {0.};
+   for (int j = 0; j < mNumDiagr; j++)
+   {
+	 mpDiagr[j].calcMtrxHs( alfTrg,  alfAnp,  cmpZTarg, cmpZAnt,arrHs) ;
+	 memcpy(arrT0, arrHs, 4 * sizeof(double));
+	 MtrxMultMatrxTransp(arrHs,2,  2, arrT0, 2 , arrT1 );
+	 MtrxSumMatrx(arrSum, arrT1,2, 2 , arrT2) ;
+	 memcpy(arrSum, arrT2, sizeof(double) * 4  );
+   }
+   ///
+
+   // умножение слева на матрицу  arr_dFGreekInv
+	MtrxMultMatrx(arr_dFGreekInv,2, 2, arrSum,  2, arrT2) ;
+	MtrxMultMatrxTransp( arrT2,2,  2, arr_dFGreekInv, 2 , arrT1) ;
+	MatrxMultScalar( arrT1, 2, 2, valSigNoise * valSigNoise, arrMtrxCorr);
+}
+
+//--------------------------------------------------------------------
+int  _fastcall TDiagrSet::calc_vectG_and_mtrxH_NewtonMeth_Razn (TComp *pcmpSZv, double alfTrg, double alfAnp
+		,double* arr_FGreek, double*  arr_dFGreek , TComp*  pcmpZTarg,TComp* pcmpZAnp  )
+ {
+
+	 calc_vectF_from_Alfa( pcmpSZv,  alfTrg, alfAnp,  arr_FGreek, pcmpZTarg, pcmpZAnp  );
+	 double delt = 0.0000001;
+	 double arr_FGreekTemp[2] ={0.}, arrT0[2] ={0.};
+	 TComp cmpZTarg0(0.,0.), cmpZAnp0(0.,0.);
+	 calc_vectF_from_Alfa( pcmpSZv,  alfTrg + delt, alfAnp,  arr_FGreekTemp ,&cmpZTarg0, &cmpZAnp0  );
+	 MtrxMinusMatrx(arr_FGreekTemp , arr_FGreek, 1, 2, arrT0);
+	 MatrxDivideScalar(arrT0, 1, 2, delt,arr_dFGreek);
+
+	 calc_vectF_from_Alfa( pcmpSZv,  alfTrg , alfAnp + delt,  arr_FGreekTemp ,&cmpZTarg0, &cmpZAnp0  );
+	 MtrxMinusMatrx(arr_FGreekTemp , arr_FGreek, 1, 2, arrT0);
+	 MatrxDivideScalar(arrT0, 1, 2, delt,&arr_dFGreek[2]);
+	 arr_dFGreek [2] =arr_dFGreek [1] ;
+	 return 0;
+ }
+
+
+void  _fastcall TDiagrSet::calc_vectF_from_Alfa( TComp *pcmpSZv, double alfTrg, double alfAnp
+  ,double* arr_FGreek, TComp*  pcmpZTarg,TComp* pcmpZAnp  )
+{
+  // TComp cmpZTarg(0.,0.), cmpZAnp (0.,0.);
+  find_ZTarg_and_ZAnt( pcmpSZv, pcmpZTarg, pcmpZAnp,  alfTrg,  alfAnp );
+
+  double arr_dFGreek[4] ={0.}; // нигде не исполтьзуется
+  calc_F_and_dF_po_dAlf ( pcmpSZv, *pcmpZTarg, *pcmpZAnp,  alfTrg,  alfAnp
+	  ,  arr_FGreek, arr_dFGreek );
+}
+
+// имитация измерений
+// INPUT:
+//valNoiseSkz  - СКО шума
+// alfTrg - у.м. цели, рад
+// alfAnp - у.м. антипода, рад
+// cmpZTarg - коэффиц отражения цели
+// cmpZAnt - коэффиц отражения антипода
+// OUTPUT:
+// pcmpS - массив измерений истнный
+// pcmpSZv - массив измерений
+
+void  _fastcall TDiagrSet::imitateMeasures( TComp *pcmpS,TComp *pcmpSZv, double alfTrg, double alfAnp
+  ,TComp cmpZTarg, TComp cmpZAnt,double valNoiseSkz )
+{
+	for (int i =0; i < mNumDiagr ; i++)
+	{
+	  TComp cmpF1 = mpDiagr[i].fncF(alfTrg);
+	  TComp cmpF2 = mpDiagr[i].fncF(alfAnp);
+	  pcmpS[i] = cmpZTarg * cmpF1 +  cmpZAnt * cmpF2 ;
+	  pcmpSZv[i].m_Re = pcmpS[i].m_Re +  getGauss(0., valNoiseSkz/sqrt(2.) );
+	  pcmpSZv[i].m_Im = pcmpS[i].m_Im +  getGauss(0., valNoiseSkz/sqrt(2.) );
+
+	}
+
+}
+
+
+void  _fastcall TDiagrSet::createDiagrGraphs(wchar_t *wchFoldName1 )
+{
+
+	wchar_t wchFoldName[300] ={0};
+	wcscpy(  wchFoldName,  wchFoldName1);
+	wcscat(wchFoldName, L"\\");
+	for (int i =0; i <  mNumDiagr; i++)
+	{
+	 wchar_t wchFoldNameTemp[300] ={0};
+	 wcscpy(  wchFoldNameTemp,  wchFoldName);
+	 String s_22 = wchFoldNameTemp;
+	 s_22 += L"GraphDiagr_";
+	 s_22 += i;
+	 _wmkdir(s_22.w_str()) ;
+	 mpDiagr[i].createDiagrGraphs(s_22.w_str()) ;
+	}
+   /*	double step = M_PI / 3000./ 10.;
+	const int nBuffRows = 1500 *2;
+	const int nBuffCols = 8;
+	double  *parrBuff = new double [nBuffRows  * nBuffCols] ;
+	memset(parrBuff, 0, nBuffRows * nBuffCols * sizeof(double));
+
+	const int lenName = 30;
+	wchar_t wcharrFileNames [240] ={0};
+	wcscpy( wcharrFileNames, L"Tetta");
+	wcscpy( &wcharrFileNames[30], L"ModF");
+	wcscpy( &wcharrFileNames[60], L"F_Re");
+	wcscpy( &wcharrFileNames[90], L"F_Im");
+
+	wcscpy( &wcharrFileNames[120], L"dF_Re");
+	wcscpy( &wcharrFileNames[150], L"dF_Im");
+	wcscpy( &wcharrFileNames[180], L"d2F_Re");
+	wcscpy( &wcharrFileNames[210], L"d2F_Im");
+  for (int i=0 ; i < nBuffRows; i++)
+  {
+   double tet = step * ((double) (-nBuffRows/2 +i));
+   parrBuff[ i * nBuffCols] = tet ;
+
+   TComp cmp = fncF( tet);
+   TComp cmp1 = dF_po_dTet( tet);
+   TComp cmp2 = d2F_po_dTet2( tet);
+   parrBuff[ i * nBuffCols + 1]= cmp.modul();
+   parrBuff[ i * nBuffCols + 2]= cmp.m_Re;
+   parrBuff[ i * nBuffCols + 3]= cmp.m_Im;
+
+   parrBuff[ i * nBuffCols + 4]= cmp1.m_Re;
+   parrBuff[ i * nBuffCols + 5]= cmp1.m_Im;
+   parrBuff[ i * nBuffCols + 6]= cmp2.m_Re;
+   parrBuff[ i * nBuffCols + 7]= cmp2.m_Im;
+
+  }
+
+ // double scalex = 100.;
+  double *pscaley = new double [nBuffCols] ;
+  pscaley[0] = 100.;
+  pscaley[1] = 100.;
+  pscaley[2] = 100.;
+  pscaley[3] = 100.;
+  pscaley[4] = 1.;
+  pscaley[5] = 1.;
+  pscaley[6] = 0.1;
+  pscaley[7] = 0.1;
+  for (int i=1; i < nBuffCols; i++)
+  {
+
+  TYrWriteShapeFile::WriteOneReport(                 wchFoldName  // путь к папке
+								  , parrBuff // массив с информацией - матрица nBuffRows x nBuffCols
+								  , nBuffCols // - к-во переменных о корорых накоплена информация в буфере
+								  , nBuffRows //  - к-во точек
+								  ,wcharrFileNames //матрица с именаими переменных - матрица nBuffCols x lenName
+								  ,lenName // максимальная длина имени переменной
+								  ,0  // номер переменной по оси X
+								  ,i  // номер переменной по оси Y
+								  ,1000. //  масштаб по оси X
+								  ,pscaley[i]// масштаб по оси Y
+								   ) ;
+  }
+
+	delete parrBuff;
+	delete pscaley;
+	wchar_t wchAxesFileName[300] ={0};
+	wcscpy(  wchAxesFileName,  wchFoldName);
+	wcscat(wchAxesFileName, L"AxesArr.shp");
+	TYrWriteShapeFile::CreateShpArrowedAxes(wchAxesFileName,-150., 150.
+	 ,-pscaley[0] * 1.1,pscaley[0] * 1.1, 50000.*step) ;
+	TURPointXY pPoints[2];
+	pPoints[0] =  TURPointXY (-100., pscaley[0]* sqrt(2.)/2.);
+	pPoints[1] =  TURPointXY (100., pscaley[0] * sqrt(2.)/2.);
+	TURPolyLine pln( pPoints,2) ;
+
+	wcscpy(  wchAxesFileName,  wchFoldName);
+	wcscat(wchAxesFileName, L"Line0.shp");
+	TURPolyLine::WriteSetSHPFiles(wchAxesFileName,&pln, 1) ;
+	*/
+ }
+
+
+double  _fastcall SIGN__(double a)
+{
+	return (a > 0.)?1:-1;
+}
+
+#pragma package(smart_init)

@@ -1,0 +1,214 @@
+//---------------------------------------------------------------------------
+
+#ifndef MyShellTrajH
+#define MyShellTrajH
+#include "ShellBody.h"
+
+
+
+#define R_ZEMLI 6371000.
+#define G_ZEMLI 9.80665
+#define OMEGA_ZEMLI 0.00007292116
+#define  LENINGRAD_LATITUDE 1.0471955119659
+// Класс описывает характеристики снаряда
+class TShellBody;
+class TEnvironment ;
+class TMyShellTraj
+{
+public:
+ // начальные условия
+	 double mTStart;  // нач момент
+	 double mTet0;  // нач угол бросания
+
+	 double mAlfDir ; //дирекциогнный угол плоскости стрельбы
+	 double mPsi0 ; // нач азимут (угол пути) в стрельбовой СК mPsi0
+
+
+
+	 double mAltit ; // нач высота
+	 double mLatitude ;  // широта
+	 double mTCur ;  // вренмя пнривязки фазового вектора
+
+
+
+	TShellBody mShellBody  ;  // снаряд
+
+	double mCoefCx;
+	double mCoefCy;
+	double mCoefCz ;
+	// фазовый  вектор  в стрельбовой СК:
+// 1. marrStrSK_VS [0]- x
+// 2. marrStrSK_VS [1]-  y
+// 3. marrStrSK_VS [2]-  z
+// 4. marrStrSK_VS [3]-  угол Пси
+// 5. marrStrSK_VS [4]-  угловая скоргость Омега
+// 6. marrStrSK_VS [5]-  относит плотность атмосферы Пи
+// 7. marrStrSK_VS [6]-  путевая скорость V
+// 8. marrStrSK_VS [7]-  угол Тетта
+	 double marrStrSK_VS [8] ;
+	// матрица производных (матрица Якоби) вектора состояния по начальным условиям
+ //	 double marrStrSK_Jac [64] ;
+
+		// матрица производных (матрица Якоби) вектора состояния по коэффиц формы
+
+	 // double marrStrSK_JacCoeffFom [8] ;
+	//  double marrStrSK_JacMass [8] ;
+	 // вектор дельт по каждой координате фазового вектора  - для рассчета частных производных
+ //	  double marrDelta [10]  ;
+	  ///
+
+
+
+	// вектор дисперсий случайных разбросов начальных условий движения
+// снваряда и 2-х параметорв - коэффиц формы и массы
+//	 double marrDispScatters[10] ;
+	 ///
+
+	 // вектор дисперсий случайных разбросов параметров ветра
+	 // marrDispWindParamsScatters[0] - % от горизонтального модуля в квадрате
+	 // marrDispWindParamsScatters[1] - 0.005 * 0.005 - направление
+	 // marrDispWindParamsScatters[2] - % от вертикального модуля в квадрате
+	 double marrDispWindParamsScatters[3] ;
+	 ///
+	// конструктор по умолчанию
+	TMyShellTraj () ;
+	// конструктор копирования
+	TMyShellTraj  (const TMyShellTraj  &R) ;
+
+	// оператор присваивания
+	TMyShellTraj  operator=(TMyShellTraj   R2) ;
+   // парам конструктор 1
+	TMyShellTraj  (const  double TStart, const  double Tet0
+			 , const  double AlfDir
+			  ,const  double Psi0 ,const  double  Altit,const  double Latitude
+			  ,const  double  TCur) ;
+
+      // парам конструктор 2
+	TMyShellTraj (const TShellBody ShellBody, const  double TStart, const  double Tet0
+			 , const  double AlfDir
+			  ,const  double Psi0 ,const  double  Altit,const  double Latitude
+			  ,const  double  TCur) ;
+
+    // парам конструктор 3
+	TMyShellTraj (const TShellBody ShellBody, const  double TStart, const  double Tet0
+			 , const  double AlfDir,const  double Psi0 ,const  double  Altit,const  double Latitude
+			  ,const  double  TCur, double *arrDispWindParamsScatters);
+
+	  // парам конструктор 4
+	TMyShellTraj (double *arrVesselVelocity, const TShellBody ShellBody,  const  double Eps0,  const  double Bet0 );
+
+
+	void fncFillNachalnieUsloviaVS();
+
+	void fncCalc_F_and_H_and_HI( double *arrF,  double *mtr_dF_po_dx
+	,  double *mtr_dF_po_dz, double *mtr_dF_po_di) ;
+	void fncCalcMach_and_GradMach( double valTay,  double valDerivTay
+	 , double &valMach,  double *arrGradMach) ;
+	void fncCalc_q_and_Grad_q( double valMach, double  *arrGradMach
+		, double  &val_q,  double *arrGrad_q) ;
+
+	 void fncCalcDeltaTettaTochka_and_DerivPoPsi( double &valDeltaTettaTochka
+		   ,  double &valDerivDeltaTettaTochkaPoPsi) ;
+	 void fncCalcDeltaPsiTochka_and_DerivPoPsi_and_DerivPoTetta( double &valDeltaPsiTochka
+		   ,  double &valDerivDeltaPsiTochkaPoPsi,  double &valDerivDeltaPsiTochkaPoTetta) ;
+	 void fncCalcGradF0( double *arr_dFTransp) ;
+	 void fncCalcGradF1(  double *arrGradF1);
+	 void fncCalcGradF2(  double *arrGradF0);
+	  void fncCalcGradF7(const  double valDerivDeltaTettaTochkaPoPsi , double *arrGradF7);
+
+	  void fncCalcGradF3( double *arrGradF7,const  double valF7,const  double valDeltaPsiTochka
+		   ,const  double valDerivDeltaPsiTochkaPoPsi, const  double valDerivDeltaPsiTochkaPoTetta
+		   ,const  double val_iz, const  double val_Deriv_iz
+		   ,const  double valKnm,  double *arrGradKnm
+		   ,  double *arrGradF3, double *arrGradF3_po_z);
+
+	  void fncCalcGradF4(const  double valMach,  double *arrGradMach
+							   ,const  double val_q,  double *arrGrad_q
+							   ,const  double valMxOmegax,  double *arrGrad_MxOmegax
+							   ,  double *arrGradF4) ;
+	   void fncCalcGradF6(const  double val_q,  double *arrGrad_q
+							   ,const  double valCxEtal,  double *arrGradCxEtal
+							   ,const  double val_ix, const  double val_Deriv_ix
+							   , double *arrGradF6, double *arrGradF6_po_z) ;
+
+
+
+	 void fncCalcKnm_and_Grad_Knm(const  double valMach,  double *arrGradMach
+			   , double &valKnm,  double *arrGradKnm ) ;
+
+	void fncCalcMxOmegax_and_Grad_MxOmegax(const  double valMach,  double *arrGradMach
+			   , double &valMxOmegax,  double *arrGradMxOmegax ) ;
+
+	void fncCalcGradF5(const  double valTay, const  double valDerivTay,  double *arrGradF5) ;
+
+	void fncCalcCxEtal_and_Grad_CxEtal(const  double valMach,  double *arrGradMach
+			   , double &valCxEtal,  double *arrGradCxEtal ) ;
+
+	void fncEilerStep(TEnvironment Environment,const  double valStepInt) ;
+
+	void fncMovePhasVector(TEnvironment Environment,const double VAlStepInt, const double valTNext );
+
+	void fncCalcVS_v_PrStSK(   double *arrVS_PrStSK)   ;
+
+	void fncCalcK(   double *arrK  ) ;
+
+	void fncCalcJacobi_PrStSK(  double *arrJac_PrStSK  ) ;
+
+	void fncMoveShell_TO_ZeroAlt(TEnvironment Environment,const double VAlStepInt, double &valDHoriz );
+
+	void fncMoveClass_TO_ZeroAlt_AND_ShowGraphs(TEnvironment Environment,const double VAlStepInt, wchar_t *wcharrPath,  double &valDHoriz );
+
+	void fncCalcVectPartialDeriv(TEnvironment Environment
+  ,const double VAlStepInt, const int iVarNum,  double valDelta,  double *arrVectPartialDeriv ) ;
+
+	void fncCalcVectPartialDeriv_Coef_Cx(TEnvironment Environment,const double VAlStepInt
+	,const  double valDelta, double *arrVectPartDerivCoeff_Cx) ;
+
+	void fncCalcVectPartialDeriv_Coef_Cz(TEnvironment Environment,const double VAlStepInt
+	,const  double valDelta, double *arrVectPartDerivCoeff_Cz);
+
+	void fncCalcVectPartialDeriv_Mass(TEnvironment Environment,const double VAlStepInt
+		 ,const  double valDelta, double *arrVectPartDerivMass)  ;
+
+	void fncCalc_F(TEnvironment Environment, double *arrF) ;
+
+ //	void fncCalcMtrxPartialDeriv(TEnvironment Environment, const double VAlStepInt ) ;
+
+	void calcVectWindV(TEnvironment Environment, double *arrWindV_SSK);
+
+	double calcMach( const double valTay, const double valVVozd) ;
+
+	double calc_q(const  double VAlVVozd, const  double VAlTay);
+
+
+// расчет транспонированной матрицы частных производных по параметрам ветра
+// arrMtrx_Wind_PartialDeriv[8*3]  - матрица частных производных по гориз скорости, направленияю, вертик скорости
+	void fncCalcMtrxTransp_Wind_PartialDeriv(TEnvironment Environment, const double VAlStepInt, double *arrMtrxTransp_Wind_PartialDeriv ) ;
+
+  void fncCalcWindK( TEnvironment Environment, const double VAlStepInt, double *arrWindK  );
+
+  void fncCalcTotalK( TEnvironment Environment, const double VAlStepInt, double *arrTotalK  )  ;
+
+  void transform_xyzGSK_To_xyzSSK( const int LEnArrVS, double *arrGSKInp, double *arrSSKOut);
+
+	void transform_xyzSSK_To_xyzGSK( const int LEnArrVS, double *arrSSKInp, double *arrGSKOut) ;
+
+	void createMtrxTransform_xyzSSK_To_xyzGSK( const int LEnArrVS,  double *arrMtrxTransformOut);
+
+  double calcPointMissMinimum(TEnvironment Environment, double *arrTargVS_SSK0, const double VAl_dtInt) ;
+
+ void fncMoveClass_TO_FixedTime_AND_ShowGraphs(TEnvironment Environment
+,const double VAlStepInt, const double VAlFixedT ,wchar_t *wcharrPath1  ) ;
+
+void calcJacobian_8x10 (TEnvironment Environment,const double VAlStepInt, double *arrStrSK_Jacobian);
+
+void calc_VS_GSK_And_ScatteringsCorrMatrx_GSK (TEnvironment Environment,const double VAlStepInt
+	 ,const double VAlTFlight,double* arrMtrxShellDisp,  double *arrStrSK_Jacobian
+	,double* arrShellScatteringsCorMtarx_GSK, double *arrShellVS_GSK, double* arrShellScatteringsCorMtrxPos_SSK);
+
+// график вероятности  поражения в зависимости от дальности
+ //  bool fncCreateGraph_Probab_FROM_Dist( wchar_t *wcharrPath,const double valAngStep,const double valAngMin
+ //  ,const double valAngMax, const double RDefeat, const double FiDefeat, const double LDanger,	double LTarg
+  //	,type_RB TypeRB,bool bCorrection) ;
+}  ;
+#endif

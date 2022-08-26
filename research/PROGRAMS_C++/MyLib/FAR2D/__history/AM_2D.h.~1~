@@ -1,0 +1,76 @@
+//---------------------------------------------------------------------------
+
+#ifndef AM_2DH
+#define AM_2DH
+
+class TComp;
+class TSingleSign;
+class TAM_2D
+{
+public:
+
+// к-во излучателей по горизонтали
+	int mNumEmitCols;
+	// к-во излучателей по горизонтали
+	int mNumEmitRows;
+	// расстояние между излучателями по горизонтали
+	double mdCol;
+	// расстояние между излучателями по вериткали
+	double mdRow;
+
+	//  скз шума излучателя
+	double mSigEmitNoise ;
+	//  скз шума КУ излуателя( 1 + delta)
+	double mSigEmitAmplFact ;
+	// отклонение коэффициента усиления
+	double mOtklCoefUs;
+	// отклонение РСН по курс углу
+	 double mOtklBetta;
+	// отклонение РСН по  углу  места
+	 double mOtklEps;
+
+ __fastcall  TAM_2D() ;
+// Конструктор копирования
+__fastcall  TAM_2D (const TAM_2D &R2) ;
+ // парам констр
+ __fastcall TAM_2D(const int NumEmitCols,const int NumEmitRows
+	  ,const double dCol,const double dRow, const double SigEmitNoise);
+// парам констр 2
+ __fastcall TAM_2D(const int NumEmitCols,const int NumEmitRows
+	  ,const double dCol,const double dRow, const double SigEmitNoise
+	  , const double OtklCoefUs, const double OklBetta
+	  , const double OtklEps );
+
+// парам констр 3
+ __fastcall TAM_2D(const int NumEmitCols,const int NumEmitRows
+	  ,const double dCol,const double dRow, const double SigEmitNoise
+	  ,const double SigEmitAmplFact);
+
+ // оператор присваивания
+ TAM_2D   operator=(TAM_2D  R2) ;
+
+ TComp fncIdealDiagr (const double valBetta,const double valEps,const double valLambda) ;
+ TComp fncImitateSingleTargMeasure(const double valBetta,const double valEps ,const double valLambda
+	 , const double valAmpl, const double valPhase, TComp * pcmpEmitMeasures);
+
+ void createVertIdealDiagrGraphs(const double valLambda, wchar_t *wchFoldName1 ) ;
+
+ //TComp fncImitateMultiTargMeasure ( TSingleSign signTarg, TSingleSign *parrsignFalse, int quantFalseSign
+  //	 ,const double valLambda, TComp * pcmpTrueEmitMeasures, TComp * pcmpNoisedEmitMeasures) ;
+
+ TComp fncImitateSingleTargMeasure (const TSingleSign Sign, const double valLambda
+	   , TComp * pcmpTrueEmitMeasures, TComp * pcmpNoisedEmitMeasures)  ;
+
+
+ static TAM_2D create_AM_5P10(const double valSigNoise);
+
+ double calcSumDisp()  ;
+
+ double calcSumAmplFactDisp();
+
+ double calcSquare();
+
+
+};
+//---------------------------------------------------------------------------
+#endif

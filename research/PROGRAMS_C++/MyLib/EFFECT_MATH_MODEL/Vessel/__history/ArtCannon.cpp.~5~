@@ -1,0 +1,88 @@
+//---------------------------------------------------------------------------
+
+
+#pragma hdrstop
+
+#include "ArtCannon.h"
+
+
+TArtCannon::TArtCannon()
+{
+ menumCannonType = A_192M;
+ mRateOfFire = 0.;
+ mAngGroupedFire =0.;
+ mSigmaDelayT = 0.;
+}
+
+
+
+// конструктор копирования
+ TArtCannon ::TArtCannon (const TArtCannon &R)
+ {
+	menumCannonType = R.menumCannonType;
+	mRateOfFire  =  R.mRateOfFire ;
+	mAngGroupedFire = R.mAngGroupedFire;
+	mSigmaDelayT = R.mSigmaDelayT;
+
+ }
+ // оператор присваивания
+ TArtCannon TArtCannon::operator=(TArtCannon  R)
+ {
+  menumCannonType = R.menumCannonType;
+	mRateOfFire  =  R.mRateOfFire ;
+	mAngGroupedFire = R.mAngGroupedFire;
+	mSigmaDelayT = R.mSigmaDelayT;
+
+	return *this ;
+ }
+
+  // парам конструктор1
+ TArtCannon::TArtCannon (const double RateOfFire, const double AngGroupedFire,  const double SigmaDelayT)
+ {
+	mRateOfFire  = RateOfFire  ;
+	mAngGroupedFire = AngGroupedFire ;
+	mSigmaDelayT = SigmaDelayT;
+
+ }
+
+ // парам конструктор1
+ TArtCannon::TArtCannon (enumCannonType EnumCannonType, const double SigmaDelayT)
+ {
+	menumCannonType = EnumCannonType;
+	mSigmaDelayT = SigmaDelayT;
+	switch( EnumCannonType)
+	{
+		case A_192M:
+		mRateOfFire = 2.;
+
+		mAngGroupedFire = 0.001;
+		break;
+		case A_190_01:
+		 mRateOfFire = 60. / 75.;
+
+		 mAngGroupedFire = 0.001;
+		break;
+		case AK_630:
+		mRateOfFire = 60. / 4980.;
+
+		mAngGroupedFire = 0.0003;
+		break;
+		case AK_630_2M:
+		mRateOfFire = 60. / 4980./ 2.;
+
+		mAngGroupedFire = 0.003;
+		break;
+
+		case AK_176:
+		mRateOfFire = 60./125. ;
+
+		mAngGroupedFire = 0.001;
+		break;
+
+		default:
+		break;
+
+	}
+
+ }
+#pragma package(smart_init)

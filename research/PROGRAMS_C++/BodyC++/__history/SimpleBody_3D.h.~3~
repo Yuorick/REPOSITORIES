@@ -1,0 +1,23 @@
+//---------------------------------------------------------------------------
+
+#ifndef SimpleBody_3DH
+#define SimpleBody_3DH
+
+class TSimpleBody_3D
+{
+public:
+
+	__fastcall TSimpleBody_3D() ;
+
+	virtual __fastcall ~TSimpleBody_3D() ;
+
+
+	virtual void calcCentreOfGravity(double *arrCentreGrav)  ;
+
+
+// вычисление тензора моментов инерции
+	virtual  void calcInertiaTensor(double *arrInertTens) ;
+
+
+};
+#endif

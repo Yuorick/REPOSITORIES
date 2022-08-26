@@ -1,0 +1,48 @@
+//---------------------------------------------------------------------------
+
+#ifndef TruncatedConeCircleH
+#define TruncatedConeCircleH
+#include "SimpleBody_3D.h"
+// класс описывает  усеченный   круговой конус с основанием R и r. расстояние между основаниями h
+// основание с радиусом R расположено в горизонтальной плоскости OXZ
+// основание с радиусом r расположено в горизонтальной плоскости сдвинутой вверх на H
+// сиситема совственных координат конуса такая:
+// OX - в право
+// OY - вверх
+// OZ - на нас
+class TTruncatedConeCircle : public TSimpleBody_3D
+{
+public:
+
+	double mR;
+	double mr;
+	double mH;
+	double mM; // масса
+
+
+
+	__fastcall ~TTruncatedConeCircle() ;
+
+
+	 TTruncatedConeCircle () ;
+
+	 // конструктор копирования
+	  TTruncatedConeCircle  (const TTruncatedConeCircle  &R) ;
+
+	  // оператор присваивания
+	  TTruncatedConeCircle  operator=(TTruncatedConeCircle   R2) ;
+
+	  TTruncatedConeCircle( const double R, const double r,const double H,const double M);
+
+	  virtual double calcCapacity() ;
+
+	  virtual void calcCentreOfGravity(double *arrCentreGrav)  ;
+
+	  virtual  void calcInertiaTensor(double *arrInertTens) ;
+
+
+
+
+};
+
+	  #endif

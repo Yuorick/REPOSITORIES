@@ -1,0 +1,58 @@
+//---------------------------------------------------------------------------
+
+
+#pragma hdrstop
+#include <string.h>
+#include "Detonator.h"
+
+
+//---------------------------------------------------------------------------
+TDetonator::TDetonator()
+{
+ mEnumDetonatorType = AR32A;
+ memset(marrDetonatorParams, 0, LEN_DOUBLE_ARR_DETONATOR_PARAMS * sizeof(double));
+ memset(miarrDetonatorParams, 0, LEN_INT_ARR_DETONATOR_PARAMS * sizeof(int));
+}
+
+//---------------------------------------------------------------------------
+
+
+// конструктор копирования
+ TDetonator ::TDetonator (const TDetonator &R)
+ {
+	 mEnumDetonatorType = R.mEnumDetonatorType ;
+	 memcpy(marrDetonatorParams, R.marrDetonatorParams,LEN_DOUBLE_ARR_DETONATOR_PARAMS * sizeof(double));
+	 memcpy(miarrDetonatorParams, R.miarrDetonatorParams,LEN_INT_ARR_DETONATOR_PARAMS * sizeof(int));
+ }
+
+ // оператор присваивания
+ TDetonator TDetonator::operator=(TDetonator  R)
+ {
+	 mEnumDetonatorType = R.mEnumDetonatorType ;
+	 memcpy(marrDetonatorParams, R.marrDetonatorParams,LEN_DOUBLE_ARR_DETONATOR_PARAMS * sizeof(double));
+	 memcpy(miarrDetonatorParams, R.miarrDetonatorParams,LEN_INT_ARR_DETONATOR_PARAMS * sizeof(int));
+
+	return *this ;
+ }
+
+// параметрическийц конструктор
+ TDetonator::TDetonator(enumDetonatorType  EnumDetonatorType, double *arrDetonatorParams
+ , double *iarrDetonatorParams)
+{
+	mEnumDetonatorType = EnumDetonatorType;
+	memcpy(marrDetonatorParams, arrDetonatorParams,LEN_DOUBLE_ARR_DETONATOR_PARAMS * sizeof(double));
+	memcpy(miarrDetonatorParams, iarrDetonatorParams,LEN_INT_ARR_DETONATOR_PARAMS * sizeof(int));
+}
+
+// параметрическийц конструктор
+ TDetonator::TDetonator(enumDetonatorType  EnumDetonatorType)
+{
+	mEnumDetonatorType = EnumDetonatorType;
+	memset(marrDetonatorParams, 0,LEN_DOUBLE_ARR_DETONATOR_PARAMS * sizeof(double));
+	memset(miarrDetonatorParams, 0,LEN_INT_ARR_DETONATOR_PARAMS * sizeof(int));
+}
+
+//---------------------------------------------------------------------------
+
+
+#pragma package(smart_init)

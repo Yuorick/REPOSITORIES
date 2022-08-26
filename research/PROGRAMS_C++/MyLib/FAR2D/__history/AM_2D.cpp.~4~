@@ -1,0 +1,656 @@
+//---------------------------------------------------------------------------
+
+
+#pragma hdrstop
+#include <vcl.h>
+#include "AM_2D.h"
+#include "Comp.h"
+#include "SingleSign.h"
+
+//---------------------------------------------------------------------------
+
+
+#pragma hdrstop
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include "Gauss.h"
+#include "YrWriteShapeFile.h"
+#include "URPolyLine.h"
+#include "UrPointXY.h"
+//#include "DiagrSinX.h"
+
+//extern const double TET0707;
+
+__fastcall  TAM_2D::TAM_2D()
+{
+ // к-во излучателей по горизонтали
+	 mNumEmitCols = 8;
+	// к-во излучателей по горизонтали
+	 mNumEmitRows =16;
+	// расстояние между излучателями по горизонтали
+	 mdCol = 2.;
+	// расстояние между излучателями по вериткали
+	 mdRow = 2.;
+	
+	// СКЗ шума  излучателя
+	 mSigEmitNoise = 10./ 32.;
+	 mOtklCoefUs = 1.;
+	 mOtklBetta = 0.;
+	 mOtklEps =0.;
+	 mSigEmitAmplFact = 0.;
+
+
+}
+// Конструктор копирования
+__fastcall  TAM_2D::TAM_2D (const TAM_2D &R2)
+ {
+	 mNumEmitCols = R2.mNumEmitCols ;
+	 mNumEmitRows = R2.mNumEmitRows;
+
+	 mdCol = R2.mdCol;
+	 mdRow = R2.mdRow;
+	 mSigEmitNoise = R2.mSigEmitNoise  ;
+	 mOtklCoefUs = R2.mOtklCoefUs;
+	 mOtklBetta = R2.mOtklBetta;
+	 mOtklEps = R2.mOtklEps;
+	 mSigEmitAmplFact = R2.mSigEmitAmplFact;
+ }
+ // парам констр 1
+ __fastcall TAM_2D::TAM_2D(const int NumEmitCols,const int NumEmitRows
+	  ,const double dCol,const double dRow, const double SigEmitNoise)
+ {
+	 mNumEmitCols = NumEmitCols ;
+	 mNumEmitRows = NumEmitRows;
+
+	 mdCol = dCol;
+	 mdRow = dRow;
+	 mSigEmitNoise = SigEmitNoise;
+	 mOtklCoefUs = 1.;
+	 mOtklBetta = 0.;
+	 mOtklEps = 0.;
+
+
+ }
+ // парам констр 2
+ __fastcall TAM_2D::TAM_2D(const int NumEmitCols,const int NumEmitRows
+	  ,const double dCol,const double dRow, const double SigEmitNoise
+	  , const double OtklCoefUs, const double OklBetta
+	  , const double OtklEps )
+ {
+	 mNumEmitCols = NumEmitCols ;
+	 mNumEmitRows = NumEmitRows;
+
+	 mdCol = dCol;
+	 mdRow = dRow;
+	 mSigEmitNoise = SigEmitNoise;
+	 mOtklCoefUs = OtklCoefUs;
+	 mOtklBetta = mOtklBetta;
+	 mOtklEps = OtklEps ;
+
+
+ }
+
+
+// оператор присваивания
+  TAM_2D TAM_2D::operator=(TAM_2D  R2)
+ {
+	 mNumEmitCols = R2.mNumEmitCols ;
+	 mNumEmitRows = R2.mNumEmitRows;
+
+	 mdCol = R2.mdCol;
+	 mdRow = R2.mdRow;
+	 mSigEmitNoise = R2.mSigEmitNoise ;
+	 mOtklCoefUs = R2.mOtklCoefUs;
+	 mOtklBetta = R2.mOtklBetta;
+	 mOtklEps = R2.mOtklEps;
+	 mSigEmitAmplFact = R2.mSigEmitAmplFact;
+
+	 return *this ;
+ }
+
+ // парам констр 3
+ __fastcall TAM_2D::TAM_2D(const int NumEmitCols,const int NumEmitRows
+	  ,const double dCol,const double dRow, const double SigEmitNoise
+	  ,const double SigEmitAmplFact)
+ {
+	 mNumEmitCols = NumEmitCols ;
+	 mNumEmitRows = NumEmitRows;
+
+	 mdCol = dCol;
+	 mdRow = dRow;
+	 mSigEmitNoise = SigEmitNoise;
+	 mSigEmitAmplFact = SigEmitAmplFact;
+	 mOtklCoefUs = 1.;
+	 mOtklBetta = 0.;
+	 mOtklEps = 0.;
+
+
+ }
+ // вычисление площади
+  double TAM_2D::calcSquare()
+  {
+	  return mNumEmitCols* mNumEmitRows * mdCol * mdRow ;
+  }
+
+ TComp TAM_2D::fncIdealDiagr (const double valBetta,const double valEps,const double valLambda)
+ {
+  TComp cmpRez(0.,0.), cmpRez0(0.,0.);
+  for (int m = 0; m < mNumEmitRows; m++)
+  {
+	for (int l = 0; l < mNumEmitCols; l++)
+	{
+		double valq = -( mdCol * cos( valEps) * sin(valBetta ) * ( (((double)mNumEmitCols)-1.)/ 2. - (double)l )
+			 + mdRow * sin( valEps) * ( (((double)mNumEmitRows)-1.)/ 2. - (double)m ));
+		cmpRez += exp_(valq * 2. * M_PI / valLambda);
+	}
+  }
+  TComp cmpTemp ( cos( valEps) * cos(valBetta ) / ((double)mNumEmitCols)/ ((double)mNumEmitRows), 0.);
+  cmpRez0 = cmpRez *  cmpTemp  ;
+	 return cmpRez0    ;
+ }
+
+ // вычисление измерения сигнала приходящего с направления valBetta, valEps и имеющего амлитуду   valAmpl
+ // и фазу valPhase (относительно фазового центра  АМ)
+ //OUTPUT:
+ // pcmparrEmitMeasures - массив сишналов принятых излучателями   размерности mNumEmitRows*  mNumEmitCols
+ // возвращает суммарный сигнал
+ // если pcmpEmitMeasures!= NULL, то в эторм массиве возвращаются сигналы с излучателей
+ TComp TAM_2D::fncImitateSingleTargMeasure (const double ValBetta,const double ValEps ,const double valLambda
+	 , const double valAmpl, const double valPhase, TComp * pcmpEmitMeasures)
+ {
+	 const double valBetta = ValBetta - mOtklBetta;
+	 const double valEps = ValEps - mOtklEps;
+	 TComp cmpNoise(0.,0.), cmpRez0(0.,0.), cmpSdvig;
+	 TComp cmpSignal( valAmpl * cos(valPhase), valAmpl * sin(valPhase));// истинный сигнал в комплексной форме
+	 TComp cmpNorm ( cos( valEps) * cos(valBetta ) / ((double)mNumEmitCols)/ ((double)mNumEmitRows), 0.);
+  TComp *pcmparrEmitMeasures = (TComp *)malloc( mNumEmitRows * mNumEmitCols * sizeof(TComp));
+  memset(pcmparrEmitMeasures, 0, mNumEmitRows * mNumEmitCols * sizeof(TComp));
+  // отклонение коеффиц усиления в комплексной форме
+  TComp cmpOklCoefUs(mOtklCoefUs, 0.);
+  for (int m = 0; m < mNumEmitRows; m++)
+  {
+	for (int l = 0; l < mNumEmitCols; l++)
+	{
+	 // double Xml = (((double)mNumEmitCols)-1.)/ 2. *mdCol - ((double)l) * mdCol;
+	//  double Zml = (((double)mNumEmitRows)-1.)/ 2. *mdRow - ((double)m) * mdRow;
+	 // double valq =  -( Xml *cos( valEps)* sin(valBetta ) +  Zml * sin( valEps));
+
+
+		double valq = -( mdCol * cos( valEps) * sin(valBetta ) * ( (((double)mNumEmitCols)-1.)/ 2. - (double)l )
+	 		 + mdRow * sin( valEps) * ( (((double)mNumEmitRows)-1.)/ 2. - (double)m ));
+
+		cmpSdvig = exp_(valq * 2. * M_PI /valLambda);
+		cmpNoise.m_Re = getGauss(0., mSigEmitNoise/ sqrt(2.) ) ;
+		cmpNoise.m_Im = getGauss(0., mSigEmitNoise/ sqrt(2.) ) ;
+		pcmparrEmitMeasures [ m *mNumEmitCols + l] =  (((cmpSignal* cmpSdvig)* cmpNorm)*cmpOklCoefUs) + cmpNoise;
+		cmpRez0 +=  pcmparrEmitMeasures [ m *mNumEmitCols + l];
+	}
+  }
+   if  (pcmpEmitMeasures)
+   {
+	   memcpy(pcmpEmitMeasures, pcmparrEmitMeasures,mNumEmitRows * mNumEmitCols * sizeof(TComp));
+   }
+   free(pcmparrEmitMeasures);
+	 return cmpRez0;
+ }
+
+
+ // построение графиков диаграммы в вертикальной плоскости
+ void TAM_2D::createVertIdealDiagrGraphs(const double valLambda, wchar_t *wchFoldName1 )
+{
+	wchar_t wchFoldName[300] ={0};
+	wcscpy(  wchFoldName,  wchFoldName1);
+	wcscat(wchFoldName, L"\\");
+	double step = M_PI / 3000./ 10.;
+
+	const int nBuffRows = 1500 *2;
+	const int nBuffCols =2;
+	double  *parrBuff = new double [nBuffRows  * nBuffCols] ;
+	memset(parrBuff, 0, nBuffRows * nBuffCols * sizeof(double));
+
+	const int lenName = 30;
+	wchar_t wcharrFileNames [150] ={0};
+	wcscpy( wcharrFileNames, L"Tetta");
+	wcscpy( &wcharrFileNames[30], L"F_Vert");
+
+
+
+	const double valBetta = 0.;
+	for (int i=0 ; i < nBuffRows; i++)
+	{
+		parrBuff[ i * nBuffCols] = ((double) (-nBuffRows/2 +i)) / 10.;
+		double tet = step * ((double) (-nBuffRows/2 +i));
+		TComp cmpTemp = fncIdealDiagr (valBetta,tet, valLambda);
+
+		parrBuff[ i * nBuffCols + 1]= cmpTemp.m_Re;
+
+
+	}
+
+	double scaley = 100.;
+	for (int i=1; i < nBuffCols; i++)
+	{
+		TYrWriteShapeFile::WriteOneReport(                 wchFoldName  // путь к папке
+		, parrBuff // массив с информацией - матрица nBuffRows x nBuffCols
+		, nBuffCols // - к-во переменных о корорых накоплена информация в буфере
+		, nBuffRows //  - к-во точек
+		,wcharrFileNames //матрица с именаими переменных - матрица nBuffCols x lenName
+		,lenName // максимальная длина имени переменной
+		,0  // номер переменной по оси X
+		,i  // номер переменной по оси Y
+		,1. //  масштаб по оси X
+		,scaley // масштаб по оси Y
+		) ;
+	}
+
+	delete parrBuff;
+	wchar_t wchAxesFileName[300] ={0};
+	wcscpy(  wchAxesFileName,  wchFoldName);
+	wcscat(wchAxesFileName, L"AxesArr.shp");
+	TYrWriteShapeFile::CreateShpArrowedAxes(wchAxesFileName,-parrBuff[ (nBuffRows-1) * nBuffCols]-100000.*step, parrBuff[ (nBuffRows-1) * nBuffCols]+100000.*step
+	,0,scaley * 1.1, 50000.*step) ;
+	TURPointXY pPoints[2];
+	pPoints[0] =  TURPointXY (-100., scaley * sqrt(2.)/2.);
+	pPoints[1] =  TURPointXY (100., scaley * sqrt(2.)/2.);
+	TURPolyLine pln( pPoints,2) ;
+
+	wcscpy(  wchAxesFileName,  wchFoldName);
+	wcscat(wchAxesFileName, L"Line0.shp");
+	TURPolyLine::WriteSetSHPFiles(wchAxesFileName,&pln, 1) ;
+}
+
+ // вычисление массива измерений сложного  сигнала
+ // описывающего массивом ложных сигналов parrsignFalse размерности quantFalseSign
+ //и истинным сигналом, отраженным от цели signTarg
+ //  INPUT:
+ // signTarg -  сигнал цели
+ // parrsignFalse - массив сигналов ложных целей(отражений)
+ // quantFalseSign - длина этого массива
+ // valLambda -  длина волны
+ //OUTPUT:
+ // pcmpTrueEmitMeasures - массив исьтнных сигналов, поступающих на вход излучателей размерности mNumEmitRows*  mNumEmitCols
+ // pcmpNoisedEmitMeasures - массив зашумленных сигналов, на выходе излучателей   размерности mNumEmitRows*  mNumEmitCols
+ // возвращает суммарный зашумленный сигнал
+ // если pcmpTrueEmitMeasures == NULL, то этот массив не заполняется
+ // если pcmpNoisedEmitMeasures == NULL, то этот массив не заполняется
+ /*
+ TComp TAM_2D::fncImitateMultiTargMeasure ( TSingleSign signTarg, TSingleSign *parrsignFalse, int quantFalseSign
+	 ,const double valLambda, TComp * pcmpTrueEmitMeasures, TComp * pcmpNoisedEmitMeasures)
+ {
+  TComp cmpRez0(0.,0.);
+  TComp *pcmparrTrueEmitMeasures = (TComp *)malloc( mNumEmitRows * mNumEmitCols * sizeof(TComp));
+  memset(pcmparrTrueEmitMeasures, 0, mNumEmitRows * mNumEmitCols * sizeof(TComp));
+  TComp *pcmparrNoisedEmitMeasures = (TComp *)malloc( mNumEmitRows * mNumEmitCols * sizeof(TComp));
+  memset(pcmparrNoisedEmitMeasures, 0, mNumEmitRows * mNumEmitCols * sizeof(TComp));
+
+	// отклонение коеффиц усиления в комплексной форме
+   TComp cmpOklCoefUs(mOtklCoefUs, 0.);
+   // формирование массива сигналов ложных целей, поступающих на вход излучателей
+   for (int n = 0; n < quantFalseSign; n++)
+   {
+	 double valBetta = parrsignFalse[n].mBet - mOtklBetta;  // истинный угол курса сигнала
+	 double valEps   = parrsignFalse[n].mEps   - mOtklEps; // истинный угол места сигнала
+	 TComp cmpSignal(parrsignFalse[n].mAmpl * cos(parrsignFalse[n].mPhase)
+			  , parrsignFalse[n].mAmpl * sin(parrsignFalse[n].mPhase));// истинный сигнал в комплексной форме
+	 TComp cmpNorm ( cos( valEps) * cos(valBetta ) / ((double)mNumEmitCols)/ ((double)mNumEmitRows), 0.);
+
+
+		for (int m = 0; m < mNumEmitRows; m++)
+		{
+		for (int l = 0; l < mNumEmitCols; l++)
+		{
+			double valq = -( mdCol * cos( valEps) * sin(valBetta ) * ( (((double)mNumEmitCols)-1.)/ 2. - (double)l )
+				 + mdRow * sin( valEps) * ( (((double)mNumEmitRows)-1.)/ 2. - (double)m ));
+			TComp cmpSdvig = exp_(valq * 2. * M_PI /valLambda);
+			pcmparrTrueEmitMeasures[ m *mNumEmitCols + l] =  (((cmpSignal* cmpSdvig)* cmpNorm)*cmpOklCoefUs) ;//+ cmpNoise;
+		}
+		}
+	}
+	///
+
+	// дробавление истинного сигнала
+	 double valBetta = signTarg.mBet - mOtklBetta;  // истинный угол курса сигнала
+	 double valEps   = signTarg.mEps   - mOtklEps; // истинный угол места сигнала
+	 TComp cmpSignal(signTarg.mAmpl * cos(signTarg.mPhase)
+			  , signTarg.mAmpl * sin(signTarg.mPhase));// истинный сигнал в комплексной форме
+	 TComp cmpNorm ( cos( valEps) * cos(valBetta ) / ((double)mNumEmitCols)/ ((double)mNumEmitRows), 0.);
+
+
+		for (int m = 0; m < mNumEmitRows; m++)
+		{
+		for (int l = 0; l < mNumEmitCols; l++)
+		{
+			double valq = -( mdCol * cos( valEps) * sin(valBetta ) * ( (((double)mNumEmitCols)-1.)/ 2. - (double)l )
+				 + mdRow * sin( valEps) * ( (((double)mNumEmitRows)-1.)/ 2. - (double)m ));
+			TComp cmpSdvig = exp_(valq * 2. * M_PI /valLambda);
+			pcmparrTrueEmitMeasures[ m *mNumEmitCols + l] =  (((cmpSignal* cmpSdvig)* cmpNorm)*cmpOklCoefUs) ;//+ cmpNoise;
+		}
+		}
+
+	///
+
+	// формирование массива зашумленных сигналов
+		for (int m = 0; m < mNumEmitRows; m++)
+		{
+		for (int l = 0; l < mNumEmitCols; l++)
+		{
+			TComp cmpNoise (0.,0.);
+			cmpNoise.m_Re = getGauss(0., mSigEmitNoise/ sqrt(2.) ) ;
+			cmpNoise.m_Im = getGauss(0., mSigEmitNoise/ sqrt(2.) ) ;
+			pcmpNoisedEmitMeasures[ m *mNumEmitCols + l] =   pcmparrTrueEmitMeasures[ m *mNumEmitCols + l] + cmpNoise;
+			cmpRez0 +=  pcmpNoisedEmitMeasures[ m *mNumEmitCols + l];
+		}
+		}
+
+
+   if  (pcmpTrueEmitMeasures)
+   {
+	   memcpy(pcmpTrueEmitMeasures, pcmparrTrueEmitMeasures,mNumEmitRows * mNumEmitCols * sizeof(TComp));
+   }
+   if  (pcmpNoisedEmitMeasures)
+   {
+	   memcpy(pcmpNoisedEmitMeasures, pcmparrNoisedEmitMeasures,mNumEmitRows * mNumEmitCols * sizeof(TComp));
+   }
+   free(pcmparrNoisedEmitMeasures);
+   free(pcmparrTrueEmitMeasures);
+   return cmpRez0;
+ }
+  */
+ TAM_2D TAM_2D::create_AM_5P10(const double valSigNoise)
+ {
+	return TAM_2D (8, 16, 2.,  2.,valSigNoise/ sqrt(28.*8.*16.)) ;
+ }
+
+ // вычисление внутреннего шума дисперсии
+double TAM_2D::calcSumDisp()
+{
+
+  return ((double)mNumEmitCols * mNumEmitRows) * mSigEmitNoise * mSigEmitNoise;
+}
+
+
+ // вычисление дисперсии  разброса КУ АМ
+double TAM_2D::calcSumAmplFactDisp()
+{
+  return   mSigEmitAmplFact * mSigEmitAmplFact /((double)mNumEmitCols * mNumEmitRows);
+}
+
+
+//    ПЕРЕГРУЖЕННАЯ!!!!!
+ // вычисление массива измерений   сигнала    одиночной цели
+
+ //  INPUT:
+ // signTarg -  сигнал цели
+ // valLambda -  длина волны
+ //OUTPUT:
+ // pcmpTrueEmitMeasures - массив исьтнных сигналов, поступающих на вход излучателей размерности mNumEmitRows*  mNumEmitCols
+ // pcmpNoisedEmitMeasures - массив зашумленных сигналов, на выходе излучателей   размерности mNumEmitRows*  mNumEmitCols
+ // возвращает суммарный зашумленный сигнал
+ // если pcmpTrueEmitMeasures == NULL, то этот массив не заполняется
+ // если pcmpNoisedEmitMeasures == NULL, то этот массив не заполняется
+TComp TAM_2D::fncImitateSingleTargMeasure (const TSingleSign Sign, const double valLambda
+	   , TComp * pcmpTrueEmitMeasures, TComp * pcmpNoisedEmitMeasures)
+{
+  TComp cmpRez0(0.,0.);
+  TComp *pcmparrTrueEmitMeasures = (TComp *)malloc( mNumEmitRows * mNumEmitCols * sizeof(TComp));
+  memset(pcmparrTrueEmitMeasures, 0, mNumEmitRows * mNumEmitCols * sizeof(TComp));
+  TComp *pcmparrNoisedEmitMeasures = (TComp *)malloc( mNumEmitRows * mNumEmitCols * sizeof(TComp));
+  memset(pcmparrNoisedEmitMeasures, 0, mNumEmitRows * mNumEmitCols * sizeof(TComp));
+
+	// отклонение коеффиц усиления в комплексной форме
+   TComp cmpOklCoefUs(mOtklCoefUs, 0.);
+   // формирование массива сигналов ложных целей, поступающих на вход излучателей
+
+
+
+	///
+	  TSingleSign sign1 =  Sign;
+	  sign1.mBet -=  mOtklBetta;  // истинный угол курса сигнала
+	  sign1.mEps -=  mOtklEps; // истинный угол места сигнала
+	  TComp cmpSignal(Sign.mAmpl * cos(Sign.mPhase)
+			  , Sign.mAmpl * sin(Sign.mPhase));// истинный сигнал в комплексной форме
+	 TComp cmpNorm ( cos( sign1.mEps) * cos(sign1.mBet ) / ((double)mNumEmitCols)/ ((double)mNumEmitRows), 0.);
+
+	 	for (int m = 0; m < mNumEmitRows; m++)
+		{
+		for (int l = 0; l < mNumEmitCols; l++)
+		{
+			double valq = -( mdCol * cos( sign1.mEps ) * sin(sign1.mBet ) * ( (((double)mNumEmitCols)-1.)/ 2. - (double)l )
+				 + mdRow * sin( sign1.mEps) * ( (((double)mNumEmitRows)-1.)/ 2. - (double)m ));
+		   //	double valq = -( mdCol * cos( sign1.mEps ) * sin(sign1.mBet ) * ( (((double)mNumEmitCols)-1.)/ 2. - (double)l )
+			 //	 - mdRow * sin( sign1.mEps) * ( (((double)mNumEmitRows)-1.)/ 2. - (double)m ));
+
+			TComp cmpSdvig = exp_(valq * 2. * M_PI /valLambda);
+			pcmparrTrueEmitMeasures[ m *mNumEmitCols + l] =  (((cmpSignal* cmpSdvig)* cmpNorm)*cmpOklCoefUs) ;//+ cmpNoise;
+		}
+		}
+
+	///
+
+	// формирование массива зашумленных сигналов
+		for (int m = 0; m < mNumEmitRows; m++)
+		{
+		for (int l = 0; l < mNumEmitCols; l++)
+		{
+			TComp cmpNoise (0.,0.);
+			cmpNoise.m_Re = getGauss(0., mSigEmitNoise ) ;
+			cmpNoise.m_Im = getGauss(0., mSigEmitNoise ) ;
+			pcmparrNoisedEmitMeasures[ m *mNumEmitCols + l] =   pcmparrTrueEmitMeasures[ m *mNumEmitCols + l] + cmpNoise;
+			cmpRez0 +=  pcmparrNoisedEmitMeasures[ m *mNumEmitCols + l];
+		}
+		}
+
+
+
+
+
+
+
+   if  (pcmpTrueEmitMeasures)
+   {
+	   memcpy(pcmpTrueEmitMeasures, pcmparrTrueEmitMeasures,mNumEmitRows * mNumEmitCols * sizeof(TComp));
+   }
+   if  (pcmpNoisedEmitMeasures)
+   {
+	   memcpy(pcmpNoisedEmitMeasures, pcmparrNoisedEmitMeasures,mNumEmitRows * mNumEmitCols * sizeof(TComp));
+   }
+   free(pcmparrNoisedEmitMeasures);
+   free(pcmparrTrueEmitMeasures);
+   return cmpRez0;
+
+}
+
+ /*// функция диаграммы источника
+ double  TAM_2D::fncFSource (const double valTetta)
+ {
+	 return sqrt(fabs(cos(valTetta)));
+ }
+  //---------------------------------------------------------
+ // функция производной  диаграммы источника
+ double  TAM_2D::fnc_dFSource_po_dTetta (const double valTetta)
+ {
+	 if ((fabs(valTetta) -M_PI/ 2.) <=0.)
+	 {
+	  return - sin (valTetta)/fncFSource (valTetta)/2.;
+	 }
+	 return sin (valTetta)/fncFSource (valTetta)/2.;
+ }
+  //---------------------------------------------------------
+
+ // функция  производной диаграммы фасеты
+ double  TAM_2D::fnc_dFAM_2D_po_dTet (const double tet)
+ {
+  double valk = 2. * M_PI / mLambda;
+double alf = valk * m_d * ((double)m_n)/ 2.;
+double bet = valk * m_d / 2.;
+
+ if (fabs(tet)< 0.0000001) return 0.;
+
+
+ double val_F1 = fncFSource (tet);
+double val_dF1 = fnc_dFSource_po_dTetta (tet) ;
+
+double f31 = fnc_F3( alf,  tet)  ;
+double f32 = fnc_F3( bet,  tet)  ;
+
+
+double val_F21 = f31/ f32;
+
+
+double a1 =  fnc_dF3_po_tet(alf,   tet) ;
+double a2 =  fnc_dF3_po_tet(bet,   tet) ;
+
+
+double val_dF21_po_dTet =  fnc_F4(f31 ,f32, a1, a2) ;
+
+
+return ( val_dF1 *  val_F21  + val_F1 * val_dF21_po_dTet )/ ((double ) m_n);
+ }
+  //---------------------------------------------------------
+double  TAM_2D::fncFAM_2D (const double tet)
+{
+
+  if (fabs(tet)< 0.0000001) return 1.;
+    double valk = 2. * M_PI / mLambda;
+double alf = valk * m_d * ((double)m_n)/ 2.;
+double bet = valk * m_d / 2.;
+  double temp = sqrt(cos(tet))* sin( alf * sin(tet) )
+		   /(((double)m_n)* sin( bet * sin(tet) )) ;
+
+  return temp  ;
+}
+ //
+  //---------------------------------------------------------
+ double TAM_2D::fnc_dF3_po_tet(const double val_gam, const double tet)
+{
+   return cos(val_gam * sin(tet) ) * val_gam * cos(tet);
+}
+  //---------------------------------------------------------
+/// F3 = sin(gam(sin(tet)-mu) -
+double TAM_2D::fnc_F3(const double val_gam, const double tet)
+{
+   return sin(val_gam * sin(tet) );
+}
+
+double TAM_2D::fnc_F4(const double v,const  double u, const double v1,const  double u1)
+{
+   return (v1 * u - u1 * v)/ u / u;
+}
+
+//-----------------------------------------------------------------
+
+double TAM_2D::findDiagrWidth()
+{
+ double tet0 = mLambda/m_d/ m_n * 0.75;
+
+ int i =0;
+ double a = sqrt(2.)/2.;
+ for ( i =0; i < 10; i++)
+ {
+  double del = -(fncFAM_2D ( tet0) - a)/ fnc_dFAM_2D_po_dTet ( tet0);
+  tet0 += del;
+  if (fabs(del) < 0.0000001) break;
+
+ }
+ return tet0;
+}
+
+
+void TAM_2D::createDiagrGraphs(wchar_t *wchFoldName1 )
+{
+	wchar_t wchFoldName[300] ={0};
+	wcscpy(  wchFoldName,  wchFoldName1);
+	wcscat(wchFoldName, L"\\");
+	double step = M_PI / 3000./ 10.;
+
+	const int nBuffRows = 1500 *2;
+	const int nBuffCols =3;
+	double  *parrBuff = new double [nBuffRows  * nBuffCols] ;
+	memset(parrBuff, 0, nBuffRows * nBuffCols * sizeof(double));
+
+	const int lenName = 30;
+	wchar_t wcharrFileNames [150] ={0};
+	wcscpy( wcharrFileNames, L"Tetta");
+	wcscpy( &wcharrFileNames[30], L"F");
+	wcscpy( &wcharrFileNames[60], L"SinxF");
+
+	double valWidthDgr = findDiagrWidth() ;
+
+	for (int i=0 ; i < nBuffRows; i++)
+	{
+		parrBuff[ i * nBuffCols] = ((double) (-nBuffRows/2 +i)) / 10.;
+		double tet = step * ((double) (-nBuffRows/2 +i));
+		parrBuff[ i * nBuffCols + 1]= fncFAM_2D( tet)   ;
+		parrBuff[ i * nBuffCols + 2]= fncDiagrSimple(valWidthDgr, tet * 1000.)   ;
+
+	}
+
+	double scaley = 100.;
+	for (int i=1; i < nBuffCols; i++)
+	{
+		TYrWriteShapeFile::WriteOneReport(                 wchFoldName  // путь к папке
+		, parrBuff // массив с информацией - матрица nBuffRows x nBuffCols
+		, nBuffCols // - к-во переменных о корорых накоплена информация в буфере
+		, nBuffRows //  - к-во точек
+		,wcharrFileNames //матрица с именаими переменных - матрица nBuffCols x lenName
+		,lenName // максимальная длина имени переменной
+		,0  // номер переменной по оси X
+		,i  // номер переменной по оси Y
+		,1. //  масштаб по оси X
+		,scaley // масштаб по оси Y
+		) ;
+	}
+
+	delete parrBuff;
+	wchar_t wchAxesFileName[300] ={0};
+	wcscpy(  wchAxesFileName,  wchFoldName);
+	wcscat(wchAxesFileName, L"AxesArr.shp");
+	TYrWriteShapeFile::CreateShpArrowedAxes(wchAxesFileName,-parrBuff[ (nBuffRows-1) * nBuffCols]-100000.*step, parrBuff[ (nBuffRows-1) * nBuffCols]+100000.*step
+	,0,scaley * 1.1, 50000.*step) ;
+	TURPointXY pPoints[2];
+	pPoints[0] =  TURPointXY (-100., scaley * sqrt(2.)/2.);
+	pPoints[1] =  TURPointXY (100., scaley * sqrt(2.)/2.);
+	TURPolyLine pln( pPoints,2) ;
+
+	wcscpy(  wchAxesFileName,  wchFoldName);
+	wcscat(wchAxesFileName, L"Line0.shp");
+	TURPolyLine::WriteSetSHPFiles(wchAxesFileName,&pln, 1) ;
+}
+
+ // приблтженный расчет ширины диаграммы через sinx/x
+ double TAM_2D::findDiagrWidthApprox()
+{
+ double vala = 2. * M_PI / mLambda * m_d * ((double)m_n)/ 2.;
+ double tet1 = TET0707 / vala;
+ return tet1;
+}
+
+ // приблтженный расчет  диаграммы через sinx/x
+double  TAM_2D::fncFAM_2DApprox (const double valTetta)
+{
+	double valWidth = findDiagrWidthApprox();
+	return fncDiagrSimple(valWidth, valTetta );
+
+}
+
+ // приблтженный расчет производной  диаграммы через sinx/x
+double  TAM_2D::fnc_dFAM_2DApprox_po_dTet (const double tet)
+{
+	double valWidth = findDiagrWidthApprox();
+	return fncDerivDiagrSimple(valWidth, tet );
+
+}
+
+ // приблтженный расчет второй производной  диаграммы через sinx/x
+double TAM_2D::fnc_d2FAM_2DApprox_po_dTet2(const double tet)
+{
+double valWidth = findDiagrWidthApprox();
+return fncDeriv2DiagrSimple(valWidth, tet );
+} */
+#pragma package(smart_init)
+
+

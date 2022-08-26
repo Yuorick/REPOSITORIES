@@ -1,0 +1,120 @@
+//---------------------------------------------------------------------------
+
+
+#pragma hdrstop
+#include <string.h>
+#include "Complicated_Body.h"
+#include "SimpleBody_3D.h"
+/*
+_fastcall TComplicated_Body::TComplicated_Body()
+{
+	mQuantSimpleBody = 0;
+}
+
+// конструктор копирования
+ TComplicated_Body ::TComplicated_Body  (const TComplicated_Body &R)
+  {
+		mQuantSimpleBody   = R.mQuantSimpleBody;
+		memcpy(marrSimpleBody, R.marrSimpleBody,  mQuantSimpleBody * sizeof(TSimpleBody_3D));
+ }
+
+  // оператор присваивания
+  TComplicated_Body TComplicated_Body::operator=(TComplicated_Body  R)
+  {
+		mQuantSimpleBody   = R.mQuantSimpleBody;
+		memcpy(marrSimpleBody, R.marrSimpleBody,  mQuantSimpleBody * sizeof(TSimpleBody_3D));
+		return *this;
+ }
+
+//---------------------------------------------------------------------------
+__fastcall TComplicated_Body::TComplicated_Body(const int  QuantSimpleBody
+  , TSimpleBody_3D **ppSimpleBody)
+{
+	 mQuantSimpleBody = QuantSimpleBody;
+	 for (int i =0; i < QuantSimpleBody; i++)
+	 {
+	   marrSimpleBody[i] = (*ppSimpleBody)[i];
+	 }
+} */
+
+_fastcall TComplicated_Body::TComplicated_Body()
+{
+	mQuantCircleCylinder = 0;
+	mQuantTruncatedConeCircle  = 0;
+
+}
+
+// конструктор копирования
+ TComplicated_Body ::TComplicated_Body  (const TComplicated_Body &R)
+  {
+		mQuantCircleCylinder   = R.mQuantCircleCylinder;
+		mQuantTruncatedConeCircle   = R.mQuantTruncatedConeCircle ;
+		memcpy(marrCircleCylinder, R.marrCircleCylinder,  mQuantCircleCylinder * sizeof(TCircleCylinder));
+		memcpy(marrTruncatedConeCircle, R.marrTruncatedConeCircle,  mQuantTruncatedConeCircle * sizeof(TTruncatedConeCircle));
+ }
+
+  // оператор присваивания
+  TComplicated_Body TComplicated_Body::operator=(TComplicated_Body  R)
+  {
+		mQuantCircleCylinder   = R.mQuantCircleCylinder;
+		mQuantTruncatedConeCircle   = R.mQuantTruncatedConeCircle ;
+		memcpy(marrCircleCylinder, R.marrCircleCylinder,  mQuantCircleCylinder * sizeof(TCircleCylinder));
+		memcpy(marrTruncatedConeCircle, R.marrTruncatedConeCircle,  mQuantTruncatedConeCircle * sizeof(TTruncatedConeCircle));
+		return *this;
+ }
+
+//---------------------------------------------------------------------------
+__fastcall TComplicated_Body::TComplicated_Body(const int  QuantCircleCylinder
+  , TCircleCylinder *arrCircleCylinder, const int  QuantTruncatedConeCircle
+  , TTruncatedConeCircle *arrTruncatedConeCircle)
+{
+	 mQuantCircleCylinder = QuantCircleCylinder;
+	 mQuantTruncatedConeCircle = QuantTruncatedConeCircle;
+	 memcpy(marrTruncatedConeCircle, arrTruncatedConeCircle,  mQuantTruncatedConeCircle * sizeof(TTruncatedConeCircle));
+	 memcpy(marrCircleCylinder, arrCircleCylinder,  mQuantCircleCylinder * sizeof(TCircleCylinder));
+
+}
+
+__fastcall TComplicated_Body::calcCapacity()
+{
+	double valCapacity =0.;
+	for (int i = 0; i < mQuantCircleCylinder; i++)
+	{
+	 TSimpleBody_3D *pSimpleBody_3D = &marrCircleCylinder[i];
+	 valCapacity += pSimpleBody_3D->calcCapacity();
+	}
+	for (int i = 0; i < mQuantTruncatedConeCircle; i++)
+	{
+	 TSimpleBody_3D *pSimpleBody_3D = &marrTruncatedConeCircle[i];
+	 valCapacity += pSimpleBody_3D->calcCapacity();
+	}
+	return valCapacity;
+}
+
+void TComplicated_Body::calcCentreOfGravity(double *arrCentreGrav)
+{
+   memset(arrCentreGrav, 0, 3 * sizeof(double));
+   double valMass = calcMass();
+   double arrCentreGravTEmp[3] = {0.}, arrT0[3] ={0.};
+	for (int i = 0; i < mQuantCircleCylinder; i++)
+	{
+	 TSimpleBody_3D *pSimpleBody_3D = &marrCircleCylinder[i];
+	 pSimpleBody_3D->calcCentreOfGravity(arrCentreGravTEmp);
+	 MatrxMultScalar(arrCentreGravTEmp, 3, 1, mM,arrCentreGravTEmp);
+	 MtrxSumMatrx(arrCentreGravTEmp, arrCentreGrav,3, 1, arrT0) ;
+	 memcpy(arrCentreGrav,arrT0, 3 * sizeof(double));
+	}
+	for (int i = 0; i < mQuantTruncatedConeCircle; i++)
+	{
+	 TSimpleBody_3D *pSimpleBody_3D = &marrTruncatedConeCircle[i];
+	 pSimpleBody_3D->calcCentreOfGravity(arrCentreGravTEmp);
+	 MatrxMultScalar(arrCentreGravTEmp, 3, 1, mM,arrCentreGravTEmp);
+	 MtrxSumMatrx(arrCentreGravTEmp, arrCentreGrav,3, 1, arrT0) ;
+	 memcpy(arrCentreGrav,arrT0, 3 * sizeof(double));
+	}
+	MatrxMultScalar(arrCentreGrav, 3, 1, 1./valMass,arrCentreGrav);
+}
+
+
+
+#pragma package(smart_init)

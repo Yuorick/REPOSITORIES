@@ -1,0 +1,51 @@
+//---------------------------------------------------------------------------
+
+#ifndef OutPutAeroShotH
+#define OutPutAeroShotH
+// класс описывает массив выходной информации по отдельному выстрелу по воздушной цели
+// это удобно для визуализации результатов
+class TOutPutAeroShot
+{
+public:
+//   время выстрела
+double mTshot;
+//   полетное время
+double mTfly;
+//  вектор состояния корабля на момент выстрела в ГСК
+double marrVS_GSK_Vessel[6];
+// вектор состояния цели корабля на момент выстрела в ГСК
+double marrVS_GSK_Targ[6];
+//  ПУВН в КГСК
+double mEpsKGSK;
+// ПУГН в КГСК
+double mBetKGSK;
+// корреляц матрица разброса вектора состояния цели в ГСК на момент встречи
+double marrKTarg[36];
+// корреляц матрица разброса вектора состояния снаряда в ГСК  на момент встречи
+double marrKShell[36];
+
+// вектор промаха
+double marrMiss[6];
+
+
+	// конструктор по умолчанию
+	TOutPutAeroShot () ;
+	// конструктор копирования
+	TOutPutAeroShot  (const TOutPutAeroShot  &R) ;
+
+	// оператор присваивания
+	TOutPutAeroShot  operator=(TOutPutAeroShot   R2) ;
+   // параметрическийц конструктор
+   TOutPutAeroShot( const double Tshot
+		,const double Tfly, double *arrVS_GSK_Vessel, double *arrVS_GSK_Targ
+		,const double EpsKGSK,const double BetKGSK, double *arrKTarg
+		,double *arrKShell, double *arrMiss);
+
+   static void   swap( TOutPutAeroShot *a0,  TOutPutAeroShot *a1);
+
+   static void   flipArray( TOutPutAeroShot *parr, const int len) ;
+
+
+}  ;
+
+#endif

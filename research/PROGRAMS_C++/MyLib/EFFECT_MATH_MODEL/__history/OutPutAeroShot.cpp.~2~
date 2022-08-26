@@ -1,0 +1,475 @@
+//---------------------------------------------------------------------------
+
+
+#pragma hdrstop
+
+#include "OutPutAeroShot.h"
+
+
+//---------------------------------------------------------------------------
+TOutPutAeroShot::TOutPutAeroShot()
+
+{
+
+
+	mEnumShellType = CALIBRO_130;
+	mDetonator = TDetonator();
+
+	 mL =0.;// 0.6833;
+// диаметр миделя, м
+	 mDm = 0.;//0.13;
+// константа h_гоб для расчета дериываци функции  mh_gob =  Lc + 0.57*Lg -0.16*Dm
+	 mh_gob = 0.;//0.380691;
+// расстояние от основания гч до цм
+	 mLc =0.;// 0.3295;
+// длина гч
+	 mLg =0.;// 0.1263 ;
+// масса
+	 mMass = 33.4;
+// момент инерции
+
+	 mvalIx0 =0.;// 0.0797248955 ;
+	mplnCix = TURPolyLine();//pln_ix_130;
+	mplnCiy = TURPolyLine();//pln_iy_130;
+	mplnCiz = TURPolyLine();//pln_iz_130;
+	mplnCx  = TURPolyLine();
+	mplnKnm = TURPolyLine();
+	mplnMxOmx = TURPolyLine();
+	mplnCz =   TURPolyLine();
+
+	mV0 = 0.;//850. ;   // нач скорость
+	mOmega0 = 0.;//1643.;  // нач угловая скорость // нач угловая скорость
+
+	mDispOmega0 = 0.;// (mOmega0 * 0.0001) * (mOmega0 * 0.0001);
+	mDispMass0 =0.;// 0.05 * mMass * 0.05 * mMass;
+	// дисперсия разброса начального значения путевой скорости
+	mDispV0 = 0. ;
+
+	// дисперсия относительного  разброса Cx (1 + delta)
+	mDispCx = 0.;//0.0009;
+
+	// дисперсия относительного  разброса Cz (1 + delta)
+	mDispCz = 0.;//0.0009;
+
+}
+
+//---------------------------------------------------------------------------
+
+
+// конструктор копирования
+ TOutPutAeroShot ::TOutPutAeroShot (const TOutPutAeroShot &R)
+ {
+	 mEnumShellType = R.mEnumShellType;
+	 mDetonator = R.mDetonator;
+	 mL = R.mL ;
+// диаметр миделя, м
+	 mDm = R.mDm;
+	 mLc = R.mLc;
+	 mLg =  R.mLg;
+// константа h_гоб для расчета дериываци функции  mh_gob =  Lc + 0.57*Lg -0.16*Dm
+	 mh_gob = R.mh_gob ;
+// масса
+	 mMass = R.mMass;
+// момент инерции
+	 mvalIx0 = R.mvalIx0 ;
+//   тадлицпа креффициентов формы снарядав зависимости от от уга бросания
+		mplnCix = R.mplnCix;
+
+//   тадлицпа креффициентов формы снарядав зависимости от от уга бросания
+
+		mplnCiy = R.mplnCiy;
+		mplnCiz = R.mplnCiz;
+
+		mplnCx  = R.mplnCx;
+		mplnKnm = R.mplnKnm;
+		mplnMxOmx = R.mplnMxOmx;
+		mplnCz = R.mplnCz ;
+
+
+
+	// вектор дисперсий случайных разбросов начальных условий движения
+// снваряда и 2-х параметорв - коэффиц формы и массы
+   //	 memcpy(marrDispScatters, R.marrDispScatters, 10 * sizeof( double));
+
+	mV0 = R.mV0 ;   // нач скорость
+
+	mOmega0 = R.mOmega0 ;  // нач угловая скорость // нач угловая скорость
+
+	mDispOmega0 = R.mDispOmega0;
+	mDispMass0 = R.mDispMass0;
+	mDispV0 = R.mDispV0;
+	mDispCx = R.mDispCx;
+	mDispCz = R.mDispCz;
+
+ }
+
+ // оператор присваивания
+ TOutPutAeroShot TOutPutAeroShot::operator=(TOutPutAeroShot  R)
+ {
+	 mEnumShellType = R.mEnumShellType;
+	 mDetonator = R.mDetonator;
+	 mL = R.mL ;
+// диаметр миделя, м
+	 mDm = R.mDm;
+	 mLc = R.mLc;
+	 mLg =  R.mLg;
+// константа h_гоб для расчета дериываци функции  mh_gob =  Lc + 0.57*Lg -0.16*Dm
+	 mh_gob = R.mh_gob ;
+// масса
+	 mMass = R.mMass;
+// момент инерции
+	 mvalIx0 = R.mvalIx0 ;
+//   тадлицпа креффициентов формы снарядав зависимости от от уга бросания
+		mplnCix = R.mplnCix;
+
+//   тадлицпа креффициентов формы снарядав зависимости от от уга бросания
+
+		mplnCiy = R.mplnCiy;
+		mplnCiz = R.mplnCiz;
+
+		mplnCx  = R.mplnCx;
+		mplnKnm = R.mplnKnm;
+		mplnMxOmx = R.mplnMxOmx;
+		mplnCz = R.mplnCz ;
+
+
+
+	mV0 = R.mV0 ;   // нач скорость
+
+	mOmega0 = R.mOmega0 ;  // нач угловая скорость // нач угловая скорость
+	mDispOmega0 = R.mDispOmega0;
+	mDispMass0 = R.mDispMass0;
+	mDispV0 = R.mDispV0;
+	mDispCx = R.mDispCx;
+	mDispCz = R.mDispCz;
+
+
+	return *this ;
+ }
+
+
+
+
+// параметрическийц конструктор
+ TOutPutAeroShot::TOutPutAeroShot( enumShellType EnumShellType, const TDetonator Detonator)
+{
+	mEnumShellType = EnumShellType;
+	mDetonator = Detonator;
+	mplnCz  = PLN_Cz_76 ;
+	switch(EnumShellType)
+	{
+		case CALIBRO_130:
+			mL = 0.6833;
+			// диаметр миделя, м
+			mDm = 0.13;
+			// расстояние от основания гч до цм
+			mLc = 0.3295;
+			// длина гч
+			mLg = 0.1263 ;
+			// масса
+			mMass = 33.4;
+			// момент инерции
+			mvalIx0 = 0.07896;
+
+			mplnCix = pln_ix_130;
+			mplnCiy = pln_iy_130;
+			mplnCiz = pln_iz_130;
+
+			mplnCx  = PLN_CxEtal;
+			mplnKnm = PLN_Knm;
+			mplnMxOmx = PLN_MxOmegax;
+
+
+			mV0 = 850. ;   // нач скорость
+			mOmega0 = 1643.;  // нач угловая скорость
+		break;
+
+		case CALIBRO_100:
+			mL = 0.522;
+			// диаметр миделя, м
+			mDm = 0.1;
+
+			// расстояние от основания гч до цм
+			 mLc = 0.21871;
+			// длина гч
+				 mLg = 0.12229; ;
+			// масса
+			mMass = 15.6;
+			// момент инерции
+
+			mvalIx0 = 0.02163;
+			mplnCix = pln_ix_100;
+			mplnCiy = pln_iy_100;
+			mplnCiz = pln_iz_100;
+
+			mplnCx  = PLN_CxEtal;
+			mplnKnm = PLN_Knm;
+			mplnMxOmx = PLN_MxOmegax;
+
+
+
+			mV0 =  880.0;   // нач скорость
+			mOmega0 = 1843.1;  // нач угловая скорость
+		break;
+
+		case CALIBRO_76_SHTAT:
+		case CALIBRO_76_BARRIER:
+			mL = 0.3524;
+			// диаметр миделя, м
+			mDm = 0.0762;
+			// расстояние от основания гч до цм
+			mLc = 0.1412;
+			// длина гч
+			 mLg = 0.05 ;
+			// масса
+			mMass = 5.9;
+			// момент инерции
+			mvalIx0 = 0.004282;// = m*r*r/2
+			mplnCix = pln_ix_76;
+			mplnCiy = pln_iy_76;
+			mplnCiz = pln_iz_76;
+
+			mplnCx  =  PLN_Cx_76;
+			mplnMxOmx = PLN_MxOmx_76;
+			mplnKnm = PLN_Knm_76 ;
+
+			mV0 = 980.;  // нач скорость
+			mOmega0 = 2500.;  // нач угловая скорость ??????
+
+		break;
+
+
+		case CALIBRO_30:
+			mL = 0.1385;;
+			// диаметр миделя, м
+			mDm = 0.03;
+
+			// расстояние от основания гч до цм
+			 mLc = 0.0206;
+			// длина гч
+				 mLg = 0.0625;
+			// масса
+			mMass = 0.384;
+			// момент инерции
+			mvalIx0 = 4.96386e-05;
+
+			mplnCix = pln_ix_30;
+			mplnCiy = pln_iy_30;
+			mplnCiz = pln_iz_30;
+
+			mplnCx  = PLN_CxEtal;
+			mplnKnm = PLN_Knm;
+			mplnMxOmx = PLN_MxOmegax;
+
+
+			mV0 =  880.;   // нач скорость
+			mOmega0 = 7728;  // нач угловая скорость
+
+		break;
+
+		case CALIBRO_UNKNOWN:
+
+		break;
+		default:
+		break;
+	}
+	///////////////////////////////////////////////
+   // константа h_гоб для расчета дериываци функции  mh_gob =  Lc + 0.57*Lg -0.16*Dm
+	mh_gob = mLc + 0.57 * mLg - 0.16 * mDm ;
+
+	mDispOmega0 =  (mOmega0 * 0.0001) * (mOmega0 * 0.0001);
+	mDispMass0 =  0.0011* mMass * 0.0011 * mMass;  // vesovoj znak 1/3 %
+	// дисперсия разброса начального значения путевой скорости
+	mDispV0 = (0.005* mV0 ) * (0.005 * mV0 ) ;
+
+	// дисперсия относительного  разброса Cx (1 + delta)
+	mDispCx = 0.01 * 0.01;//0.0033 * 0.0033;
+
+	// дисперсия относительного  разброса Cz (1 + delta)
+	mDispCz = 0.0033 * 0.0033;
+
+	if ((mEnumShellType == CALIBRO_76_BARRIER) || (mEnumShellType == CALIBRO_76_SHTAT) || (mDetonator.mEnumDetonatorType == CONTACT))
+	{
+	mDispOmega0 =  (mOmega0 * 0.0001) * (mOmega0 * 0.0001);
+	mDispMass0 =  0.0011* mMass * 0.0011* mMass;  // vesovoj znak 1/3 %
+	// дисперсия разброса начального значения путевой скорости
+	mDispV0 = (0.00389* mV0 ) * (0.00389* mV0 ) ;
+
+	// дисперсия относительного  разброса Cx (1 + delta)
+	mDispCx = 0.009781 * 0.009781;
+
+	// дисперсия относительного  разброса Cz (1 + delta)
+	mDispCz = 0.05 * 0.05;//0.001 * 0.001;
+
+	}
+	if ((mEnumShellType == CALIBRO_76_BARRIER) || (mEnumShellType == CALIBRO_76_SHTAT) || (mDetonator.mEnumDetonatorType == BARRIER))
+	{
+	  mDispV0 = (0.0005* mV0 ) * (0.0005* mV0 ) ;
+    }
+
+
+}
+
+//---------------------------------------------------------------------------
+
+
+
+// параметрическийц конструктор
+ TOutPutAeroShot::TOutPutAeroShot( enumShellType EnumShellType)
+{
+	mEnumShellType = EnumShellType;
+	mDetonator = DETONATOR_UNKNOWN;
+	mplnCz  = PLN_Cz_76 ;
+	switch(EnumShellType)
+	{
+		case CALIBRO_130:
+			mL = 0.6833;
+			// диаметр миделя, м
+			mDm = 0.13;
+			// расстояние от основания гч до цм
+			mLc = 0.3295;
+			// длина гч
+			mLg = 0.1263 ;
+			// масса
+			mMass = 33.4;
+			// момент инерции
+			mvalIx0 = 0.07896;
+
+			mplnCix = pln_ix_130;
+			mplnCiy = pln_iy_130;
+			mplnCiz = pln_iz_130;
+
+			mplnCx  = PLN_CxEtal;
+			mplnKnm = PLN_Knm;
+			mplnMxOmx = PLN_MxOmegax;
+
+
+			mV0 = 850. ;   // нач скорость
+			mOmega0 = 1643.;  // нач угловая скорость
+		break;
+
+		case CALIBRO_100:
+			mL = 0.522;
+			// диаметр миделя, м
+			mDm = 0.1;
+
+			// расстояние от основания гч до цм
+			 mLc = 0.21871;
+			// длина гч
+				 mLg = 0.12229; ;
+			// масса
+			mMass = 15.6;
+			// момент инерции
+
+			mvalIx0 = 0.02163;
+			mplnCix = pln_ix_100;
+			mplnCiy = pln_iy_100;
+			mplnCiz = pln_iz_100;
+
+			mplnCx  = PLN_CxEtal;
+			mplnKnm = PLN_Knm;
+			mplnMxOmx = PLN_MxOmegax;
+
+
+
+			mV0 =  880.0;   // нач скорость
+			mOmega0 = 1843.1;  // нач угловая скорость
+		break;
+
+		case CALIBRO_76_SHTAT:
+		case CALIBRO_76_BARRIER:
+			mL = 0.3524;
+			// диаметр миделя, м
+			mDm = 0.0762;
+			// расстояние от основания гч до цм
+			mLc = 0.1412;
+			// длина гч
+			 mLg = 0.05 ;
+			// масса
+			mMass = 5.9;
+			// момент инерции
+			mvalIx0 = 0.004282;// = m*r*r/2
+			mplnCix = pln_ix_76;
+			mplnCiy = pln_iy_76;
+			mplnCiz = pln_iz_76;
+
+			mplnCx  =  PLN_Cx_76;
+			mplnMxOmx = PLN_MxOmx_76;
+		   	mplnKnm = PLN_Knm_76 ;
+
+			mV0 = 980.;  // нач скорость
+			mOmega0 = 2500.;  // нач угловая скорость ??????
+
+		break;
+
+
+		case CALIBRO_30:
+			mL = 0.1385;;
+			// диаметр миделя, м
+			mDm = 0.03;
+
+			// расстояние от основания гч до цм
+			 mLc = 0.0206;
+			// длина гч
+				 mLg = 0.0625;
+			// масса
+			mMass = 0.384;
+			// момент инерции
+			mvalIx0 = 4.96386e-05;
+
+			mplnCix = pln_ix_30;
+			mplnCiy = pln_iy_30;
+			mplnCiz = pln_iz_30;
+
+			mplnCx  = PLN_CxEtal;
+			mplnKnm = PLN_Knm;
+			mplnMxOmx = PLN_MxOmegax;
+
+
+			mV0 =  880.;   // нач скорость
+			mOmega0 = 7728;  // нач угловая скорость
+
+		break;
+
+		case CALIBRO_UNKNOWN:
+
+		break;
+		default:
+		break;
+	}
+	///////////////////////////////////////////////
+   // константа h_гоб для расчета дериываци функции  mh_gob =  Lc + 0.57*Lg -0.16*Dm
+	mh_gob = mLc + 0.57 * mLg - 0.16 * mDm ;
+
+	mDispOmega0 =  (mOmega0 * 0.0001) * (mOmega0 * 0.0001);
+	mDispMass0 =  0.0011* mMass * 0.0011 * mMass;  // vesovoj znak 1/3 %
+	// дисперсия разброса начального значения путевой скорости
+	mDispV0 = (0.0005* mV0 ) * (0.0005 * mV0 ) ;
+
+	// дисперсия относительного  разброса Cx (1 + delta)
+	mDispCx = 0.01 * 0.01;//0.0033 * 0.0033;
+
+	// дисперсия относительного  разброса Cz (1 + delta)
+	mDispCz = 0.0033 * 0.0033;
+
+	if ((mEnumShellType == CALIBRO_76_BARRIER) || (mEnumShellType == CALIBRO_76_SHTAT))
+	{
+	mDispOmega0 =  (mOmega0 * 0.0001) * (mOmega0 * 0.0001);
+	mDispMass0 =  0.0011* mMass * 0.0011* mMass;  // vesovoj znak 1/3 %
+	// дисперсия разброса начального значения путевой скорости
+	mDispV0 = (0.00389* mV0 ) * (0.00389* mV0 ) ;
+
+	// дисперсия относительного  разброса Cx (1 + delta)
+	mDispCx = 0.009781 * 0.009781;
+
+	// дисперсия относительного  разброса Cz (1 + delta)
+	mDispCz = 0.05 * 0.05;//0.001 * 0.001;
+	}
+
+
+}
+
+//---------------------------------------------------------------------------
+
+
+#pragma package(smart_init)

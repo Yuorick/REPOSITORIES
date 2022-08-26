@@ -1,0 +1,39 @@
+//---------------------------------------------------------------------------
+
+#ifndef HelicH
+#define HelicH
+#include "Blade.h"
+// класс описывает вертолет
+class TBlade;
+class THelic
+{
+public:
+	// лопасть винта
+	TBlade mBlade;
+	// частота вращениеия винта
+	double mBladeOmega;
+	// масса вертолетв
+	double mHelicMass;
+	// к-во лопастей
+	int mQuantBlades;
+
+
+
+
+
+ __fastcall  THelic() ;
+// Конструктор копирования
+__fastcall  THelic (const THelic &R2) ;
+
+ // оператор присваивания
+ THelic   operator=(THelic  R2) ;
+
+  // парам констр
+  __fastcall THelic(const TBlade Blade,const double BladeOmega
+   ,const double HelicMass, const double QuantBlades);
+
+double calcCt(const double TKel0,const double HeliH) ;
+
+
+};
+#endif

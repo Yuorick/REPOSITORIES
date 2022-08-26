@@ -1,0 +1,31 @@
+//---------------------------------------------------------------------------
+
+#ifndef ControlSystH
+#define ControlSystH
+class TBius
+{
+public:
+	//Темп фильтрации
+	double mFiltT;
+	// Задержка СИНС
+	double mSinsDelayT;
+
+
+
+
+
+	// конструктор по умолчанию
+	TBius () ;
+	// конструктор копирования
+	TBius  (const TBius  &R) ;
+	// оператор присваивания
+	TBius  operator=(TBius   R2) ;
+
+	TBius (const double FiltT, const double SinsDelayT)  ;
+
+
+
+
+
+}  ;
+#endif

@@ -1,0 +1,38 @@
+//---------------------------------------------------------------------------
+
+#ifndef FarH
+#define FarH
+#include "Faceta.h"
+class TComp;
+class TFaceta;
+class TFar
+{
+public:
+
+
+ // количество модулей (фасет)
+ int m_N;
+ // расстояние между модулями
+ double  m_D;
+ // длина волны
+ double	 mLambda ;
+ // фасета
+ TFaceta mFaceta;
+
+
+
+ TFar() ;
+
+
+// конструктор копирования
+ TFar(const TFar &R) ;
+ TFar operator=(TFar  R2) ;
+ // парам констр
+ __fastcall TFar(const int N,const double D,const double Lambda
+   ,TFaceta Faceta);
+ // парам констр
+ __fastcall TFar(const int N);
+ 
+
+};
+#endif

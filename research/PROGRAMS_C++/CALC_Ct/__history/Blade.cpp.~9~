@@ -1,0 +1,139 @@
+//---------------------------------------------------------------------------
+
+
+#pragma hdrstop
+
+#include "Blade.h"
+
+
+__fastcall  TBlade::TBlade()
+{
+  // радиус винта
+	 mBladeR  = 0.;
+	// расстояние от оси вращения до  втулки ГШ
+	 mRadHorizHsarnir =0.;
+	// высота вертикального сечения  лопасти ближе к центру вращения
+	 mPofile_d0 =0.;
+	// высота вертикального сечения  лопасти дальше от центра вращения
+	 mPofile_d1=0.;
+	// масса лопасти
+	 mBladeM=0.;
+	// хорда лопасти
+	 mBlade_b=0.;
+
+}
+// Конструктор копирования
+__fastcall  TBlade::TBlade (const TBlade &R)
+ {
+	// радиус винта
+	 mBladeR  = R.mBladeR ;
+	// расстояние от оси вращения до  втулки ГШ
+	 mRadHorizHsarnir = R.mRadHorizHsarnir;
+	// высота вертикального сечения  лопасти ближе к центру вращения
+	 mPofile_d0 = R.mPofile_d0;
+	// высота вертикального сечения  лопасти дальше от центра вращения
+	 mPofile_d1 = R.mPofile_d1;
+	// масса лопасти
+	 mBladeM = R.mBladeM;
+	// хорда лопасти
+	 mBlade_b = R.mBlade_b;
+   }
+ // оператор присваивания
+  TBlade TBlade::operator=(TBlade  R)
+ {
+	// радиус винта
+	 mBladeR  = R.mBladeR ;
+	// расстояние от оси вращения до  втулки ГШ
+	 mRadHorizHsarnir = R.mRadHorizHsarnir;
+	// высота вертикального сечения  лопасти ближе к центру вращения
+	 mPofile_d0 = R.mPofile_d0;
+	// высота вертикального сечения  лопасти дальше от центра вращения
+	 mPofile_d1 = R.mPofile_d1;
+	// масса лопасти
+	 mBladeM = R.mBladeM;
+	// хорда лопасти
+	 mBlade_b = R.mBlade_b;
+	 return *this ;
+ }
+
+ // парам констр 1
+ __fastcall TBlade::TBlade(const double  BladeR,const double  RadHorizHsarnir
+   ,const double  Pofile_d0,const double  Pofile_d1,const double  BladeM  ,const double  Blade_b)
+ {
+   mBladeR = BladeR;
+   mRadHorizHsarnir = RadHorizHsarnir;
+   mPofile_d0 = Pofile_d0 ;
+   mPofile_d1 = Pofile_d1;
+   mBladeM = BladeM;
+   mBlade_b = Blade_b;
+ }
+//-------------------------------------------------------------------------------
+// вычисление расстояния от точки приложения аэродинамической силы
+// сопротивления до центра втулки  оси НВ
+double TBlade::calc_rQ()
+{
+   double x0 =  mRadHorizHsarnir;
+   double x1 = mBladeR;
+   double valK = (mPofile_d1  - mPofile_d0)/(x1 - x0);
+   double temp =  mPofile_d0 - valK * x0;
+   double temp2 = (x1 * x1 - x0 * x0) / 2.;
+   double temp3 = (x1 * x1* x1 - x0 * x0* x0) / 3.;
+   double temp4 = (x1 * x1* x1 * x1 - x0 * x0 * x0 * x0) / 4.;
+   double val_rQ = (temp * temp3 + valK * temp4 )/ ( temp * temp2 + valK * temp3);
+   return val_rQ;
+}
+
+//-------------------------------------------------------------
+// вычисление расстояния от центра масс лопасти  до ближай точке лопасти к центру вращения
+
+// VAlPofile_d0 - высота профиля вертикального сечения лопасти  в точке ближайшей к центру вращения
+// VAlPofile_d1 - высота профиля вертикального сечения лопасти  в дальней точке от центра вращения
+double TBlade::calc_X_BladeCentreMass()
+{
+	const double VAl_L = mBladeR - mRadHorizHsarnir;// VAl_L - длина лопасти
+	return VAl_L * (mPofile_d0 + 2. * mPofile_d1)/ (mPofile_d0 +  mPofile_d1) /3.;
+}
+
+//-------------------------------------------------------------
+// вычисление статического момента относитедбьно центра вращения
+// VAlR - радиус ометаемой площади
+// VAlRadHorizHsarnir - радиус горизоньтального шарнира
+// VAlPofile_d0 - высота профиля вертикального сечения лопасти  в точке ближайшей к центру вращения
+// VAlPofile_d1 - высота профиля вертикального сечения лопасти  в дальней точке от центра вращения
+// VAlM - масса лопасти
+double TBlade::calc_X_StatMoment_Sg()
+{
+	double valCentreMass = calc_X_BladeCentreMass();
+	return   mBladeM * ( valCentreMass + mRadHorizHsarnir);
+}
+
+//-------------------------------------------------------------
+// вычисление момента инерции  относитедбьно центра тяжести
+double TBlade::calcInertiaMoment0()
+{
+	const double VAlL = mBladeR - mRadHorizHsarnir;// VAl_L - длина лопасти
+	return   mBladeM * VAlL * VAlL *( mPofile_d0 * mPofile_d0 + mPofile_d0 * mPofile_d1 * 4.
+	 + mPofile_d1* mPofile_d1)
+	   / (mPofile_d0 + mPofile_d1) / (mPofile_d0 + mPofile_d1)/18.;
+}
+
+//-------------------------------------------------------------
+// вычисление момента инерции  относитедбьно центра втулки горизонтального шарнира
+double TBlade::calcInertiaMomentHorSharnir()
+{
+	const double VAl_L = mBladeR - mRadHorizHsarnir;// VAl_L - длина лопасти
+	return   mBladeM* VAl_L * VAl_L *( mPofile_d0  +  3. *mPofile_d1)
+	   / (mPofile_d0 + mPofile_d1) /6.;
+}
+
+//-------------------------------------------------------------
+// вычисление момента инерции  относитедбьно центра вращения лопасти
+double  TBlade::calcInertiaMoment()
+{
+	double valXCentre = calc_X_BladeCentreMass() ;
+	return   calcInertiaMoment0() + (valXCentre  +  mRadHorizHsarnir)
+	 * (valXCentre  +  mlRadHorizHsarnir) * mBladeM;
+}
+
+
+#pragma package(smart_init)

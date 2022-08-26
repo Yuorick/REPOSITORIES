@@ -1,0 +1,37 @@
+//---------------------------------------------------------------------------
+
+#ifndef Table_1DH
+#define Table_1DH
+// класс описывает однмерную таблицу
+// таблица представляет из себя массив (вектиор) значений некоторой функции в точках
+// значения функции хранятся в массиве  mparrVal
+// значения аргументов в массиве mparrArg
+// mNumCols - число ьточек в котороых задана функция
+
+//
+class TTable_1D
+{
+public:
+
+	int mNumCols ;// к-во столбцов
+	double *mparrArg; // вектор значений столбцов
+	double *mparrVal; // вектор аргументов столбцов
+
+
+
+	__fastcall ~TTable_1D() ;
+
+	TTable_1D();
+ // конструктор копирования
+ TTable_1D (const TTable_1D &R) ;
+ // оператор присваивания
+ TTable_1D operator=(TTable_1D  R);
+// парам констр
+TTable_1D( double *parrArg, double *parrVal, const int NumCols);
+
+double calcValue(const double VAlArg);
+
+//void calcBoundBox();
+
+};
+#endif

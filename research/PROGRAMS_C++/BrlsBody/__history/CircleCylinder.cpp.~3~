@@ -1,0 +1,85 @@
+//---------------------------------------------------------------------------
+
+
+#pragma hdrstop
+
+#include "CircleCylinder.h"
+#include "Plane.h"
+
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+
+
+
+  TCircleCylinder ::TCircleCylinder()
+{
+
+	mR = 0. ;
+	mH = 0.;
+	mM = 0.;
+
+
+}
+TCircleCylinder ::TCircleCylinder(const TPlane Plane, const double R, const double H,const double M) :TSimpleBody_3D( Plane)
+{
+ mR = R;
+ mH = H;
+ mM = M;
+
+}
+
+// конструктор копировани€
+ TCircleCylinder ::TCircleCylinder (const TCircleCylinder &R)
+  {
+	mR  = R.mR;
+	mH = R.mH;
+	mM = R.mM   ;
+ }
+ // оператор присваивани€
+ TCircleCylinder TCircleCylinder::operator=(TCircleCylinder  R)
+ {
+	mR  = R.mR;
+	mH = R.mH;
+	mM = R.mM   ;
+	return *this ;
+  }
+
+
+// вычисление объема
+double TCircleCylinder::calcCapacity()
+{
+ return  M_PI * mH * mR * mR ;
+}
+
+// вычисление координат центра т€жести
+void TCircleCylinder::calcCentreOfGravity(double *arrCentreGrav)
+{
+  arrCentreGrav [0] = mH /2.;
+  arrCentreGrav [1] = 0.;
+  arrCentreGrav [2] = 0.;
+}
+
+// вычисление тензора моментов инерции
+// это диагональна€ матрица
+// относительно оси вращени€ считаетс€ по формуле
+// относительно осей X и Z прмиен€тс€ формула Ўтейнера
+//  усеченный конус достраиваетс€ до неусеченного, большого.
+// “о есть добавл€етс€ маленький конус сверху.
+// ¬ычисл€ютс€ координаты центра т€жести усеченного, большого и малого конусов.
+// вычисл€ютмс€ моменты инерции большого и малого конусов.
+// ѕо теореме Ўтейнера находитс€ момент инерции относительно осей  X и Z
+void TCircleCylinder::calcInertiaTensor(double *arrInertTens)
+{
+  // 1. высисление момента инерции относительно оси Y
+  memset(arrInertTens, 0, 9 * sizeof(double));
+  arrInertTens[0] =  mM * mR*mR / 2.;
+  ////
+  arrInertTens[4] = mM * (3. * mR * mR + mH * mH)/ 12.;
+  arrInertTens[8] = arrInertTens[0];
+}
+
+
+#pragma package(smart_init)

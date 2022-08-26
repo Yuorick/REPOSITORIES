@@ -1,0 +1,36 @@
+//---------------------------------------------------------------------------
+
+#ifndef TruncatedConeCircleH
+#define TruncatedConeCircleH
+
+// класс описывает
+class TTruncatedConeCircle : public TURFigure
+{
+public:
+
+	double Box[4] ;		// Bounding Box
+	int NumParts ;
+	int NumPoints ;
+	int *Parts ;
+	TURPointXY *Points ;
+
+  //	__fastcall TTruncatedConeCircle() ;
+   //	__fastcall TTruncatedConeCircle(const GPolygon &obj) ;
+	__fastcall ~TTruncatedConeCircle() ;
+
+  //	TTruncatedConeCircle &operator = (const TTruncatedConeCircle &obj) ;
+
+
+
+   //	__fastcall TTruncatedConeCircle ::~TTruncatedConeCircle ();
+  // virtual ~TTruncatedConeCircle ();
+	 TTruncatedConeCircle () ;
+
+	 // конструктор копирования
+	  TTruncatedConeCircle  (const TTruncatedConeCircle  &R) ;
+	  // оператор присваивания
+	  TTruncatedConeCircle  operator=(TTruncatedConeCircle   R2) ;
+
+};
+
+	  #endif

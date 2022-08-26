@@ -1,0 +1,40 @@
+//---------------------------------------------------------------------------
+
+#ifndef DetonatorH
+#define DetonatorH
+enum enumDetonatorType {DVM,AR32A, D4MRM, CONTACT, MFIVU,AR51_LM,BARRIER, DETONATOR_UNKNOWN};
+
+#define LEN_DOUBLE_ARR_DETONATOR_PARAMS 50
+#define LEN_INT_ARR_DETONATOR_PARAMS 50
+// Класс описывает характеристики детонатора
+
+// СЛУЧАЙ ПЕРСПЕКТИВНОГО ВУ БАРЬЕР кал 76 мм
+// marrDetonatorParams[0] - дискрет установки времени срабатывания
+// marrDetonatorParams[1] - коэффицент нарастания ошибки срабатывания при полетном времени
+
+
+// СЛУЧАЙ штатного АР51-ЛМ
+class TDetonator
+{
+public:
+ // характерная длина снаряда, м
+	 enumDetonatorType  mEnumDetonatorType ;
+	 double marrDetonatorParams [LEN_DOUBLE_ARR_DETONATOR_PARAMS];
+	 int miarrDetonatorParams [LEN_INT_ARR_DETONATOR_PARAMS];
+
+	// конструктор по умолчанию
+	TDetonator () ;
+	// конструктор копирования
+	TDetonator  (const TDetonator  &R) ;
+
+	// оператор присваивания
+	TDetonator  operator=(TDetonator   R2) ;
+   // параметрическийц конструктор
+	TDetonator(enumDetonatorType  EnumDetonatorType, double *arrDetonatorParams
+ , int *iarrDetonatorParams) ;
+
+   TDetonator(enumDetonatorType  EnumDetonatorType);
+
+
+}  ;
+#endif

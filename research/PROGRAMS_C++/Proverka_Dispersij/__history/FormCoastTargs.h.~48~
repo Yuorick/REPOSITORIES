@@ -1,0 +1,362 @@
+//---------------------------------------------------------------------------
+
+#ifndef FormCoastTargsH
+#define FormCoastTargsH
+//---------------------------------------------------------------------------
+#include <Classes.hpp>
+#include <Controls.hpp>
+#include <StdCtrls.hpp>
+#include <Forms.hpp>
+#include <ExtCtrls.hpp>
+#include <Dialogs.hpp>
+
+
+#include "SingleSign.h"
+#include "InitTargData.h"
+#include "EtalonSign.h"
+#include "Target.h"
+#include "TransmitAnt.h"
+#include "AM_2D.h"
+#include "Far_2D.h"
+#include "URPointZ.h"
+
+#include "Environment.h"
+#include "MyShellTraj.h"
+#include "Bius.h"
+#include "ArtCannon.h"
+#include "ArtComplex.h"
+#include "Vessel.h"
+#include "Fight.h"
+#include "ArtCannon.h"
+
+#include "YrRastr.h"
+#include <Grids.hpp>
+
+
+
+
+
+
+// enum enumTargetType;
+ //enum enumShellType;
+// enum enumCannonType;
+//---------------------------------------------------------------------------
+class TAM_2D;
+class TFar_2D;
+class TURPointZ;
+class  TSingleSign;
+class TInitTargData;
+class TEtalonSign;
+class TTransmitAnt;
+class TWind;
+class TEnvironment;
+class TBius;
+class TArtCannon;
+class TArtComplex;
+class TVessel;
+class TFight;
+//----------------
+
+//---------------------------------------------------------------------------
+class TForm2 : public TForm
+{
+__published:	// IDE-managed Components
+	TPanel *Panel2;
+	TLabeledEdit *LabeledEdit1;
+	TLabeledEdit *LabeledEdit2;
+	TRadioGroup *RadioGroup1;
+	TButton *Button2;
+	TLabeledEdit *LabeledEdit3;
+	TLabeledEdit *LabeledEdit4;
+	TLabeledEdit *LabeledEdit5;
+	TPanel *Panel7;
+	TLabel *Label8;
+	TLabeledEdit *LabeledEdit29;
+	TLabeledEdit *LabeledEdit23;
+	TOpenDialog *OpenDialog1;
+	TPanel *Panel3;
+	TLabel *Label9;
+	TLabel *Label7;
+	TLabel *Label4;
+	TLabel *Label5;
+	TComboBox *ComboBox3;
+	TComboBox *ComboBox1;
+	TComboBox *ComboBox2;
+	TPanel *Panel10;
+	TLabel *Label1;
+	TLabeledEdit *LabeledEdit49;
+	TLabeledEdit *LabeledEdit51;
+	TLabeledEdit *LabeledEdit52;
+	TLabeledEdit *LabeledEdit53;
+	TLabeledEdit *LabeledEdit50;
+	TLabeledEdit *LabeledEdit6;
+	TButton *Button1;
+	TPanel *Panel4;
+	TLabel *Label3;
+	TButton *Button4;
+	TEdit *Edit2;
+	TLabel *Label2;
+	TComboBox *ComboBox4;
+	TComboBox *ComboBox5;
+	TLabel *Label6;
+	TLabeledEdit *LabeledEdit7;
+	TRadioGroup *RadioGroup2;
+	TPanel *Panel1;
+	TLabel *Label10;
+	TStringGrid *StringGrid2;
+	TEdit *Edit3;
+	TEdit *Edit1;
+	TEdit *Edit4;
+	TEdit *Edit5;
+	TEdit *Edit7;
+	TEdit *Edit8;
+	TLabeledEdit *LabeledEdit9;
+	TOpenDialog *OpenDialog2;
+	TRadioGroup *RadioGroup3;
+	TOpenDialog *OpenDialog3;
+	TPanel *Panel6;
+	TLabel *Label14;
+	TEdit *Edit10;
+	TEdit *Edit11;
+	TEdit *Edit12;
+	TEdit *Edit13;
+	TPanel *Panel8;
+	TLabel *Label15;
+	TButton *Button8;
+	TEdit *Edit15;
+	TButton *Button9;
+	TLabeledEdit *LabeledEdit10;
+	TLabel *Label16;
+	TPanel *Panel9;
+	TButton *Button5;
+	TEdit *Edit6;
+	TLabel *Label11;
+	TPanel *Panel5;
+	TLabel *Label12;
+	TLabel *Label13;
+	TButton *Button6;
+	TEdit *Edit9;
+	TButton *Button7;
+	TLabeledEdit *LabeledEdit8;
+	TLabeledEdit *LabeledEdit11;
+	TButton *Button3;
+	TEdit *Edit14;
+	TLabel *Label17;
+	void __fastcall Button1Click(TObject *Sender);
+	void __fastcall RadioGroup1Exit(TObject *Sender);
+	void __fastcall RadioGroup1Click(TObject *Sender);
+	void __fastcall Button2Click(TObject *Sender);
+	void __fastcall Button4Click(TObject *Sender);
+	void __fastcall Panel3Click(TObject *Sender);
+	void __fastcall ComboBox3Change(TObject *Sender);
+	void __fastcall ComboBox1Change(TObject *Sender);
+	void __fastcall ComboBox2Change(TObject *Sender);
+	void __fastcall ComboBox4Change(TObject *Sender);
+	void __fastcall ComboBox5Change(TObject *Sender);
+	void __fastcall LabeledEdit23Change(TObject *Sender);
+	void __fastcall LabeledEdit29Change(TObject *Sender);
+	void __fastcall LabeledEdit1Change(TObject *Sender);
+	void __fastcall LabeledEdit2Change(TObject *Sender);
+	void __fastcall LabeledEdit49Change(TObject *Sender);
+	void __fastcall LabeledEdit51Change(TObject *Sender);
+	void __fastcall LabeledEdit52Change(TObject *Sender);
+	void __fastcall LabeledEdit53Change(TObject *Sender);
+	void __fastcall LabeledEdit50Change(TObject *Sender);
+	void __fastcall RadioGroup2Click(TObject *Sender);
+	void __fastcall RadioGroup3Click(TObject *Sender);
+	void __fastcall StringGrid2Exit(TObject *Sender);
+	void __fastcall Button5Click(TObject *Sender);
+	void __fastcall Button6Click(TObject *Sender);
+	void __fastcall Button7Click(TObject *Sender);
+	void __fastcall Button9Click(TObject *Sender);
+	void __fastcall Button8Click(TObject *Sender);
+	void __fastcall Button3Click(TObject *Sender);
+
+private:	// User declarations
+public:		// User declarations
+	__fastcall TForm2(TComponent* Owner);
+
+	void __fastcall FormShow(TObject *Sender);
+
+	void __fastcall drawManPowerPoligon();
+
+	// алгоритм управления
+	enumTypeOfControlAlgorithm menumTypeOfControlAlgorithm;
+	// признак корректировки огня
+	bool bCorrection;
+	// признак корректировки огня
+	int miIdexRadioGroup1;
+	//
+ //	количество снарядов
+ int mQuantIspit;
+
+
+	// путь к папке с нрафиками
+	wchar_t *mpwchOutFile0;
+	// путь к папке с графиками  результатов расчета диаграмм
+	wchar_t mwchOutFold[400]; //
+	// путь к файлу с полигоном цели
+	wchar_t *mpwchSHP_TargFile; //
+	//
+	TURPolygon mPlgTarg;
+	
+	String mStringFileDataPoints;
+
+		// путь к файлу с результатами для точечной  групповой цели
+	wchar_t *mpwchOutFileForPointGroupTarg; //
+	// Снаряд
+
+	//тип взрывателя
+	enumDetonatorType mDetonatorType;
+	enumShellType mEnumShellType;
+	enumCannonType menumCannonType;
+	//
+	//к-во снарядов
+	int mQuantShells;
+
+	///
+
+	// Цель
+
+	//тип цели
+	enumTargetType  mEnumTargType;
+	//угол пеленга, град
+	double mBearing0;
+	//высота, м
+	double mElev0;
+	//скорость, м/с
+	double mVelocity0;
+	//дальность, м
+	double mDist0;
+	//  УЗП
+	TYrRastr mRastrUZP;
+
+	//скз шума движения, м/с/с
+ 	double mWSkz;
+	//
+	double mTargZenitAng0;
+	//угол курса
+	double mTargCourse0;
+	// ЭПР цели
+	double mTargEPR ;
+
+	// задержка в работе АУ
+	double mAUDelayT;
+
+	// арткомплекс
+	// темп стрельбы
+	double mRateOfFire;
+
+	// 	точногсть отработки привода углов
+	double  mSigDrivAY_U ;
+
+	// 	точногсть отработки приводом скорости  углов
+	double  mSigDrivAY_dU_po_dt ;
+
+	// СКЗ угловой ошибки СИНС (углов качек)
+	double	mSigSins;
+
+	// СКЗ угловой ошибки СИНСпо скорости углов (углов качек)
+	double	mSig_d_po_dt_Sins;
+
+	// корабль наш
+	double mVesselWidth ; // ширина(м)
+	double mVesselLength ;
+	double marrFarParallacs[3] ;
+
+	double mMaxQ ; /// максимальный угол отклонения от генерального курса(амплитуда угла рыскания)
+	double mT_Q; // период рыскания
+	double mMaxPsi ;// максимальный угол килевой качки(амплитуда)
+	double mT_Psi ; // период килевой качки
+	double mMaxTet ; //максимальный угол боротовой качки(амплитуда)
+	double mT_Tet; // период бортовой качки
+	double mMaxVert  ;
+
+	// парамеитры движения  корабля нашего
+	double mQ0  ; // генеральный курс
+	double mVVess  ;// скорость корабля своего 20 узлов
+	double marrDelt[4] ;//  начальные фазы
+
+	//максимальная амплитуда кормового изгиба корабля в рад на 100 м
+	double mMaxAmp_AftFlexure;
+	// период колебаний кормового изгиба
+	double mT_AftFlexure;
+	//максимальная амплитуда бортового изгиба корабля в рад на 100 м
+	double mMaxAmp_BoardFlexure;
+	// период колебаний бортового изгиба
+	double mT_BoardFlexure;
+
+	// 3.1 создание СИНС
+	TSins mSins ;
+	double mMaxSig_Q ;
+	double mMaxSig_Psi  ;
+	double mMaxSig_Tet  ;
+	double mMaxSig_dQdt ;
+	double mMaxSig_dPsidt ;
+	double mMaxSig_dTetdt ;
+	double mK1         ;
+	double mSigV      ;
+	double mSigH     ;
+	double mMaxSig_H ;
+	double mMaxSig_VH ;
+	// тип алгоритма фильтрации
+
+
+	// привод
+	double mDriverSigBet ;// точность измерения угла Bet привода
+	double mDriverSigEps ;// точность измерения угла Eps  привода (угла места)
+	double mDriverDynamicSigBet ;// точность отработки угла курса  привода
+	double mDriverDynamicSigEps ;// точность  привода отработки угла места
+
+	//
+	 double marrArtParral[3]; // вектор параллакса АУ
+	//Темп фильтрации
+	// интервал между измерениями
+	double mMeasT;
+
+	// Задержка СИНС
+	double mSinsDelayT;
+
+
+	TBius mBius;
+	TFar_2D mFar_2D;
+	TArtCannon mArtCannon ;
+	TArtComplex mArtComplex;  // АУ
+	TTransmitAnt mTransmitAnt;
+	TEtalonSign mEtalonSign;
+	TVessel mVessel;
+	TFight mFight;
+	TEnvironment mEnvironment;
+	TInitTargData mInitTargData;
+	TShellBody mShellBody;
+
+	// приведенный радиус поражения
+	double mKillingRange;
+
+	// для групповой точечной цели
+	double mSig13GroupD; // скз систем ошибки по дальности
+	double mSig13GroupBet; // скз систем ошибки по углу
+	double mSig2GroupD; // скз флукт ошибки по дальности
+	double mSig2GroupBet; // скз флукт ошибки по углу
+	double mSigLocation;// СКЗ ошибки определения положения точек
+	double mAimCellSize; //  шаг дискретизации SHP объекта прицеливания при  трансформации его в массив точек
+	double mTargCellSize; //  шаг дискретизации SHP объекта цели при трансформации его в массив точек
+
+		// Файл URPointZ с точками прицеливания для работы в ручном режиме
+	wchar_t *mpwch_PointZ_File_AimingPoints; //
+
+	void __fastcall fncInputData();
+	void __fastcall create5P10();
+	void __fastcall createInputGridForPointTargs();
+	void __fastcall InputGridData();
+	void __fastcall fillInputGrid();
+
+};
+//---------------------------------------------------------------------------
+extern PACKAGE TForm2 *Form2;
+//---------------------------------------------------------------------------
+
+//TYrRastr(int nc,int nr,double xll,double yll,double cs,double nd,const bool irastr)
+
+
+#endif

@@ -1,0 +1,75 @@
+//---------------------------------------------------------------------------
+ // класс описывает сложное объемное тело, состоящее из множества простых тел
+ // Простые тела это или прямые круговые цилиндры или прямые круговые усеченные конусы
+ // Множество простых тел может быть расширено при необходимости
+ // MAX_POSSIBLE_QUANT_OF_SIMPLE_BODY - это максимально возможное к-во простых тел
+ // marrCircleCylinder - массив цилиндров
+ // mQuantCircleCylinder - к-во цилиндров
+ // marrTruncatedConeCircle - множество усеченных конусов
+ // mQuantTruncatedConeCircle - количество  усеченных конусов
+ // Каждое простое тело имеет свою начальную систему координат
+ // Сложное тело имеет свою начальную сиситему координат
+ // Взаимное расположение начальных систем координат каждого простого тела
+ // и сложного тела приведены в члене класса TSimpleBody_3D под названием mPlane
+ // это матрица единичных ортов начальной сиситемы координат простого тела
+ // и вектор положения начала этой сиситемы координат
+ // Класс предназначен для расчта матрицы моментов инерции сложного тела
+ // и расета координат центра тяжести каждой простого тела в
+ // в связанной сиситеме координат сложного тела
+ //
+
+#ifndef Complicated_BodyH
+#define Complicated_BodyH
+#include "SimpleBody_3D.h"
+#include "CircleCylinder.h"
+#include "TruncatedConeCircle.h"
+
+
+#define MAX_POSSIBLE_QUANT_OF_SIMPLE_BODY 20
+class TCircleCylinder;
+class TTruncatedConeCircle;
+class TComplicated_Body
+{
+public:
+
+	  TCircleCylinder marrCircleCylinder[MAX_POSSIBLE_QUANT_OF_SIMPLE_BODY];
+	  int mQuantCircleCylinder;
+	  TTruncatedConeCircle marrTruncatedConeCircle[MAX_POSSIBLE_QUANT_OF_SIMPLE_BODY];
+	  int mQuantTruncatedConeCircle;
+
+	  // координаты центра масс в начальной связанной системе координат
+	  double marrSdvig[3];
+
+	__fastcall TComplicated_Body() ;
+
+__fastcall TComplicated_Body(const int  QuantCircleCylinder
+  , TCircleCylinder *arrCircleCylinder, const int  QuantTruncatedConeCircle
+  , TTruncatedConeCircle *arrTruncatedConeCircle);
+
+  __fastcall TComplicated_Body(const double VAlM,const double VAlH1
+  , const double VAlR1, const double VAlH2, const double VAlH3
+  , const double VAlR3, const double VAlH4, const double VAlX5
+  , const double VAlR5, const double VAlH5) ;
+
+	TComplicated_Body  (const TComplicated_Body &R);
+
+	TComplicated_Body operator=(TComplicated_Body  R);
+
+	__fastcall calcCapacity();
+
+	void calcCentreOfGravity(double *arrCentreGrav);
+
+	double calcMass();
+
+	void setupPointersArray(TSimpleBody_3D **SimpleBody_3D );
+
+	void doCentreUp();
+
+	void calcInertiaMtrx(double *arrMtrxInertia);
+
+
+
+};
+
+
+#endif

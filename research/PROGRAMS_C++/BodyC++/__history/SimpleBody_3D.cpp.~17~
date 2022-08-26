@@ -1,0 +1,121 @@
+//---------------------------------------------------------------------------
+
+
+#pragma hdrstop
+#include "MatrixProccess.h"
+#include "SimpleBody_3D.h"
+
+__fastcall TSimpleBody_3D::TSimpleBody_3D()
+{
+	/*RecNumber = 0 ;
+	RecLength = 0 ;
+	Type = ShapeType::NullShape ;
+	FigureColor = (TColor)0 ;*/
+	 mPlane = TPlane();
+	 mM = 0.; // масса
+}
+// конструктор копировани€
+ TSimpleBody_3D ::TSimpleBody_3D  (const TSimpleBody_3D &R)
+  {
+	mPlane  = R.mPlane;
+	mM = 0.;
+ }
+
+  // оператор присваивани€
+  TSimpleBody_3D TSimpleBody_3D::operator=(TSimpleBody_3D  R)
+  {
+	mPlane  = R.mPlane;
+	mM = 0.;
+
+	return *this;
+ }
+//---------------------------------------------------------------------------
+__fastcall TSimpleBody_3D::TSimpleBody_3D(const TPlane Plane, const double M)
+{
+	 mPlane = Plane;
+	 mM = M;
+}
+//---------------------------------------------------------------------------
+
+//__fastcall TSimpleBody_3D::~TSimpleBody_3D()
+//{
+//}
+//---------------------------------------------------------------
+
+
+// вычисление объема
+double TSimpleBody_3D::calcCapacity()
+{
+
+}
+
+// вычисление координат центра т€жести  в системе собственных координат простого тела
+void TSimpleBody_3D::calcCentreOfGravity(double *arrCentreGrav)
+{
+
+}
+
+// вычисление координат центра т€жести  в собственной системе координат сложного тела
+void TSimpleBody_3D::calcCentreOfGravityComplicatedAxes(double *arrCentreGrav)
+{
+  double arrCentreGrav0 [3] = {0.};
+  calcCentreOfGravity(arrCentreGrav0) ;
+  mPlane.transform_xyzSKP_to_xyzSSK(arrCentreGrav0, arrCentreGrav) ;
+}
+// вычисление тензора моментов инерции  л€ единичной массы
+void TSimpleBody_3D::calcInertiaTensor(double *arrInertTens)
+{
+
+}
+
+
+// вычисление тензора моментов инерции постого тела дл€ массы mM
+// задано простое тело  TSimpleBody_3D
+// задана точка Scm в исходном пространстве (в котором задана плоскость mPlane)
+// требуетс€ вычислить тензор инерции тела относительно
+// пр€моугольной декартовой системы координат, с ос€ми параллельными ос€м
+// исходной сиситемы координат и сцентром в точке  Scm
+// Ѕухгольц ќсновной курс теорет миеханики, ч 2, стр 136
+//  делаетс€ поворот и сдвиг по теореме Ўтейнера
+// INPUT:
+// arrScm[3] - координаты точки начала координат новой системы координат
+// относительно которой надо вычислить тензор инерции
+// OUTPUT:
+// arrInertTens[9] - матрица моментов инерции
+void TSimpleBody_3D::calcInertiaTensorMass(double *arrScm, double *arrInertTens)
+{
+ double arr0[9] = {0.},arr1[9] = {0.},arr2[9] = {0.};
+ // относительно главных осей инерции
+ calcInertiaTensor(arr2);
+ ///
+
+
+  MatrxMultScalar(arr2, 3, 3, mM,arr0);
+
+ // поворот
+ calcF_D_FTransp(mPlane.marrF,arr0,3,arr1 ) ;
+ ///
+
+ // сдвиг по теореме Ўтейнера
+
+ calcInertiaTensorShteinerSdvig(mM, mPlane.marrS0
+
+ , arr1, arrInertTens)  ;
+
+}
+// вычисление матрицы моментов инерции отностиельно сиситемы коорлинат сдвинутой на вектор  arrS
+// INPUT:
+// VAlM -  масса тела
+// arrS[3] -  вектор положени€ начала координат системы в которой	 надо вычислить матрицу моментов  мнерции
+// arrInertTensInp[9] -  матрица ммоментов инерции в старой системе координат
+// OUTPUT:
+// arrInertTensOut - -  матрица ммоментов инерции в новой  системе координат
+void TSimpleBody_3D::calcInertiaTensorShteinerSdvig(const double VAlM, double *arrS
+ , double *arrInertTensInp, double *arrInertTensOut)
+ {
+  double arr0[9] = {0.} , arr1[9] = {0.};
+  MtrxMultMatrx(arrS,3, 1, arrS, 3, arr0) ;
+  MatrxMultScalar(arr0, 3, 3, VAlM, arr1);
+  MtrxSumMatrx(arrInertTensInp, arr1, 3, 3, arrInertTensOut) ;
+ }
+#pragma package(smart_init)

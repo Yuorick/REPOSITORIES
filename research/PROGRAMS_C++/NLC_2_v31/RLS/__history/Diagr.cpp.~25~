@@ -1,0 +1,632 @@
+//---------------------------------------------------------------------------
+
+
+#pragma hdrstop
+
+#include "Diagr.h"
+//#include "Faceta.h"
+//#include "Far.h"
+#include <vcl.h>
+#include <math.h>
+#include "Comp.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include "YrWriteShapeFile.h"
+#include "URPolyLine.h"
+#include "UrPointXY.h"
+#include "MatrixProccess.h"
+
+ TDiagr::~TDiagr()
+{
+
+ if(mparrCmpElCurrent)
+ {
+	 free (mparrCmpElCurrent);
+	 mparrCmpElCurrent = NULL;
+ }
+}
+// valTetScanRadian - угол поворота направления максимума
+ TDiagr::TDiagr(const double valTetScanRadian)
+{
+
+ //Фар
+  mFar = TFar();
+ // массив токов по модулям
+  mparrCmpElCurrent = (TComp*)malloc(mFar.m_N * sizeof(TComp));
+   double delFi =  -mFar.m_D * sin(valTetScanRadian)/ 2./ mFar.mLambda * 2. * M_PI;
+
+  mparrCmpElCurrent[0] = TComp:: exp_(-3. *delFi);
+  mparrCmpElCurrent[1] = TComp:: exp_(-delFi);
+  mparrCmpElCurrent[2] = TComp:: exp_(delFi);
+  mparrCmpElCurrent[3] = TComp:: exp_(3.* delFi);
+  TComp cmp(0.25,0.);
+
+  for (int i=0; i < 4; i++)
+  {
+	mparrCmpElCurrent[i] *= cmp;
+  }
+}
+
+TDiagr::TDiagr()
+{
+ // количество модулей (фасет)
+  mFar.m_N = 0;
+ // расстояние между модулями
+   mFar.m_D = 0.;
+ // длина волны
+   mFar.mLambda = 0.;
+ // массив фасет
+  mFar.mFaceta = TFaceta();
+ // массив токов по модулям
+  mparrCmpElCurrent = NULL;
+
+}
+
+
+// Конструктор копирования
+TDiagr::TDiagr (const TDiagr &R2)
+ {
+ //
+  mFar = R2.mFar;
+
+
+  if (mparrCmpElCurrent)
+  {
+//free (mparrCmpElCurrent);
+	mparrCmpElCurrent = NULL;
+  }
+  if (R2.mparrCmpElCurrent)
+  {
+   mparrCmpElCurrent = (TComp*)malloc(mFar.m_N * sizeof(TComp));
+   memcpy(mparrCmpElCurrent, R2.mparrCmpElCurrent,mFar.m_N * sizeof(TComp));
+  }
+}
+
+ // оператор присваивания
+ TDiagr TDiagr::operator=(TDiagr  R2)
+{
+ //
+  mFar = R2.mFar;
+
+
+  if (mparrCmpElCurrent)
+  {
+	//free (mparrCmpElCurrent);
+	mparrCmpElCurrent = NULL;
+  }
+  if (R2.mparrCmpElCurrent)
+  {
+   mparrCmpElCurrent = (TComp*)malloc(mFar.m_N * sizeof(TComp));
+   memcpy(mparrCmpElCurrent, R2.mparrCmpElCurrent,mFar.m_N * sizeof(TComp));
+  }
+
+	return *this ;
+}
+
+
+// парам констр
+  TDiagr::TDiagr(const TFar Far, TComp *parrCmpElCurrent)
+ {
+	 mFar = Far ;
+	 if (parrCmpElCurrent)
+	 {
+		mparrCmpElCurrent =  (TComp *)malloc( Far.m_N * sizeof(TComp));
+		memcpy(mparrCmpElCurrent, parrCmpElCurrent, Far.m_N * sizeof(TComp));
+	 }
+
+ }
+ /*
+ // парам констр
+ // Input:
+ // iTypeOfDiagram  - тип диаграммы
+ //  parrPar - массивпараметров, соответсвующий типу, который его описывает
+ // 1. iTypeOfDiagram = 0 - диаграмма имеющая 2 максимума
+ //  parrPar[0] - расстояние между максимумом о нулем
+ //  parrPar[1] - угол сканирования
+ //  iTypeOfDiagram = 1 - разностная диаграмма
+  TDiagr::TDiagr(const TFar Far, const int iTypeOfDiagram, double *parrPar)
+ {
+	 mFar = Far ;
+	 // массив токов по модулям
+  mparrCmpElCurrent = (TComp*)malloc(mFar.m_N * sizeof(TComp));
+   double valTetScan = parrPar[1] ;
+
+   double delFi =  -mFar.m_D * sin(valTetScan)/ 2./ mFar.mLambda * 2. * M_PI;
+
+
+  mparrCmpElCurrent[0] = TComp:: exp_(-3. *delFi);
+  mparrCmpElCurrent[1] = TComp:: exp_(-delFi);
+  mparrCmpElCurrent[2] = TComp:: exp_(delFi + M_PI);
+  mparrCmpElCurrent[3] = TComp:: exp_(3.* delFi + M_PI);
+
+  double valTetDiff = parrPar[0] ;
+  double delFiDiff =  -mFar.m_D * sin(valTetDiff)/ 2./ mFar.mLambda * 2. * M_PI;
+  mparrCmpElCurrent[0] *= TComp:: exp_(-3. *delFiDiff );
+  mparrCmpElCurrent[1] *= TComp:: exp_(delFiDiff );
+  mparrCmpElCurrent[2] *= TComp:: exp_(delFiDiff );
+  mparrCmpElCurrent[3] *= TComp:: exp_(-3.* delFiDiff );
+
+
+  TComp cmp(1./ ((double)mFar.m_N),0.);
+
+  for (int i=0; i < mFar.m_N; i++)
+  {
+	mparrCmpElCurrent[i] *= cmp;
+  }
+
+ } */
+
+
+ // парам констр
+ // Input:
+ // iTypeOfDiagram  - тип диаграммы
+ //  parrPar - массивпараметров, соответсвующий типу, который его описывает
+
+ //  iTypeOfDiagram = 0 - разностная диаграмма
+ //  parrPar[0] - угол сканирования
+  TDiagr::TDiagr(const TFar Far, const int iTypeOfDiagram, double *parrPar)
+ {
+	 mFar = Far ;
+	 // массив токов по модулям
+  mparrCmpElCurrent = (TComp*)malloc(mFar.m_N * sizeof(TComp));
+  double valTetScan = parrPar[0] ;
+  double delFi =  -mFar.m_D * sin(valTetScan)/ 2./ mFar.mLambda * 2. * M_PI;
+  double delFi0 =  -delFi - (((double)(mFar.m_N/2)) -1.) * delFi * 2.;
+  int i =0;
+  double valTetDiff = 0.;
+  double delFiDiff =0.;
+  switch(iTypeOfDiagram)
+  {
+	case 1:
+		// разностная диаграмма
+		for ( i =0; i < mFar.m_N /2; i++)
+		{
+		mparrCmpElCurrent[i] = TComp:: exp_(delFi0 + ((double) i) * delFi * 2. +M_PI/2. );
+		mparrCmpElCurrent[mFar.m_N  -1 -i] = TComp:: exp_(-delFi0 - ((double) i) * delFi * 2. + M_PI +M_PI/2.);
+		}
+
+		for ( i =0; i < mFar.m_N /2; i++)
+		{
+		mparrCmpElCurrent[i] = TComp:: exp_(((double) i) * delFi * 2. );
+		mparrCmpElCurrent[mFar.m_N  -1 -i] = TComp:: exp_( - ((double) i) * delFi * 2. + M_PI );
+		}
+		if ((mFar.m_N % 2) == 1)
+		{
+			mparrCmpElCurrent[mFar.m_N /2]=TComp:: exp_(0. );
+		}
+
+	break;
+
+	case 0:   //
+		// диаграмма с разнесенной действительной и мнимой частями
+
+
+
+//  mparrCmpElCurrent[0] = TComp:: exp_(- delFi );//+M_PI/2.);
+ // mparrCmpElCurrent[1] = TComp:: exp_(delFi);// + M_PI/2.);
+ // mparrCmpElCurrent[2] = TComp:: exp_(delFi );//+M_PI/2.);
+//  mparrCmpElCurrent[3] = TComp:: exp_(3.* delFi);// +M_PI/2.);
+   mparrCmpElCurrent[0] =  TComp:: exp_(3. * delFi );//+M_PI/2.);
+  mparrCmpElCurrent[1] =  TComp:: exp_(-delFi + M_PI/2.);
+  mparrCmpElCurrent[2] =  TComp:: exp_(delFi  + M_PI/2.);
+  mparrCmpElCurrent[3] = TComp:: exp_(-3.* delFi);// +M_PI/2.);
+ //  mparrCmpElCurrent[2] = TComp(0.,0.);
+  // mparrCmpElCurrent[3] = TComp(0.,0.);
+
+	valTetDiff = parrPar[1] ;
+	delFiDiff =  -mFar.m_D * sin(valTetDiff)/ 2./ mFar.mLambda * 2. * M_PI;
+	mparrCmpElCurrent[0] *= TComp:: exp_(-3. *delFiDiff );
+	mparrCmpElCurrent[1] *= TComp:: exp_(delFiDiff );
+	mparrCmpElCurrent[2] *= TComp:: exp_(-delFiDiff );
+	mparrCmpElCurrent[3] *= TComp:: exp_(3.* delFiDiff );
+
+	break ;
+
+	case 2:   //
+		// диаграмма с разнесенной действительной и мнимой частями
+		// диаграмма с разнесенной действительной и мнимой частями
+
+
+
+//  mparrCmpElCurrent[0] = TComp:: exp_(- delFi );//+M_PI/2.);
+ // mparrCmpElCurrent[1] = TComp:: exp_(delFi);// + M_PI/2.);
+ // mparrCmpElCurrent[2] = TComp:: exp_(delFi );//+M_PI/2.);
+//  mparrCmpElCurrent[3] = TComp:: exp_(3.* delFi);// +M_PI/2.);
+   mparrCmpElCurrent[0] =  TComp:: exp_(3. * delFi );//+M_PI/2.);
+  mparrCmpElCurrent[1] =  TComp:: exp_(-delFi + M_PI/2.);
+  mparrCmpElCurrent[2] =  TComp:: exp_(delFi  + M_PI/2.);
+  mparrCmpElCurrent[3] = TComp:: exp_(-3.* delFi);// +M_PI/2.);
+ //  mparrCmpElCurrent[2] = TComp(0.,0.);
+  // mparrCmpElCurrent[3] = TComp(0.,0.);
+
+	valTetDiff = parrPar[1] ;
+	delFiDiff =  mFar.m_D * sin(valTetDiff)/ 2./ mFar.mLambda * 2. * M_PI;
+	mparrCmpElCurrent[0] *= TComp:: exp_(-3. *delFiDiff );
+	mparrCmpElCurrent[1] *= TComp:: exp_(delFiDiff );
+	mparrCmpElCurrent[2] *= TComp:: exp_(-delFiDiff );
+	mparrCmpElCurrent[3] *= TComp:: exp_(-3.* delFiDiff );
+
+	break ;
+
+	default:
+	break;
+  }
+
+
+
+
+  TComp cmp(1./ ((double)mFar.m_N),0.);
+
+  for (int i=0; i < mFar.m_N; i++)
+  {
+	mparrCmpElCurrent[i] *= cmp;
+  }
+
+ }
+
+
+
+
+ TComp _fastcall TDiagr::fncF (const double tet)
+{
+  TComp cmpRez(0.,0.) ;
+  TComp delFas(0.,  mFar.m_D * sin(tet)/ 2./ mFar.mLambda * 2. * M_PI);
+
+  TComp delFas0(0.,  -delFas.m_Im - delFas.m_Im * 2.*  ((double)(mFar.m_N/2 -1)));//11111111!!!
+  TComp cmpDia(mFar.mFaceta.fncFFacetaApprox (tet),0.);
+  for (int i = 0; i < mFar.m_N; i++)
+  {
+
+	//double valS =  mFar.mFaceta.fncFFacetaApprox (tet);
+	TComp cmpFasCur ( 0.,((double)i) * 2. * delFas.m_Im+delFas0.m_Im);
+	TComp cmpTemp = TComp::exp_(cmpFasCur);
+   //	cmpTemp.m_Re = cmpTemp1.m_Re * valS;
+   //	cmpTemp.m_Im = cmpTemp1.m_Im * valS;
+	cmpTemp *=  mparrCmpElCurrent[i] ;
+	cmpRez += cmpTemp ;
+  }
+   cmpRez *= cmpDia ;
+  return  cmpRez;
+}
+
+void  _fastcall TDiagr::createDiagrGraphs(wchar_t *wchFoldName1 )
+{
+
+	wchar_t wchFoldName[300] ={0};
+	wcscpy(  wchFoldName,  wchFoldName1);
+	wcscat(wchFoldName, L"\\");
+	double step = M_PI / 3000./ 10.;
+	const int nBuffRows = 1500 *2;
+	const int nBuffCols = 8;
+	double  *parrBuff = new double [nBuffRows  * nBuffCols] ;
+	memset(parrBuff, 0, nBuffRows * nBuffCols * sizeof(double));
+
+	const int lenName = 30;
+	wchar_t wcharrFileNames [240] ={0};
+	wcscpy( wcharrFileNames, L"Tetta");
+	wcscpy( &wcharrFileNames[30], L"ModF");
+	wcscpy( &wcharrFileNames[60], L"F_Re");
+	wcscpy( &wcharrFileNames[90], L"F_Im");
+
+	wcscpy( &wcharrFileNames[120], L"dF_Re");
+	wcscpy( &wcharrFileNames[150], L"dF_Im");
+	wcscpy( &wcharrFileNames[180], L"d2F_Re");
+	wcscpy( &wcharrFileNames[210], L"d2F_Im");
+  for (int i=0 ; i < nBuffRows; i++)
+  {
+   double tet = step * ((double) (-nBuffRows/2 +i));
+   parrBuff[ i * nBuffCols] = tet ;
+
+   TComp cmp = fncF( tet);
+   TComp cmp1 = dF_po_dTet( tet);
+   TComp cmp2 = d2F_po_dTet2( tet);
+   parrBuff[ i * nBuffCols + 1]= cmp.modul();
+   parrBuff[ i * nBuffCols + 2]= cmp.m_Re;
+   parrBuff[ i * nBuffCols + 3]= cmp.m_Im;
+
+   parrBuff[ i * nBuffCols + 4]= cmp1.m_Re;
+   parrBuff[ i * nBuffCols + 5]= cmp1.m_Im;
+   parrBuff[ i * nBuffCols + 6]= cmp2.m_Re;
+   parrBuff[ i * nBuffCols + 7]= cmp2.m_Im;
+
+  }
+
+ // double scalex = 100.;
+  double *pscaley = new double [nBuffCols] ;
+  pscaley[0] = 100.;
+  pscaley[1] = 100.;
+  pscaley[2] = 100.;
+  pscaley[3] = 100.;
+  pscaley[4] = 1.;
+  pscaley[5] = 1.;
+  pscaley[6] = 0.1;
+  pscaley[7] = 0.1;
+  for (int i=1; i < nBuffCols; i++)
+  {
+
+  TYrWriteShapeFile::WriteOneReport(                 wchFoldName  // путь к папке
+								  , parrBuff // массив с информацией - матрица nBuffRows x nBuffCols
+								  , nBuffCols // - к-во переменных о корорых накоплена информация в буфере
+								  , nBuffRows //  - к-во точек
+								  ,wcharrFileNames //матрица с именаими переменных - матрица nBuffCols x lenName
+								  ,lenName // максимальная длина имени переменной
+								  ,0  // номер переменной по оси X
+								  ,i  // номер переменной по оси Y
+								  ,1000. //  масштаб по оси X
+								  ,pscaley[i]// масштаб по оси Y
+								   ) ;
+  }
+
+	delete parrBuff;
+	delete pscaley;
+	wchar_t wchAxesFileName[300] ={0};
+	wcscpy(  wchAxesFileName,  wchFoldName);
+	wcscat(wchAxesFileName, L"AxesArr.shp");
+	TYrWriteShapeFile::CreateShpArrowedAxes(wchAxesFileName,-150., 150.
+	 ,-pscaley[0] * 1.1,pscaley[0] * 1.1, 50000.*step) ;
+	TURPointXY pPoints[2];
+	pPoints[0] =  TURPointXY (-100., pscaley[0]* sqrt(2.)/2.);
+	pPoints[1] =  TURPointXY (100., pscaley[0] * sqrt(2.)/2.);
+	TURPolyLine pln( pPoints,2) ;
+
+	wcscpy(  wchAxesFileName,  wchFoldName);
+	wcscat(wchAxesFileName, L"Line0.shp");
+	TURPolyLine::WriteSetSHPFiles(wchAxesFileName,&pln, 1) ;
+ }
+
+ // Вычисление целевой функции ММП
+// INPUT:
+// pcmpSZv   -  измерение диаграммы (комплексное число)
+// cmpZ1  - комплексный коэффициент отражения цели
+// cmpZ2  - комплексный коэффициент отражения антипода
+// alfTrg - угол места цели
+// alfAnp - угол места антипода
+double _fastcall TDiagr::calcFncObjPartial_MMP(TComp cmpSZv, TComp cmpZTrg, TComp cmpZAnp, double alfTrg, double alfAnp )
+{
+  TComp cmpMesTarg = fncF (alfTrg);;
+  TComp cmpMesAnp = fncF (alfAnp);;
+  TComp cmpTemp = cmpZTrg * cmpMesTarg + cmpZAnp* cmpMesAnp  -cmpSZv;
+  //double valG1 = arrX[2] * val_F1 +  arrX[3] * val_F2 - cmpSZv.m_Re ;
+ // double valG2 = arrX[4] * val_F1 +  arrX[5] * val_F2 - cmpSZv.m_Im ;
+
+  return cmpTemp.modul()* cmpTemp.modul();
+}
+
+
+//
+void  _fastcall TDiagr::calc_ATA_andATS(TComp cmpSZv, double alfTrg, double alfAnp , double*arrAATCur, double*arrATSCur )
+{
+   double arrA[8] = {0.}, arrA0[8] = {0.}, arrS[2] = {0.};
+   TComp cmp0 = fncF (alfTrg);
+   TComp cmp1 = fncF (alfAnp);
+   arrA[0] =  cmp0.m_Re;
+   arrA[1] =  -cmp0.m_Im;
+   arrA[2] =  cmp1.m_Re;
+   arrA[3] =  -cmp1.m_Im;
+   arrA[4] =  cmp0.m_Im;
+   arrA[5] =  cmp0.m_Re;
+   arrA[6] =  cmp1.m_Im;
+   arrA[7] =  cmp1.m_Re;
+   memcpy(arrA0, arrA, 8 * sizeof(double));
+
+   arrS[0] =  cmpSZv.m_Re;
+   arrS[1] =  cmpSZv.m_Im;
+
+   MtrxTranspMultMatrx(arrA,2, 4, arrA0,4, arrAATCur) ;
+   MtrxTranspMultMatrx(arrA,2, 4, arrS,1, arrATSCur) ;
+
+}
+
+//--------------------------------------------------------
+void  _fastcall TDiagr::calcPartial_F_and_dF_po_dAlf(TComp cmpSZv,TComp ZTarg, TComp ZAnp
+		,double alfTrg,double alfAnp ,double* arr_Part_F,double* arr_Part_dF )
+{
+  TComp cmpMesTarg = fncF (alfTrg);;
+  TComp cmpMesAnp = fncF (alfAnp);;
+  TComp cmpA = ZTarg * cmpMesTarg + ZAnp * cmpMesAnp  -cmpSZv;
+
+  TComp cmp_dF1_po_dx = dF_po_dTet (alfTrg);
+  TComp cmp_dF2_po_dx = dF_po_dTet (alfAnp);
+
+  TComp cmp_d2F1_po_dxSq = d2F_po_dTet2 (alfTrg);
+  TComp cmp_d2F2_po_dxSq= d2F_po_dTet2 (alfAnp);
+
+  double val_dA1_po_dx1 =  ZTarg.m_Re * cmp_dF1_po_dx.m_Re -  ZTarg.m_Im * cmp_dF1_po_dx.m_Im ;
+  double val_dA1_po_dx2 =  ZAnp.m_Re * cmp_dF2_po_dx.m_Re -  ZAnp.m_Im * cmp_dF2_po_dx.m_Im ;
+
+  double val_dA2_po_dx1 =  ZTarg.m_Im * cmp_dF1_po_dx.m_Re +  ZTarg.m_Re * cmp_dF1_po_dx.m_Im ;
+  double val_dA2_po_dx2 =  ZAnp.m_Im * cmp_dF2_po_dx.m_Re +  ZAnp.m_Re * cmp_dF2_po_dx.m_Im ;
+  // вектор функция
+  arr_Part_F[0] = (ZTarg.m_Re * cmpA.m_Re + ZTarg.m_Im * cmpA.m_Im) * cmp_dF1_po_dx.m_Re
+		   +(-ZTarg.m_Im * cmpA.m_Re + ZTarg.m_Re * cmpA.m_Im ) * cmp_dF1_po_dx.m_Im ;
+
+  arr_Part_F[1] = (ZAnp.m_Re * cmpA.m_Re + ZAnp.m_Im * cmpA.m_Im) * cmp_dF2_po_dx.m_Re
+		   +(-ZAnp.m_Im * cmpA.m_Re + ZAnp.m_Re * cmpA.m_Im ) * cmp_dF2_po_dx.m_Im ;
+///
+
+// матрица
+arr_Part_dF[0] =  (ZTarg.m_Re * cmpA.m_Re + ZTarg.m_Im * cmpA.m_Im) * cmp_d2F1_po_dxSq.m_Re
+				+ (-ZTarg.m_Re * val_dA1_po_dx1 + ZTarg.m_Im *val_dA2_po_dx1) * cmp_dF1_po_dx.m_Re
+				+ (-ZTarg.m_Im * cmpA.m_Re + ZTarg.m_Re * cmpA.m_Im )*  cmp_d2F1_po_dxSq.m_Im
+				+ (-ZTarg.m_Im * val_dA1_po_dx1 + ZTarg.m_Re * val_dA2_po_dx1 ) * cmp_dF1_po_dx.m_Im;
+
+
+arr_Part_dF[1] =  (ZTarg.m_Re * val_dA1_po_dx2 + ZTarg.m_Im * val_dA2_po_dx2 ) * cmp_dF1_po_dx.m_Re
+				 + ( -ZTarg.m_Im * val_dA1_po_dx2 + ZTarg.m_Re * val_dA2_po_dx2 ) * cmp_dF1_po_dx.m_Im ;
+
+arr_Part_dF[3] = (ZAnp.m_Re * cmpA.m_Re + ZAnp.m_Im * cmpA.m_Im) * cmp_d2F2_po_dxSq.m_Re
+				+ (ZAnp.m_Re * val_dA1_po_dx2 + ZAnp.m_Im * val_dA2_po_dx2) * cmp_dF2_po_dx.m_Re
+				+ (-ZAnp.m_Im * cmpA.m_Re + ZAnp.m_Re * cmpA.m_Im ) * cmp_d2F2_po_dxSq.m_Im
+				+ (-ZAnp.m_Im * val_dA1_po_dx2  + ZAnp.m_Re * val_dA2_po_dx2 ) *cmp_dF2_po_dx.m_Im;
+
+arr_Part_dF[2] = (ZAnp.m_Re * val_dA1_po_dx1 + ZAnp.m_Im * val_dA2_po_dx1 ) * cmp_dF2_po_dx.m_Re
+		   +(-ZAnp.m_Im * val_dA1_po_dx1 + ZAnp.m_Re * val_dA2_po_dx1 ) * cmp_dF2_po_dx.m_Im ;
+
+
+}
+
+TComp _fastcall TDiagr::dF_po_dTet(const double tet)
+{
+  TComp cmpRez(0.,0.) ;
+  double  delFas =  mFar.m_D * sin(tet)/ 2./ mFar.mLambda * 2. * M_PI;
+  double  d_delFas =  mFar.m_D * cos(tet)/ 2./ mFar.mLambda * 2. * M_PI;
+
+  for (int j = 0; j < mFar.m_N; j++)
+  {
+	double temp = ((double)( -  mFar.m_N + 1 + 2 * j));
+	TComp cmpTemp = TComp::exp_(delFas * temp );
+	cmpTemp *=  mparrCmpElCurrent[j] ;
+	double valS =  mFar.mFaceta.fncFFacetaApprox(tet);
+	double valdS =  mFar.mFaceta.fnc_dFFacetaApprox_po_dTet(tet);
+	TComp cmpTemp1(valdS ,  temp * d_delFas * valS);
+	TComp cmpTemp2 = cmpTemp * cmpTemp1;
+
+	double t1 = cmpTemp2.modul() ;
+	cmpRez += cmpTemp2 ;
+  }
+return  cmpRez;
+}
+TComp _fastcall TDiagr::d2F_po_dTet2(const double tet)
+{
+  TComp cmpRez(0.,0.) ;
+  double  delFas =  mFar.m_D * sin(tet)/ 2./ mFar.mLambda * 2. * M_PI;
+  double  d_delFas =  mFar.m_D * cos(tet)/ 2./ mFar.mLambda * 2. * M_PI;
+  double  d2_delFas = - mFar.m_D * sin(tet)/ 2./ mFar.mLambda * 2. * M_PI;
+
+
+  for (int j = 0; j < mFar.m_N; j++)
+  {
+	double temp = ((double)( -  mFar.m_N + 1 + 2 * j));
+	TComp cmpTemp = TComp::exp_(delFas * temp  );
+	cmpTemp *=  mparrCmpElCurrent[j] ;
+
+	double valf =  mFar.mFaceta.fncFFacetaApprox(tet);
+	double valdf=  mFar.mFaceta.fnc_dFFacetaApprox_po_dTet(tet);
+	double vald2f=  mFar.mFaceta.fnc_d2FFacetaApprox_po_dTet2(tet);
+
+	TComp cmpTemp1(-temp * temp * valf + vald2f ,  temp *( -2. *valdf * d_delFas - d2_delFas * valf) );
+	TComp cmpTemp2 = cmpTemp * cmpTemp1;
+	cmpRez += cmpTemp2 ;
+
+ }
+return  cmpRez;
+}
+
+//----------------------------------------------------------
+void  _fastcall TDiagr::calcPartial_vectG_and_mtrxH(TComp cmpSZv, double alfTrg,double  alfAnp,double valK11, double valK12
+	 ,double valK21,double valK22,double* arr_gradK11, double* arr_gradK12, double* arr_gradK21
+	 ,double* arr_gradK22, double*arr_HessK11, double* arr_HessK12, double* arr_HessK21
+	 ,double* arr_HessK22,double*   arr_FGreek, double*  arr_dFGreek )
+{
+  TComp cmp_F1   = fncF (alfTrg);
+  TComp cmp_dF1  = dF_po_dTet (alfTrg);
+  TComp cmp_d2F1 = d2F_po_dTet2 (alfTrg);
+
+  TComp cmp_F2   = fncF (alfAnp);
+  TComp cmp_dF2  = dF_po_dTet (alfAnp);
+  TComp cmp_d2F2 = d2F_po_dTet2 (alfAnp);
+
+  TComp cmpK1(valK11, valK12);
+  TComp cmpK2(valK21, valK22);
+
+  TComp cmpA = cmpK1 * cmp_F1 + cmpK2 * cmp_F2 -  cmpSZv;
+//  TComp cmpA2 = valK12* valF1 + valK22 * valF2 -  cmpSZv.m_Im ;
+
+  // вычисление градиента G
+ /* double arrB1[2] ={0.}, arrB2[2]={0.}, arrT0[2]= {0.}, arrT1[2]= {0.};
+  arrB1[0] = valF1 * arr_gradK11[0] +  valF2 * arr_gradK21[0] + valK11 *val_dF1;
+  arrB1[1] = valF1 * arr_gradK11[1] +  valF2 * arr_gradK21[1] + valK21 *val_dF2;
+
+  arrB2[0] = valF1 * arr_gradK12[0] +  valF2 * arr_gradK22[0] + valK12 *val_dF1;
+  arrB2[1] = valF1 * arr_gradK12[1] +  valF2 * arr_gradK22[1] + valK22 *val_dF2;
+
+   MatrxMultScalar(arrB1, 1, 2, valA1,arrT0);
+   MatrxMultScalar(arrB2, 1, 2, valA2,arrT1);
+   MtrxSumMatrx(arrT0, arrT1,1, 2, arr_FGreek) ;
+   ///
+
+   // нахождение гессиана
+   double arr_dB1_po_dx[4] = {0.}, arr_dB2_po_dx[4] = {0.};
+	// arr_dB1_po_dx:
+   arr_dB1_po_dx[0] = arr_HessK11[0] * valF1 + val_dF1* arr_gradK11[0] + valF2 * arr_HessK21[0]
+	 + arr_gradK11[0]* val_dF1 + valK11 * val_d2F1;
+
+   arr_dB1_po_dx[1] = valF1 * arr_HessK11[1] + valF2 * arr_HessK21[1] + val_dF2 * arr_gradK21[0]
+	 + arr_gradK11[1] * val_dF1 ;
+
+   arr_dB1_po_dx[2] =  valF1 * arr_HessK11[1] + val_dF1 * arr_gradK11[1] + valF2 * arr_HessK21[1]
+	 + arr_gradK21[0] * val_dF2;
+
+   arr_dB1_po_dx[3] = valF1 * arr_HessK11[3] + valF2 * arr_HessK21[3] + val_dF2 *arr_gradK21[1]
+	+ val_dF2 *arr_gradK21[1] +  valK21 * val_d2F2;
+	///
+
+	// arr_dB2_po_dx:
+	arr_dB2_po_dx[0] =  valF1 * arr_HessK12[0] + val_dF1 * arr_gradK12[0] +  valF2 * arr_HessK22[0]
+	  +arr_gradK12[0] * val_dF1 + valK12 * val_d2F1;
+
+	arr_dB2_po_dx[1] = valF1 * arr_HessK12[1] + arr_HessK22[1] * valF2 +  val_dF2* arr_gradK22[0]
+	  + arr_gradK12[1] * val_dF1;
+
+	arr_dB2_po_dx[2] = arr_HessK12[1] * valF1 + val_dF1 * arr_gradK12[1] + valF2 * arr_HessK22[1]
+	  + arr_gradK22[0] * val_dF2;
+
+	arr_dB2_po_dx[3] = valF1 * arr_HessK12[3] + valF2 * arr_HessK22[3] + val_dF2 * arr_gradK22[1]
+	  + val_dF2 * arr_gradK22[1] + valK22 * val_d2F2;
+	  ///
+
+	  double arrT2[4] = {0.}, arrT3[4] = {0.}, arrT4[4] = {0.}, arrT5[4] = {0.};
+	  arrT2[0] = arrB1[0]* arrB1[0];
+	  arrT2[1] = arrB1[1]* arrB1[0];
+	  arrT2[2] = arrB1[0]* arrB1[1];
+	  arrT2[3] = arrB1[1]* arrB1[1];
+
+	  MatrxMultScalar(arr_dB1_po_dx, 2, 2, valA1,arrT3);
+	  MtrxSumMatrx(arrT3, arrT2,2,2,  arr_dFGreek ) ;
+
+	  ///
+
+	  arrT2[0] = arrB2[0]* arrB2[0];
+	  arrT2[1] = arrB2[1]* arrB2[0];
+	  arrT2[2] = arrB2[0]* arrB2[1];
+	  arrT2[3] = arrB2[1]* arrB2[1];
+
+	  MatrxMultScalar(arr_dB2_po_dx, 2, 2, valA2,arrT3);
+	  MtrxSumMatrx(arrT3, arrT2,2,2,  arrT4 ) ;
+
+	  MtrxSumMatrx(arrT4, arr_dFGreek,2,2,  arrT5 ) ;
+	  memcpy(arr_dFGreek,  arrT5, 4 * sizeof(double));
+
+   */
+}
+
+
+void  _fastcall TDiagr::calcPartial_vectA_and_mtrx_dA_po_dx_solv3(TComp cmpSZv, double alfTrg,double  alfAnp,double valK11, double valK12
+	 ,double valK21,double valK22,double* arr_gradK11, double* arr_gradK12, double* arr_gradK21
+	 ,double* arr_gradK22, double*arr_HessK11, double* arr_HessK12, double* arr_HessK21
+	 ,double* arr_HessK22,double*   arr_A, double*  arr_dA_po_dx )
+{
+  TComp cmp_F1   = fncF (alfTrg);
+  TComp cmp_dF1  = dF_po_dTet (alfTrg);
+  TComp cmp_d2F1 = d2F_po_dTet2 (alfTrg);
+
+  TComp cmp_F2   = fncF (alfAnp);
+  TComp cmp_dF2  = dF_po_dTet (alfAnp);
+  TComp cmp_d2F2 = d2F_po_dTet2 (alfAnp);
+
+  TComp cmp_FDif = cmp_F1 - cmp_F2 ;
+
+  TComp cmpK1(valK11, valK12);
+  TComp cmpK2(valK21, valK22);
+
+  TComp cmpA = cmpK1 * cmp_F1 + cmpK2 * cmp_F2 -  cmpSZv;
+  arr_A[0] = cmpA.m_Re;
+  arr_A[1] = cmpA.m_Im;
+
+  TComp cmp_a = cmpK1 + cmpK2;
+
+
+  arr_dA_po_dx[0] = arr_gradK11[0] * cmp_FDif.m_Re + valK11* cmp_dF1.m_Re - arr_gradK12[0] *  cmp_FDif.m_Im
+	 - valK12 * cmp_dF1.m_Im ;
+}
+#pragma package(smart_init)

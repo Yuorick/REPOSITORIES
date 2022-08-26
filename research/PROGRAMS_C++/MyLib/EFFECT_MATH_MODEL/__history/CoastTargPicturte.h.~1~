@@ -1,0 +1,8 @@
+//---------------------------------------------------------------------------
+
+#ifndef CoastTargPicturteH
+#define CoastTargPicturteH
+class TURPolygon;
+void createNibourAppointmPointPictureForCoastTarg(wchar_t *wchOutFold, double *arrShellScatteringsCorMtrxPos_SSK
+		 , TURPolygon Polygon, const double VAlTargCourse0, const double VAlPsi);
+#endif

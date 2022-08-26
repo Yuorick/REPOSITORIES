@@ -1,0 +1,9 @@
+//---------------------------------------------------------------------------
+
+
+#pragma hdrstop
+
+#include "Table76_No1.h"
+
+
+#pragma package(smart_init)

@@ -1,0 +1,150 @@
+//---------------------------------------------------------------------------
+
+
+#pragma hdrstop
+
+#include "OutPutAeroShot.h"
+#include  <string.h>
+
+//---------------------------------------------------------------------------
+TOutPutAeroShot::TOutPutAeroShot()
+
+{
+//   время выстрела
+ mTshot = 0.;
+//   полетное время
+ mTfly = 0.;
+//  вектор состояния корабля на момент выстрела в ГСК
+memset(marrVS_GSK_Vessel, 0, 6 * sizeof(double));
+
+// вектор состояния цели корабля на момент выстрела в ГСК
+memset(marrVS_GSK_Targ, 0, 6 * sizeof(double));
+
+//  ПУВН в КГСК
+ mEpsKGSK =0.;
+// ПУГН в КГСК
+ mBetKGSK =0.;
+// корреляц матрица разброса вектора состояния цели в ГСК на момент встречи
+memset(marrKTarg, 0, 36 * sizeof(double));
+
+// корреляц матрица разброса вектора состояния снаряда в ГСК  на момент встречи
+memset(marrKShell, 0, 36 * sizeof(double));
+
+// вектор промаха
+memset(marrMiss, 0, 6 * sizeof(double));
+
+
+}
+
+//---------------------------------------------------------------------------
+
+
+// конструктор копирования
+ TOutPutAeroShot ::TOutPutAeroShot (const TOutPutAeroShot &R)
+ {
+	//   время выстрела
+ mTshot = R.mTshot;
+//   полетное время
+ mTfly = R.mTfly;
+//  вектор состояния корабля на момент выстрела в ГСК
+memcpy(marrVS_GSK_Vessel, R.marrVS_GSK_Vessel, 6 * sizeof(double));
+
+// вектор состояния цели корабля на момент выстрела в ГСК
+memcpy(marrVS_GSK_Targ, R.marrVS_GSK_Targ, 6 * sizeof(double));
+
+//  ПУВН в КГСК
+ mEpsKGSK = R.mEpsKGSK;
+// ПУГН в КГСК
+ mBetKGSK = R.mBetKGSK;
+// корреляц матрица разброса вектора состояния цели в ГСК на момент встречи
+memcpy(marrKTarg, R.marrKTarg, 36 * sizeof(double));
+
+// корреляц матрица разброса вектора состояния снаряда в ГСК  на момент встречи
+memcpy(marrKShell, R.marrKShell, 36 * sizeof(double));
+
+memcpy( marrMiss, R. marrMiss, 6 * sizeof(double));
+
+
+ }
+
+ // оператор присваивания
+ TOutPutAeroShot &TOutPutAeroShot::operator=(const TOutPutAeroShot  &R)
+ {
+	//   время выстрела
+ mTshot = R.mTshot;
+//   полетное время
+ mTfly = R.mTfly;
+//  вектор состояния корабля на момент выстрела в ГСК
+memcpy(marrVS_GSK_Vessel, R.marrVS_GSK_Vessel, 6 * sizeof(double));
+
+// вектор состояния цели корабля на момент выстрела в ГСК
+memcpy(marrVS_GSK_Targ, R.marrVS_GSK_Targ, 6 * sizeof(double));
+
+//  ПУВН в КГСК
+ mEpsKGSK = R.mEpsKGSK;
+// ПУГН в КГСК
+ mBetKGSK = R.mBetKGSK;
+// корреляц матрица разброса вектора состояния цели в ГСК на момент встречи
+memcpy(marrKTarg, R.marrKTarg, 36 * sizeof(double));
+
+// корреляц матрица разброса вектора состояния снаряда в ГСК  на момент встречи
+memcpy(marrKShell, R.marrKShell, 36 * sizeof(double));
+memcpy( marrMiss, R. marrMiss, 6 * sizeof(double));
+
+	return *this ;
+ }
+
+
+
+
+// параметрическийц конструктор
+ TOutPutAeroShot::TOutPutAeroShot( const double Tshot
+		,const double Tfly, double *arrVS_GSK_Vessel, double *arrVS_GSK_Targ
+		,const double EpsKGSK,const double BetKGSK, double *arrKTarg
+		,double *arrKShell, double *arrMiss)
+{
+   mTshot = Tshot;
+   mTfly = Tfly;
+   memcpy(marrVS_GSK_Vessel, arrVS_GSK_Vessel, 6 * sizeof(double));
+
+// вектор состояния цели корабля на момент выстрела в ГСК
+memcpy(marrVS_GSK_Targ, arrVS_GSK_Targ, 6 * sizeof(double));
+//  ПУВН в КГСК
+ mEpsKGSK =  EpsKGSK;
+// ПУГН в КГСК
+ mBetKGSK =  BetKGSK;
+// корреляц матрица разброса вектора состояния цели в ГСК на момент встречи
+memcpy(marrKTarg,  arrKTarg, 36 * sizeof(double));
+
+// корреляц матрица разброса вектора состояния снаряда в ГСК  на момент встречи
+memcpy(marrKShell,  arrKShell, 36 * sizeof(double));
+
+memcpy(marrMiss,  arrMiss, 6 * sizeof(double));
+
+}
+
+//---------------------------------------------------------------------------
+
+ //---------------------------------------------------------------------
+//
+void   TOutPutAeroShot::swap( TOutPutAeroShot *a0,  TOutPutAeroShot *a1)
+{
+	TOutPutAeroShot b = *a1;
+	*a1 = *a0 ;
+	*a0 = b ;
+}
+
+//---------------------------------------------------------------------
+// изменение нумерации одномерного массива на обратную
+void   TOutPutAeroShot:: flipArray( TOutPutAeroShot *parr, const int len)
+{
+	for (int i = 0; i < len/ 2; i++)
+	{
+		 swap(&parr[i], &parr[len - 1 -i]) ;
+
+	}
+}
+
+
+
+#pragma package(smart_init)

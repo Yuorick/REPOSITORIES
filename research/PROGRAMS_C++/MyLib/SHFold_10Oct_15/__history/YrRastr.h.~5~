@@ -1,0 +1,111 @@
+//---------------------------------------------------------------------------
+
+#ifndef YrRastrH
+#define YrRastrH
+#include <vcl.h>
+//---------------------------------------------------------------------------
+
+class TURPointXY;
+class TURPolygon;
+class TYrRastr//:public TObject
+  {
+
+public:
+		TYrRastr() ;
+		TYrRastr(wchar_t *wFileName) ;
+
+		TYrRastr(int nc,int nr,double xll,double yll,double cs,double nd,const bool irastr);
+		TYrRastr( TURPolygon plg, const double cs,  const double value);
+		TYrRastr (wchar_t *wFileName,const TURPointXY pntP0,const double d0);
+		// конструктор копирования
+		TYrRastr (const TYrRastr &R) ;
+		// оператор присваивания
+		TYrRastr operator=(TYrRastr  R2) ;
+
+		TYrRastr(int nc,int nr,double xll,double yll,double cs,double *arrData);
+
+		int ncols;
+		int nrows ;
+		double xllcorner ;
+		double yllcorner ;
+		double cellsize ;
+		double nodata ;
+		char byteorder[30]  ;
+
+		double *pflt_rastr;
+		wchar_t wMyFltFile[300] ;
+
+
+		~ TYrRastr() ;
+		bool  TYrRastr:: InitRastr();
+		static bool FindParamsForCutRastr(const TYrRastr *srcRastr, const double xmin
+			 ,const double ymin,const double xmax, const double ymax
+				,int *nrowfirst,int *ncolfirst, int *nrowscut,int *ncolscut) ;
+		static void  ExportRastrExtent(TYrRastr *dstRastr, TYrRastr *srcRastr)  ;
+		static bool  CutFltRastr(TYrRastr *dstRastr, TYrRastr *srcRastr,const int nrowfirst
+					,const int ncolfirst,const int nrowscut, const int ncolscut);
+		static bool CustomizeToGrid( TYrRastr *srcRastr,  TYrRastr *destRastr);
+		static void  WriteRastrsMassiveInIkdFile(wchar_t *FileName,TYrRastr *pRastr
+			 , const int quanRastrs)  ;
+		static double BilinearValue (double* arrSh,const double cellsize
+		,const double xt,const double yt) ;
+		static double NearestPointValue (double* arrSh,const double cellsize
+		,const double  Nodata,const double xt,const double yt);
+		static double LinApprox(double* arrSh,const double cellsize
+		,const double Nodata,const double xt,const double yt) ;
+		double InterpolateZ(const double x,const double y );
+
+		public:
+		void   ShowMe(int i)  ;
+		double   get_X(const int i,const int j) ;
+		double   get_Y(const int i,const int j) ;
+		double   get_X(const int j);
+		double   get_Y(const int i);
+		double   get_PiksVal(const double x, const double y) ;
+		void  WriteMeAsFltFile(wchar_t *wFileName);
+		static TYrRastr   SumOfRastrs(TYrRastr *pRastr1, TYrRastr *pRastr2);
+		static TYrRastr   MinusOfRastrs(TYrRastr *pRastr1, TYrRastr *pRastr2);
+		static int YMIN(const int n, const int m);
+
+		static int YMAX (const int n, const int m) ;
+		bool IsPointInsideExtent(const double x,const double y ) ;
+		void GetExtent(double &xmin,double &ymin,double &xmax,double &ymax) ;
+		void   ModifyOrderOfDataArray();
+		static bool  replace(char*str) ;
+		bool DigCanyon(const TURPointXY P0,const TURPointXY P1);
+		TURPointXY OutPnt(const TURPointXY P0,const double kx,const double ky);
+
+		static int  ISign(const double a);
+		static double YMINd(const double n, const double m) ;
+
+		static double YMAXd (const double n, const double m) ;
+
+		static void AdjustDEM( wchar_t *wFileDEM  //исходный  FLT файлом DEM
+					 ,wchar_t *wFileSetNull   // исходный  FLT файл с растром потоков типа setnull
+					 ,TURPointXY *arrP0,TURPointXY *arrP1, const int quantPoints,TURPointXY *purpntOut);
+		static bool Link2Streams(const TURPointXY urpntUpper,const TURPointXY urpntLower
+				,wchar_t *wFileDEM ,wchar_t *wFileSetNull
+				,TURPointXY *urpntStart,TURPointXY *urpntEnd) ;
+		void CreateCluster(const TURPointXY P0, int **ppiarrNums , int *quantArrNums) ;
+		int FindSinkIndex (int **ppiarrNums, const int quantNums) ;
+		double  getValue(const int iNum);
+		TURPointXY  getCellCentre(const int iNum) ;
+		bool IsLowerPointSuit(const TURPointXY P0,const TURPointXY P1 ) ;
+		void CreateRasterFromCluster(int *piarrNums , const int quantNums,TYrRastr &rstrRez)  ;
+
+		int InsertRastrInFltFile(wchar_t*FileName);
+		static int ChangeCellValue(wchar_t*wFileName,const TURPointXY urpntP,const double valZ) ;
+		static  void ReadHDRFile (wchar_t*wFileName,int *ncols, int *nrows, double *xllcorner
+			 ,double *yllcorner, double *cellsize, double *nodata, char *pbyteorder)  ;
+
+		static  double  get_PiksVal(wchar_t*wFileName,const TURPointXY urpntP)  ;
+
+		void applyKillingRange( const TURPointXY pntFall, const double VAlRad) ;
+
+		int calcQuantValuablePiksels() ;
+
+		int getOrderNum(const int NUmNotNodata);
+
+
+	};
+ #endif

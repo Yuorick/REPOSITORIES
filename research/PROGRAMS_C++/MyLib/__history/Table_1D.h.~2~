@@ -1,0 +1,50 @@
+//---------------------------------------------------------------------------
+
+#ifndef Table_1DH
+#define Table_1DH
+
+class TTable_1D
+{
+public:
+
+	int nNumCols ;// к-во столбцов
+	double *mparrArgCols; // вектор значений столбцов
+	double *mparrValues; // вектор аргументов столбцов
+	double mArgRow;  // значение аргумента строки
+
+
+	__fastcall ~TTable_1D() ;
+
+  TTable_1D();
+ // конструктор копирования
+ TTable_1D (const TTable_1D &R) ;
+ // оператор присваивания
+ TTable_1D operator=(TTable_1D  R);
+// парам констр
+TTable_1D( TURPointXY *ppntArr, const int iNumPoints);
+
+virtual void createTargPointsArray(const int valTargCellSize, TURPointXY **ppTargPntArray, int *lenTargPntArray);
+
+//virtual void createAimPointsArray(const int valTargCellSize, TURPointXY **ppAimPntArray, int *lenAimPntArray) ;
+virtual void createUnatedPointsArray(TURPointXY **ppunatedPoints, int *quantUnitedPoints) ;
+
+void calcBoundBox();
+
+ void WriteIndexFile(wchar_t *wchFileName);
+ void WriteDBASEFile(wchar_t *wchFileName);
+
+virtual void WriteSetSHPFiles(wchar_t *wchFileName);
+void WriteMainFile(wchar_t *wchFileName);
+void ChangeByteOrder(int * pi0);
+
+virtual void   LinearTransformation(const double  valAng , const TURPointXY pntSdvig,const double valRastigenie );
+
+virtual void   ConvexShell(TURPolygon *pPolgConv);
+
+double  calcDiam(int *pnum0,  int *pnum1);
+
+
+
+
+};
+#endif
